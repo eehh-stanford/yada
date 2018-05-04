@@ -1,0 +1,13 @@
+Package: yada
+Type: Package
+Title: Yet Another Demographic Analysis package
+Version: 0.1.0
+Author: Michael Holton Price
+Maintainer: Michael Holton Price <michaelholtonprice@sgmail.com>
+Description: yada, which stands for Yet Another Demographic Analysis package, supports a variety of demographic tasks oriented, with most applications drawn from forensic anthroplogy and archaeology
+License: MIT
+Encoding: UTF-8
+LazyData: true
+Imports:
+    distr,
+    MCMCpack

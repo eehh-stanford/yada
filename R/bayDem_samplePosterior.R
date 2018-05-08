@@ -25,29 +25,9 @@
 #                          ymax         -- maximum calendar date
 
 bayDem_samplePosterior <- function(fit,hp,N) {
-  numChains <- fit@sim$chains
-  sampsPerChain <- fit@sim$iter
-  numTot <- numChains * sampsPerChain
-  ind <- sample.int(numTot,size=N)
-  samps <- list()
-  for(n in 1:N) {
-    cc <- 1 + floor((ind[n]-1) / sampsPerChain) # The chain
-    ss <- ((ind[n]-1) %% sampsPerChain) + 1 # Sample within chain
-    if(hp$fitType == 'gaussmix') {
-      piVect <- rep(NA,K)
-      muVect <- rep(NA,K)
-      sigVect <- rep(NA,K)
-      for(k in 1:hp$K) {
-        piVect[k]  <- fit@sim$samples[[cc]][[paste('pi[',as.character(k),']',sep='')]][ss]
-        muVect[k]  <- fit@sim$samples[[cc]][[paste('mu[',as.character(k),']',sep='')]][ss]
-        sigVect[k] <- fit@sim$samples[[cc]][[paste('sig[',as.character(k),']',sep='')]][ss]
-      }
-      samp <- list(fitType=hp$fitType,ymin=hp$ymin,ymax=hp$ymax,pi=piVect,mu=muVect,sig=sigVect)
-    } else {
-      stop(paste('Unrecognized fit type:',hp$fitType))
-    }
-    samps[[n]] <- samp
-  }
-  return(samps)
+  samps <- bayDem_extractParam(fit,hp,asList=T)
+  numSamp <- length(samps)
+  ind <- sample.int(numSamp,size=N)
+  return(samps[ind])
 }
 

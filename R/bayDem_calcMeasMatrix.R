@@ -1,7 +1,7 @@
 # Description
 #   Calculate the measurement matrix, which is the likelihood of the radiocarbon
-#   measurements in sampRcMeas calculated at the calendar dates in the vector
-#   ygrid:
+#   measurements phi_m with measurement uncertainty sig_m calculated at the
+#   calendar dates in the vector ygrid:
 #
 #  M = [p(phi_m,1|y_1)  p(phi_m,1:y_2) ... ]
 #    = [p(phi_m,2|y_1)       ---       ... ]
@@ -16,12 +16,13 @@
 #
 # Example calls(s)
 #
-#   M <- bayDem_calcMeasMatrix(ygrid,sampRcMeas,calibDf)
+#   M <- bayDem_calcMeasMatrix(ygrid,phi_m,sig_m,calibDf)
 # 
 # Input(s)
 #   Name          Type      Description
 #   ygrid         vector    The locations at which to calculate the likelihood
-#   sampRcMeas    list      Radiocarbon samples (see bayDem_dateSampToC14samp)
+#   phi_m         vector    The radiocarbon measurements (fraction modern)
+#   sig_m         vector    Uncertainty of radiocarbon measurements
 #   calibDf       dframe    Calibration curve (see bayDem_loadCalibCurve)
 #
 # Output(s)
@@ -30,7 +31,7 @@
 #                           the likelihood of this measurement calculated for
 #                           the calendar dates in ygrid.
 
-bayDem_calcMeasMatrix <- function(ygrid,sampRcMeas,calibDf) {
+bayDem_calcMeasMatrix <- function(ygrid,phi_m,sig_m,calibDf) {
 	# ygrid is in AD
 	ygrid_BP <- 1950 - ygrid
 
@@ -45,11 +46,11 @@ bayDem_calcMeasMatrix <- function(ygrid,sampRcMeas,calibDf) {
 	sig_k <- approx(y_curve,sig_k_curve,ygrid_BP)
 	sig_k <- sig_k$y
 
-	PHI_m <- replicate(length(ygrid_BP),sampRcMeas$phi_m)
-	SIG_m <- replicate(length(ygrid_BP),sampRcMeas$sig_m)
+	PHI_m <- replicate(length(ygrid_BP),phi_m)
+	SIG_m <- replicate(length(ygrid_BP),sig_m)
 
-	MU_k  <- t(replicate(length(sampRcMeas$phi_m),mu_k))
-	SIG_k <- t(replicate(length(sampRcMeas$sig_m),sig_k))
+	MU_k  <- t(replicate(length(phi_m),mu_k))
+	SIG_k <- t(replicate(length(sig_m),sig_k))
 
 	SIG_sq <- SIG_m^2 + SIG_k^2
 

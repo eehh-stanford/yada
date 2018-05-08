@@ -8,13 +8,19 @@
 # 
 # Input(s)
 #   Name         Type          Description
-#   calibFile    string        The calibration file
+#   calibCurve   string        Name of calibration curve
 #
 # Output(s)
 #   Name         Type          Description
-#   calibDf      data frame    T
+#   calibDf      dataframe     The calibration dataframe, with columns yearBP,
+#                              uncalYearBP, and uncalYearBPError
 
-bayDem_loadCalibCurve <- function(calibFile) {
+bayDem_loadCalibCurve <- function(calibCurve) {
+  if(calibCurve == 'intcal13') {
+    calibFile <- system.file('data/intcal13.14c.data',package='yada')
+  } else {
+    stop(paste('Unknown calibration curve name:',calibCurve))
+  }
     calibDf <- read.csv(calibFile,comment.char='#',header=F)
     calibDf <- calibDf[,1:3]
     colnames(calibDf) <- c('yearBP','uncalYearBP','uncalYearBPError')

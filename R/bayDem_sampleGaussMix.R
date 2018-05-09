@@ -1,7 +1,6 @@
 # Description
-#   Sample from a (truncated) two-component Gaussian mixture. This provides
-#   calendar dates of radiocarbon samples from the demographic model specified
-#   by the two-component Gaussian mixture.
+#   Sample from a Gaussian mixture. This provides calendar dates of radiocarbon
+#   samples from the demographic model specified by Gaussian mixture.
 #
 # Example calls(s)
 #
@@ -10,56 +9,45 @@
 # Input(s)
 #   Name    Type           Description
 #   N       integer        The number of samples
-#   th      vector-like    A vectore-like object of length 2 + 3*J with the
+#   th      vector-like    A vector-like object of length 3*K with the
 #                          following entries:
-#                          ymin  -- Minimum value
-#                          ymax  -- Maximum value
-#                                   [Samples are truncated to the interval
-#                                    ymin to ymax]
-#                          zj    -- [J entries] Weight of the j-th mixture
-#                          muj   -- [J entries] Mean of the j-th mixture
-#                          sigj  -- [J entries] Standard deviation of the j-th
+#                          pik   -- [K entries] Weight of the k-th mixture
+#                          muk   -- [K entries] Mean of the k-th mixture
+#                          sigk  -- [K entries] Standard deviation of the k-th
 #                                               mixture
 #
 # Output(s)
 #   Name    Type           Description
 #   samp    vector         The samples (length = N)
 
-bayDem_sampleGaussMix <- function(N,th) {
-    J <- (length(th)-2)/3 # Number of  mixtures
+bayDem_sampleGaussMix <- function(N,th,ymin=NA,ymax=NA) {
+    K <- length(th)/3 # Number of  mixtures
 
-    # This commented out code fails because Truncate expects an
+    # (Somewhat awkwardly), define the mixing distribution directly for K = 1
+    # to 4 directly. This is necessary because truncate expects an
     # AbscontDistribution but creating a mixture distribution via vectors
-    # as in this commented out code produces a UnivarMixingDistribution, which
-    # cannot be cast to an AbscontDistribution. Perhaps this shortcoming of
-    # distr will be addressed in the future. In the meantime, the number of
-    # mixtures is limited to 4
-
-    #mixDistrList <- list()
-    #for(j in 1:J) {
-    #    mixDistrList[[j]] <- distr::Norm(mean=th[2+J+j],sd=th[2+2*J+j])
-    #}
-    #mixDistr <- new('UnivarMixingDistribution',mixCoeff=th[3:(2+J)],mixDistr=new('UnivarDistrList',mixDistrList))
-    #mixDistrTrunc <- distr::Truncate(mixDistr,th[1],th[2])
-    
-    # (Somewhat awkwardly), define the mixing distribution directly for J = 1
-    # to 6 directly
-    if(J == 1) { # Allow J = 1 (i.e., a Gaussian, not a mixture) as a special
-	         # case
-        normMix <- distr::Norm(mean=th[4],sd=th[5])
-    } else if(J == 2) {
-        normMix <- distr::UnivarMixingDistribution(distr::Norm(mean=th[5],sd=th[7]),distr::Norm(mean=th[6],sd=th[8]),mixCoeff=th[3:4])
-    } else if(J == 3) {
-        normMix <- distr::UnivarMixingDistribution(distr::Norm(mean=th[6],sd=th[9]),distr::Norm(mean=th[7],sd=th[10]),,distr::Norm(mean=th[8],sd=th[11]),mixCoeff=th[3:5])
-    } else if(J == 4) {
-        normMix <- distr::UnivarMixingDistribution(distr::Norm(mean=th[7],sd=th[11]),distr::Norm(mean=th[8],sd=th[12]),,distr::Norm(mean=th[9],sd=th[13]),distr::Norm(mean=th[10],sd=th[14]),mixCoeff=th[3:6])
+    # creates a UnivarMixingDistribution, which cannot be cast to an
+    # AbscontDistribution. Perhaps this shortcoming of distr will be addressed
+    # in the future. In the meantime, the number of mixtures is limited to 4
+    if(K == 1) { # Allow K = 1 (i.e., a Gaussian, not a mixture) as a special case
+        normMix <- distr::Norm(mean=th[2],sd=th[3])
+    } else if(K == 2) {
+        normMix <- distr::UnivarMixingDistribution(distr::Norm(mean=th[3],sd=th[5]),distr::Norm(mean=th[4],sd=th[6]),mixCoeff=th[1:2])
+    } else if(K == 3) {
+        normMix <- distr::UnivarMixingDistribution(distr::Norm(mean=th[4],sd=th[7]),distr::Norm(mean=th[5],sd=th[8]),,distr::Norm(mean=th[6],sd=th[9]),mixCoeff=th[1:3])
+    } else if(K == 4) {
+        normMix <- distr::UnivarMixingDistribution(distr::Norm(mean=th[5],sd=th[9]),distr::Norm(mean=th[6],sd=th[10]),,distr::Norm(mean=th[7],sd=th[11]),distr::Norm(mean=th[8],sd=th[12]),mixCoeff=th[1:4])
     } else {
         stop('The maximum number of supported mixture components is 4')
     }
 
     # Use distr to sample from a two-component, truncated Gaussian mixture
-    normMixTrunc <- distr::Truncate(normMix,th[1],th[2])
-    samp <- distr::r(normMixTrunc)(N)
+    if(!is.na(ymin) && !is.na(ymax)) {
+      normMixTrunc <- distr::Truncate(normMix,ymin,ymax)
+      samp <- distr::r(normMixTrunc)(N)
+    } else {
+      samp <- distr::r(normMix)(N)
+    }
     return(samp)
 }
 

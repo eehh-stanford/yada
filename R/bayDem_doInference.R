@@ -61,14 +61,6 @@ bayDem_doInference <- function(prob) {
     initList <- prob$control$initList
   } else {
     initList <- bayDem_samplePrior(prob$hp,numChains)
-    ## kluege
-    ## modify initList to have evenly spaced mu's
-    #muVect <- seq(prob$hp$ymin,prob$hp$ymax,len=prob$hp$K+2)[2:(prob$hp$K+1)]
-    #for(ii in 1:length(initList)) {
-    #  init <- initList[[ii]]
-    #  init$mu <- muVect
-    #  initList[[ii]] <- init
-    #}
   }
 
   if(haveStanControl) {
@@ -90,7 +82,7 @@ bayDem_doInference <- function(prob) {
     G <- dim(M)[2]
     sigAlpha <- prob$hp$sigAlpha
     sigBeta <- prob$hp$sigBeta
-    dirichParam <- prob$hp$sigBeta
+    dirichParam <- prob$hp$dirichParam
     K <- prob$hp$K
     filePath <- system.file('data/gaussmix.stan',package='yada')
     options(mc.cores = parallel::detectCores())

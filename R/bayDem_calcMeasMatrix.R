@@ -55,5 +55,6 @@ bayDem_calcMeasMatrix <- function(ygrid,phi_m,sig_m,calibDf) {
 	SIG_sq <- SIG_m^2 + SIG_k^2
 
 	M <- exp(-(PHI_m - MU_k)^2 / (SIG_sq) / 2) / sqrt(SIG_sq) / sqrt(2*pi)
+	M <- M * matrix(1/rowSums(M),dim(M)[1],dim(M)[2]) # Normalize the rows to sum to 1
 	return(M)
 }

@@ -31,7 +31,7 @@ bayDem_extractParam <- function(fit,hp,asList=F) {
   numSamp <- dim(X)[1]
    
   if(hp$fitType=='gaussmix') {
-    numParam <- 2 + 3*hp$K
+    numParam <- 3*hp$K
     piVect <- rep(NA,hp$K)
     muVect <- rep(NA,hp$K)
     sigVect <- rep(NA,hp$K)
@@ -43,8 +43,6 @@ bayDem_extractParam <- function(fit,hp,asList=F) {
       varList[k + 2*hp$K] <- paste('sig[',as.character(k),']',sep='')
     }
     TH <- as.matrix(X[,varList])
-    TH <- cbind(rep(hp$ymin,numSamp),rep(hp$ymax,numSamp),TH)
-    colnames(TH) <- c('ymin','ymax',varList)
 
     if(!asList) {
       class(TH) <- hp$fitType # Set the class to aid subsequent evaluation

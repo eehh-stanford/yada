@@ -7,14 +7,12 @@ data {
   real<lower=0> dirichParam; // Parameter for the mixture distribution
   real ymin;
   real ymax;
-  //real ymax;
   real<lower=0> sigAlpha;
   real<lower=0> sigBeta;
 }
 
 parameters {
   simplex[K] pi;
-  //ordered[K] mu;
   vector[K] mu;
   vector<lower=0>[K] sig;
 }
@@ -25,16 +23,13 @@ model {
   row_vector[G] logf;
   vector[K] logpi = log(pi);
 
-  //f = to_row_vector(rep_vector(0,G));
   logf = to_row_vector(rep_vector(0,G));
   for (g in 1:G) {
     vector[K] lse = logpi;
     for (k in 1:K) {
-      //lse[k] += normal_lpdf(ygrid[g]|mu[k],sig[k]) - log(normal_cdf(ymax,mu[k],sig[k])-normal_cdf(ymin,mu[k],sig[k]));
       lse[k] += normal_lpdf(ygrid[g]|mu[k],sig[k]);
     }
     logf[g] = log_sum_exp(lse);
-    //f[g] = exp(log_sum_exp(lse));
   }
   f = exp(logf);
   f = f / sum(f);

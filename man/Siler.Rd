@@ -20,9 +20,9 @@ dsiler(x, a, x0 = 0)
 
 psiler(x, a, x0 = 0)
 
-qsiler(qvect, a, x0 = 0, maxVal = 1000)
+qsiler(qvect, a, x0 = 0)
 
-rsiler(N, a, x0 = 0, maxVal = 1000)
+rsiler(N, a, x0 = 0)
 }
 \arguments{
 \item{x, q}{vector of quantiles}

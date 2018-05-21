@@ -76,20 +76,35 @@ psiler <- function(x,a,x0=0) {
 
 #' @export
 #' @rdname Siler
-qsiler <- function(qvect,a,x0=0,maxVal=1000) {
+qsiler <- function(qvect,a,x0=0) {
+    # Solve the inverse problem for the cumulative density with a change of
+    # variable
+    #
+    # xbar = a5*(x - x0) / (a5*x + 1)
+    #
+    # or, equivalently,
+    #
+    # x = ((xbar/a5) + x0)/(1-xbar).
+    #
+    # xbar lies between 0 to 1, which allows R's root-finder to be invoked on
+    # a bounded interval. Normalizing by a5 regularizes the root finding for
+    # large ages where the positive exponential term dominates the hazard.
+
     N <- length(qvect)
     xvect <- rep(NA,N)
     for(n in 1:N) {
       Sn <- 1 - qvect[n]
-      froot <- function(x) {log(Sn)+chsiler(x,a,x0)}
-      xvect[n] <- uniroot(froot,c(0,maxVal))$root
+      #froot <- function(xbar) {log(Sn)+chsiler((x0+xbar)/(1-xbar),a,x0)}
+      froot <- function(xbar) {log(Sn)+chsiler(((xbar/a[5])+x0)/(1-xbar),a,x0)}
+      xbar_n <- uniroot(froot,c(0,1))$root
+      xvect[n] <- ((xbar_n/a[5])+x0)/(1-xbar_n)
     }
     return(xvect)
 }
 
 #' @export
 #' @rdname Siler
-rsiler <- function(N,a,x0=0,maxVal=1000) {
+rsiler <- function(N,a,x0=0) {
     cdf <- runif(N)
-    return(qsiler(cdf,a,x0,maxVal))
+    return(qsiler(cdf,a,x0))
 }

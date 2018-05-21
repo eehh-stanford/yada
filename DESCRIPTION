@@ -12,5 +12,6 @@ Imports:
     distr,
     MCMCpack,
     rstan,
-    parallel
+    parallel,
+    survival
 RoxygenNote: 6.0.1

@@ -13,3 +13,4 @@ Imports:
     MCMCpack,
     rstan,
     parallel
+RoxygenNote: 6.0.1

@@ -96,7 +96,7 @@ qsiler <- function(qvect,a,x0=0) {
       Sn <- 1 - qvect[n]
       #froot <- function(xbar) {log(Sn)+chsiler((x0+xbar)/(1-xbar),a,x0)}
       froot <- function(xbar) {log(Sn)+chsiler(((xbar/a[5])+x0)/(1-xbar),a,x0)}
-      xbar_n <- uniroot(froot,c(0,1))$root
+      xbar_n <- uniroot(froot,c(0,1),tol=.Machine$double.eps/2)$root
       xvect[n] <- ((xbar_n/a[5])+x0)/(1-xbar_n)
     }
     return(xvect)

@@ -21,3 +21,20 @@ test_that("test Siler random sampler", {
     xsamp <- rsiler(N,a0)
     expect_equal(cdf,ecdf(xsamp)(x),tolerance=1e-3)
 })
+
+x0 <- 10
+test_that("test Siler inverse with offset", {
+    qin  <- seq(0,.999,by=.001) # quantiles in
+    x    <- qsiler(qin,a0,x0) # x from quantiles
+    qout <- psiler(x,a0,x0) # quantiles from x
+    expect_equal(qin,qout)
+})
+
+test_that("test Siler random sampler with offset", {
+    set.seed(400532) # from random.org
+    N <- 1000000
+    x <- seq(x0,120,by=.01)
+    cdf <- psiler(x,a0,x0)
+    xsamp <- rsiler(N,a0,x0)
+    expect_equal(cdf,ecdf(xsamp)(x),tolerance=1e-3)
+})

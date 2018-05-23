@@ -10,7 +10,7 @@ fitSilerMaxLik(x, a0 = c(0.175, 1.4, 0.368 * 0.01, 0.075 * 0.001, 0.917 *
 \arguments{
 \item{x}{Locations at which to evaluate probability density function}
 
-\item{a0}{Initial value for optimization. Default from Gage and Dyke 1986, Level 15, Table 2}
+\item{a0}{Initial value for optimization. Default from Gage and Dyke 1986, Table 2, Level 15}
 
 \item{x0}{x-offset. The default is 0 (no offset).}
 }

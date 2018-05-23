@@ -8,6 +8,7 @@
 \alias{psiler}
 \alias{qsiler}
 \alias{rsiler}
+\alias{nllsiler}
 \title{Siler hazard model}
 \usage{
 hsiler(x, a)
@@ -23,6 +24,8 @@ psiler(x, a, x0 = 0)
 qsiler(qvect, a, x0 = 0)
 
 rsiler(N, a, x0 = 0)
+
+nllsiler(a, x, x0 = 0)
 }
 \arguments{
 \item{x, q}{vector of quantiles}
@@ -37,12 +40,12 @@ rsiler(N, a, x0 = 0)
 A numeric vector of length equal to the input
 }
 \description{
-\code{dsiler} gives the probability density function, \code{psiler} the cumulative density function, \code{qsiler} the quantile function, \code{rsiler} random draws, \code{hsiler} the hazard, \code{chsiler} the cumulative hazard, and \code{ssiler} the survival.
+\code{dsiler} gives the probability density function, \code{psiler} the cumulative density function, \code{qsiler} the quantile function, \code{rsiler} random draws, \code{hsiler} the hazard, \code{chsiler} the cumulative hazard, \code{ssiler} the survival, and \code{nllsiler} the negative log-likelihood.
 }
 \details{
 The Siler hazard is
 
-\deqn{\lambda(x) = a_1 e^{-a_2 x} + a_3 + a_4 e^{a_5 x}}
+\deqn{\lambda(x) = a_1 \exp(-a_2 \, x) + a_3 + a_4 \exp(a_5 \, x)}
 
 where \eqn{a_i} (index notation) is the parameter vector. The cumulative hazard is found by integrating the hazard from some initial point \eqn{x_0} to \eqn{x},
 
@@ -50,7 +53,7 @@ where \eqn{a_i} (index notation) is the parameter vector. The cumulative hazard 
 
 If \eqn{x_0} (optional) is not input it is set equal to 0. The survival and cumulative density function are, respectively,
 
-\deqn{S(x_0,x) = e^{-\Lambda(x_0,x)}}
+\deqn{S(x_0,x) = \exp(-\Lambda(x_0,x)) = \frac{S(0,x)}{S(0,x_0)} = \frac{S(x)}{S(x_0)}}
 
 and
 

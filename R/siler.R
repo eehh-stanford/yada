@@ -1,14 +1,14 @@
 #' @title Siler hazard model
 #'  
-#' @description \code{dsiler} gives the probability density function, \code{psiler} the cumulative density function, \code{qsiler} the quantile function, \code{rsiler} random draws, \code{hsiler} the hazard, \code{chsiler} the cumulative hazard, and \code{ssiler} the survival.
+#' @description \code{dsiler} gives the probability density function, \code{psiler} the cumulative density function, \code{qsiler} the quantile function, \code{rsiler} random draws, \code{hsiler} the hazard, \code{chsiler} the cumulative hazard, \code{ssiler} the survival, and \code{nllsiler} the negative log-likelihood.
 #' 
 #' @details The Siler hazard is
 #' 
-#' \deqn{\lambda(x) = a_1 \exp(-a_2 \, x) + a_3 + a_4 \exp(a_5 \, x) }
+#' \deqn{\lambda(x) = a_1 \exp(-a_2 \, x) + a_3 + a_4 \exp(a_5 \, x)}
 #' 
 #' where \eqn{a_i} (index notation) is the parameter vector. The cumulative hazard is found by integrating the hazard from some initial point \eqn{x_0} to \eqn{x},
 #' 
-#' \deqn{\Lambda(x_0,x) = -\frac{a_1}{a_2} (e^{-a_2 x} - e^{-a_2 x_0}) + a_3 (x-x_0) + \frac{a_4}{a_5} (e^{a_5 x} - e^{a_5 x_0})}}.
+#' \deqn{\Lambda(x_0,x) = -\frac{a_1}{a_2} (e^{-a_2 x} - e^{-a_2 x_0}) + a_3 (x-x_0) + \frac{a_4}{a_5} (e^{a_5 x} - e^{a_5 x_0})}.
 #' 
 #' If \eqn{x_0} (optional) is not input it is set equal to 0. The survival and cumulative density function are, respectively,
 #'
@@ -107,4 +107,11 @@ qsiler <- function(qvect,a,x0=0) {
 rsiler <- function(N,a,x0=0) {
     cdf <- runif(N)
     return(qsiler(cdf,a,x0))
+}
+
+#' @export
+#' @rdname Siler
+# a is the first input as expected by most R optimization routines
+nllsiler <- function(a,x,x0=0) {
+    return(-sum(log(dsiler(x,a,x0))))
 }

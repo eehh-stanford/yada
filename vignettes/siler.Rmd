@@ -1,0 +1,144 @@
+---
+title: "The Siler mortality model"
+author: "Michael Holton Price"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+## Definitions
+The Siler mortality hazard is
+
+$$\lambda(x) = a_1 \exp(-a_2 \, x) + a_3 + a_4 \exp(a_5 \, x) \mbox{,}$$
+
+where x is age-at-death and
+
+$$\mathbf{a} = \begin{bmatrix}a_1&a_2&a_3&a_4&a_5\end{bmatrix}^T$$
+
+is the parameter vector. This yields a bathtub-shaped mortality hazard with the first term dominating at younger ages, the third term at higher ages, and the middle term being constant (background) mortality. The cumulative hazard contingent on having survived to age $x_0$ is found by integrating the hazard from $x_0$ to $x$,
+
+$$\Lambda(x_0,x) = -\frac{a_1}{a_2} [ \exp(-a_2 \, x) - \exp(-a_2 \, x_0) ] + a_3 [x-x_0] + \frac{a_4}{a_5} [\exp(a_5 \, x) - \exp(a_5 \, x_0)] \mbox{.}$$
+
+Due to this definition, $\Lambda(x_0,x) = \Lambda(0,x) - \Lambda(0,x_0) = \Lambda(x) - \Lambda(x_0)$, where we adopt the convention that $\Lambda(x) = \Lambda(0,x)$. The survival contingent on having survived to age $x_0$ is
+
+$$S(x_0,x) = \exp(\Lambda(x_0,x)) = \frac{S(0,x)}{S(0,x_0)} = \frac{S(x)}{S(x_0)} \mbox{,} $$
+
+where as with the cumulative hazard we adopt the convention $S(0,x) = S(x)$. The cumulative density function is
+
+$$F(x_0,x) = 1 - S(x_0,x)$$
+
+and the probability density function is.
+
+$$ f(x_0,x) = \frac{d}{dx} F(x_0,x) = \lambda(x) \, S(x_0,x) \mbox{.}$$
+
+`yada` implements these functions as `hsiler` (hazard), `chsiler` (cumulative hazard), `ssiler` (survival), `psiler` (cumulative density), and `dsiler` (density). In addition, `qsiler` (quantiles) inverts the cumulative density, $x = F^{-1}(q)$, and `rsiler` makes random draws from the probability density.
+
+## Plotting
+Gage and Dyke (1986) [Parameterizing Abridged Mortality Tables] describe sensible paramterizations of the Siler hazard for human mortality. The parameterization for Level 15 in Table 2 is 
+
+```{r}
+a0 <- c(0.175,1.40,0.368*0.01,0.075*0.001,0.917*0.1) 
+```
+
+Create a vector of ages $x$ from age 0 to 100 and calculate the hazard,
+
+```{r,fig.align='center',fig.width=6,fig.height=6}
+library(yada)
+x <- seq(0,100,by=.1)
+hazSiler <- hsiler(x,a0)
+plot(x,hazSiler,type='l',xlab='Age [years]',ylab='Hazard')
+```
+The cumulative density is
+
+```{r,fig.align='center',fig.width=6,fig.height=6}
+cumHazSiler <- chsiler(x,a0)
+plot(x,cumHazSiler,type='l',xlab='Age [years]',ylab='Cumulative Hazard')
+```
+The survival is
+
+```{r,fig.align='center',fig.width=6,fig.height=6}
+survSiler <- ssiler(x,a0)
+plot(x,survSiler,type='l',xlab='Age [years]',ylab='Survival')
+```
+
+The cumulative density is
+
+```{r,fig.align='center',fig.width=6,fig.height=6}
+cumDensSiler <- psiler(x,a0)
+plot(x,cumDensSiler,type='l',xlab='Age [years]',ylab='Cumulative Density')
+```
+
+The density is
+
+```{r,fig.align='center',fig.width=6,fig.height=6}
+densSiler <- dsiler(x,a0)
+plot(x,densSiler,type='l',xlab='Age [years]',ylab='Cumulative Density')
+```
+
+## Maximum likelihood estimation
+yada provides code to solve for the maximum likelihood Siler parameter vector given age-at-death data. Create simulated age-at-death data assuming survival by calling `rsiler`. To illustrate how to use the optional parameter $x_0$, assume that infants under two are excluded from the sample, $x_0=2$.
+
+```{r}
+set.seed(896354) # from random.org
+N <- 10000
+x0 <- 2
+xsamp <- rsiler(N,a0,x0)
+```
+
+"Jitter" $a_0$ a little to provide a starting point for the maximum likelihood estimation that differs from $a_0$, then do the fit:
+```{r}
+a1 <- a0 * runif(5,min=.9,max=1.1)
+silerFit <- fitSilerMaxLik(xsamp,a1,x0,calcHessian=TRUE)
+print(silerFit$a)
+```
+
+Since all elements of the Siler parameter vector are positive, the fit is done on a transformed variable, $\mathbf{\bar{a}} = \log{\mathbf{a}} - \log{\mathbf{a}_0}$, so that an unconstrained optimzation can be done by calling `optim'. This is the parameter that is optimized in the returned fit,
+
+```{r}
+print(silerFit$fit)
+```
+
+Naturally, the variable `a` in `silerFit` (printed above) and the `hessian` (optional; see below) account for this transformation. Now plot the histogram for the sampled data, target curve (solid black line; from $a_0$); initial estimate (dashed red line; from $a_1$), and maximum likelihood fit (solid red line):
+
+```{r,fig.align='center',fig.width=6,fig.height=6}
+hist(xsamp,100,freq=F,main=NA)
+xplot <- seq(x0,120,by=.1,xlab='Age [years]',ylab='Density')
+lines(xplot,dsiler(xplot,a0,x0),lty=1,col='1')
+lines(xplot,dsiler(xplot,a1,x0),lty=2,col='red')
+lines(xplot,dsiler(xplot,silerFit$a,x0),col='red')
+legend('topright',c('Target','Initial','Max Lik'),col=c('black','red','red'),lty=c(1,2,1))
+```
+
+A common (frequentist) question is whether the estimated parameter values differ from $0$. This can be assessed by calculating the standard errors using the Hessian, which is the negative of the observed Fisher information matrix (for pertinent assumptions see https://en.wikipedia.org/wiki/Fisher_information). The covariance matrix for the standard error is 
+
+```{r}
+covMat <- solve(-silerFit$hessian)
+```
+
+The standard errors are the roots of the diagonals of the covariance matrix,
+
+```{r}
+standErr <- sqrt(diag(covMat))
+```
+
+The so-called z-score is the ratio of the estimate to its standard error,
+
+```{r}
+z <- silerFit$a / standErr
+```
+
+The one-sided p-values are (one-sided because parameters are positive)
+
+```{r}
+pval <- pnorm(-abs(z))
+print(pval)
+```

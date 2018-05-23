@@ -38,3 +38,12 @@ test_that("test Siler random sampler with offset", {
     xsamp <- rsiler(N,a0,x0)
     expect_equal(cdf,ecdf(xsamp)(x),tolerance=1e-3)
 })
+
+test_that("test Siler maximum likelihood estimation", {
+    set.seed(291542) # from random.org
+    N <- 1000000
+    xsamp <- rsiler(N,a0)
+    a1 <- a0 * runif(5,min=.9,max=1.1) # jitter start
+    silerFit <- fitSilerMaxLik(xsamp,a1,calcHessian=TRUE)
+    expect_equal(a0,silerFit$a,tol=1e-3)
+})

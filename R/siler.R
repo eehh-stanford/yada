@@ -4,15 +4,15 @@
 #' 
 #' @details The Siler hazard is
 #' 
-#' \deqn{\lambda(x) = a_1 e^{-a_2 x} + a_3 + a_4 e^{a_5 x}}
+#' \deqn{\lambda(x) = a_1 \exp(-a_2 \, x) + a_3 + a_4 \exp(a_5 \, x) }
 #' 
 #' where \eqn{a_i} (index notation) is the parameter vector. The cumulative hazard is found by integrating the hazard from some initial point \eqn{x_0} to \eqn{x},
 #' 
-#' \deqn{\Lambda(x_0,x) = -\frac{a_1}{a_2} (e^{-a_2 x} - e^{-a_2 x_0}) + a_3 (x-x_0) + \frac{a_4}{a_5} (e^{a_5 x} - e^{a_5 x_0})}.
+#' \deqn{\Lambda(x_0,x) = -\frac{a_1}{a_2} (e^{-a_2 x} - e^{-a_2 x_0}) + a_3 (x-x_0) + \frac{a_4}{a_5} (e^{a_5 x} - e^{a_5 x_0})}}.
 #' 
 #' If \eqn{x_0} (optional) is not input it is set equal to 0. The survival and cumulative density function are, respectively,
 #'
-#' \deqn{S(x_0,x) = e^{-\Lambda(x_0,x)}}
+#' \deqn{S(x_0,x) = \exp(-\Lambda(x_0,x)) = \frac{S(0,x)}{S(0,x_0)} = \frac{S(x)}{S(x_0)}}
 #'
 #' and
 #'

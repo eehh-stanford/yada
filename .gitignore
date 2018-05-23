@@ -4,3 +4,6 @@
 .Ruserdata
 *.swp
 inst/doc
+*.pdf
+*.html
+*.tex

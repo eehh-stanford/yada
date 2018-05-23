@@ -1,9 +1,7 @@
 context("Siler")
 
 # a0 is the baseline parameter vector used to test Siler functions. It is from
-# Gage and Dyke 1986, Table 2, Level 15 Table 2. The article does not describe
-# things well, but it seems that the last three parameters must be modified by
-# multiplying by .01, .001, and .1, respectively.
+# Gage and Dyke 1986, Table 2, Level 15.
 a0 <- c(.175,1.40,.368*.01,.075*.001,.917*.1) 
 
 test_that("test Siler inverse", {

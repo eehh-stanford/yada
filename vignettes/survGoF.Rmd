@@ -1,0 +1,43 @@
+---
+title: "A general goodness-of-fit test for survival analysis"
+author: "Michael Holton Price"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+## Overview
+This vignette generates the figures for the article ``A general goodness-of-fit test for survival analysis'' by Michael Holton Price and James Holland Jones. Although the article is currently in review, a preliminary version is available on biorxiv at https://www.biorxiv.org/content/early/2017/01/31/104406. This vignette will be updated with a link to the final article when it is in press. The vignette relies on open source code in the R package yada, https://github.com/eehh-stanford/yada, which can be installed using devtools.
+
+## Plotting probability density functions
+Section 2 defines the Martingale Survival Residual (MSR) and Negative Martingale Residual (NMR) and Appendix A derives their probability density functions (PDFs) assuming constant event occurrence and censoring (Equations 43 and 44). These can be caculated with the yada functions calcMSRDensityConstHaz and calcNMRDensityConstHaz. The overall PDF can be calculated, as can the components due to event occurrence and censoring. Plot the MSR PDF for censoring ratios of 0% and 25%,
+
+```{r,fig.align='center',fig.width=6,fig.height=6}
+library(yada)
+Dplot_MSR <- seq(-0.5,0.5,len=1001) # The locations at which to plot the PDFs
+plot(Dplot_MSR,calcMSRDensityConstHaz(Dplot,.25,component="event"),type="l",xlim=c(-0.5,0.5),ylim=c(0,2),xlab="Residual Value",ylab="MSR PDF",lwd=th,col='gray',lty=2)
+lines(Dplot_MSR,calcMSRDensityConstHaz(Dplot,.25),lwd=th,col='gray')
+lines(Dplot_MSR,calcMSRDensityConstHaz(Dplot,0),lwd=th,col='black')
+legend('topright',c('No Censoring','25% Censoring'),lwd=th,col=c('black','gray'))
+```
+
+Make a similar plot for the NMR PDF (not on the same interval as the preceding plot since the NMR ranges from -1 to Infinity),
+
+
+```{r,fig.align='center',fig.width=6,fig.height=6}
+Dplot_NMR <- seq(-1,2,len=1001) # The locations at which to plot the PDFs
+plot(Dplot_NMR,calcNMRDensityConstHaz(Dplot_NMR,.25,component="event"),type="l",xlim=c(-1,2),ylim=c(0,1),xlab="Residual Value",ylab="NMR PDF",lwd=th,col='gray',lty=2)
+lines(Dplot_NMR,calcNMRDensityConstHaz(Dplot_NMR,.25),lwd=th,col='gray')
+lines(Dplot_NMR,calcNMRDensityConstHaz(Dplot_NMR,0),lwd=th,col='black')
+legend('topright',c('No Censoring','25% Censoring'),lwd=th,col=c('black','gray'))
+```
+

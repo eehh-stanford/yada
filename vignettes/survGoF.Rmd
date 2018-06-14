@@ -18,16 +18,16 @@ knitr::opts_chunk$set(
 ## Overview
 This vignette generates the figures for the article ``A general goodness-of-fit test for survival analysis'' by Michael Holton Price and James Holland Jones. Although the article is currently in review, a preliminary version is available on biorxiv at https://www.biorxiv.org/content/early/2017/01/31/104406. This vignette will be updated with a link to the final article when it is in press. The vignette relies on open source code in the R package yada, https://github.com/eehh-stanford/yada, which can be installed using devtools.
 
-## Plotting probability density functions
-Section 2 defines the Martingale Survival Residual (MSR) and Negative Martingale Residual (NMR) and Appendix A derives their probability density functions (PDFs) assuming constant event occurrence and censoring (Equations 43 and 44). These can be caculated with the yada functions calcMSRDensityConstHaz and calcNMRDensityConstHaz. The overall PDF can be calculated, as can the components due to event occurrence and censoring. Plot the MSR PDF for censoring ratios of 0% and 25%,
+## Probability density functions of the MSR and NMR
+Section 2 defines the Martingale Survival Residual (MSR) and Negative Martingale Residual (NMR) and Appendix A derives their probability density functions (PDFs) assuming constant event occurrence and censoring (Equations 43 and 44). These can be caculated with the yada functions `calcMSRDensityConstHaz` and `calcNMRDensityConstHaz`. The overall PDF can be calculated, as can the components due to event occurrence and censoring. Plot the MSR PDF for censoring ratios of 0% and 25%,
 
 ```{r,fig.align='center',fig.width=6,fig.height=6}
 library(yada)
 Dplot_MSR <- seq(-0.5,0.5,len=1001) # The locations at which to plot the PDFs
-plot(Dplot_MSR,calcMSRDensityConstHaz(Dplot,.25,component="event"),type="l",xlim=c(-0.5,0.5),ylim=c(0,2),xlab="Residual Value",ylab="MSR PDF",lwd=th,col='gray',lty=2)
-lines(Dplot_MSR,calcMSRDensityConstHaz(Dplot,.25),lwd=th,col='gray')
-lines(Dplot_MSR,calcMSRDensityConstHaz(Dplot,0),lwd=th,col='black')
-legend('topright',c('No Censoring','25% Censoring'),lwd=th,col=c('black','gray'))
+plot(Dplot_MSR,calcMSRDensityConstHaz(Dplot_MSR,.25,component="event"),type="l",xlim=c(-0.5,0.5),ylim=c(0,2),xlab="Residual Value",ylab="MSR PDF",lwd=3,col='gray',lty=2)
+lines(Dplot_MSR,calcMSRDensityConstHaz(Dplot_MSR,.25),lwd=3,col='gray')
+lines(Dplot_MSR,calcMSRDensityConstHaz(Dplot_MSR,0),lwd=3,col='black')
+legend('topright',c('No Censoring','25% Censoring'),lwd=3,col=c('black','gray'))
 ```
 
 Make a similar plot for the NMR PDF (not on the same interval as the preceding plot since the NMR ranges from -1 to Infinity),
@@ -35,9 +35,105 @@ Make a similar plot for the NMR PDF (not on the same interval as the preceding p
 
 ```{r,fig.align='center',fig.width=6,fig.height=6}
 Dplot_NMR <- seq(-1,2,len=1001) # The locations at which to plot the PDFs
-plot(Dplot_NMR,calcNMRDensityConstHaz(Dplot_NMR,.25,component="event"),type="l",xlim=c(-1,2),ylim=c(0,1),xlab="Residual Value",ylab="NMR PDF",lwd=th,col='gray',lty=2)
-lines(Dplot_NMR,calcNMRDensityConstHaz(Dplot_NMR,.25),lwd=th,col='gray')
-lines(Dplot_NMR,calcNMRDensityConstHaz(Dplot_NMR,0),lwd=th,col='black')
-legend('topright',c('No Censoring','25% Censoring'),lwd=th,col=c('black','gray'))
+plot(Dplot_NMR,calcNMRDensityConstHaz(Dplot_NMR,.25,component="event"),type="l",xlim=c(-1,2),ylim=c(0,1),xlab="Residual Value",ylab="NMR PDF",lwd=3,col='gray',lty=2)
+lines(Dplot_NMR,calcNMRDensityConstHaz(Dplot_NMR,.25),lwd=3,col='gray')
+lines(Dplot_NMR,calcNMRDensityConstHaz(Dplot_NMR,0),lwd=3,col='black')
+legend('topright',c('No Censoring','25% Censoring'),lwd=3,col=c('black','gray'))
 ```
 
+## Illustration of the Kolmogorov-Smirnov statistic
+Our goodness-of-fit test for survival models relies on the Kolmogorov-Smirnov statistic, which in turn relies on the maximum distance between the empirical cumulative density function (empirical CDF or ECDF) and the CDF of the reference distribution. We illustrate this graphically. First, create some simulated data (with only four data points to aid visualization). The yada function `simLinHaz` creates simulated data with a linear event hazard and constant censoring hazard. To make this precise -- and using the notation in the article linked to above -- the event and censoring hazards are, respectively, 
+
+$$\lambda(t) = a_1 + b_1 \, t$$
+
+and
+
+$$\lambda^C(t) = b_2 \mbox{,}$$
+
+where $t$ is time and $a_1$, $b_1$, and $b_2$ are variables that parameterize the hazards. `simLinHaz` creates simulated data per these hazards, returning a data frame with two columns, time and status, where time is the event (or censoring) time and status is 1 for event occurrence and 0 for censoring:
+
+```{r}
+# Set the random number seed
+set.seed(60498) # Chosen to effectively illustrate the Kolmogorov-Smirnov statistic
+
+n <- 4
+rho <- .2
+a1 <- 1/20
+a0 <- a1*rho/(1-rho) # Censoring rate [rho is only apporoximately the censoring ratio given a linear event hazard]
+
+b1 <- a1/10
+survObjLin <- simLinHaz(n,a1,b1,a0)
+print(survObjLin)
+```
+
+Given the chosen seed, there are no censored events. We now fit the simulated data with an incorrect model by calling the yada function `fitConstHaz`, which does a maximum likelihood fit assuming a constant event and censoring hazard. From this fit, calculate the predicted cumulative hazard at the occurrence time accounting for both events and censoring:
+
+```{r}
+fitConst <- fitConstHaz(survObjLin) # The wrong model
+cumHazEvent <- fitConst$a1 * survObjLin[,'time']
+cumHazCens  <- fitConst$a0 * survObjLin[,'time']
+cumHazTot <- cumHazEvent + cumHazCens
+print(cumHazTot)
+```
+
+By modeling both event and censoring hazards, the censoring status is immaterial for the calculation of the data residuals. The data is fit with an incorrect model to provide a large difference between the ECDF and reference curve (see below). Call the yada function `calcMSR` to calculate the MSRs and run a Kolomgorov-Smirnov test on the residuals assuming a uniform reference PDF on the interval -.5 to .5 (linear CDF).
+
+```{r}
+# Martingale Survival Residual treating censoring as a competing risk
+msrTot <- calcMSR(cumHazTot)
+ksLin <- ks.test(msrTot, punif,-.5,.5) # The Kolmogorov-Smirnov test
+```
+
+Calculate the empirical CDF by calling the yada function `caclStoppingCDF`, which can be considered a generalization of the base R function ecdf (for details, see the documentation for `calcStoppingCDF`). Also determine the index where the difference between the empirical CDF and reference distribution is maximum.
+
+```{r}
+cdf <- calcStoppingCDF(msrTot,rep(F,length(msrTot)),where="both")
+indMax <- which.max(c(abs(cdf$y+.5-cdf$before),abs(cdf$y+.5-cdf$after)))
+isBefore <- indMax <= length(cdf$y)
+ind0 <- isBefore*(indMax) + (1-isBefore)*(indMax-4)
+```
+
+Plot the emirical CDF and show the maximum distance between the empirical CDF and reference distribution.
+
+```{r,fig.align='center',fig.width=6,fig.height=6}
+library(shape)
+plot(x=NULL,y=NULL,frame=T,xlim=c(-.5,.5),ylim=c(0,1),lwd=3,xlab="Residual Value",ylab="Empirical CDF")
+lines(c(-.5,.5),c(0,1),col="gray",lwd=3)
+lines(c(1,1)*cdf$y[ind0],c(0,cdf$before[ind0]),col="gray",lwd=3,lty="dashed")
+if(isBefore) {
+	stop("This should not happen for the seed used")
+} else {
+	lines(c((cdf$y[ind0]-.5)/2,cdf$y[ind0]),c(1,1)*cdf$y[ind0]+.5,col="gray",lwd=3,lty="dashed")
+	lines(c((cdf$y[ind0]-.5)/2,cdf$y[ind0]),c(1,1)*cdf$after[ind0],col="gray",lwd=3,lty="dashed")
+	Arrows((cdf$y[ind0]-.5)/2,cdf$y[ind0]+.5,(cdf$y[ind0]-.5)/2,cdf$after[ind0],code=3,col="gray",arr.type="triangle",arr.adj=-.5,arr.length=.25,arr.width=.25,lwd=2)
+	
+	text(x=(cdf$y[ind0]-.5)/2-.1,y=(cdf$y[ind0]+.5+cdf$after[ind0])/2,labels=expression(K[n]))
+}
+lines(c(-.5,cdf$y,.5),c(0,cdf$before,1),type="S",lwd=3)
+```
+
+The maximum value occurs at the third ``step'', for which the Residual Value (x-axis) is
+
+```{r}
+print(cdf$y[ind0])
+```
+
+The CDF of the reference uniform distribution is linear on the interval $-.5$ to $.5$ (grey line). The maximum distance between the empirical CDF and reference distribution is
+
+```{r}
+print(cdf$after[ind0] - (cdf$y[ind0]+.5))
+```
+
+Check this value by calling the core R function ks.test directly,
+```{r}
+ksTest <- ks.test(cdf$y,punif,-.5,.5)
+print(ksTest$statistic)
+```
+
+The p-value for this test depends on the value of the statistic and the number of samples in empirical CDF (4). The p-value is $0.982$,
+
+```{r}
+print(ksTest)
+```
+
+Since the p-value is greater than $0.05$, one cannot reject the possibility that this sample was drawn from the reference distribution (though in fact it was not). This is expected due to the small number of samples, $4$.

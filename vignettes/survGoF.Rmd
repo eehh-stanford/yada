@@ -32,7 +32,6 @@ legend('topright',c('No Censoring','25% Censoring'),lwd=3,col=c('black','gray'))
 
 Make a similar plot for the NMR PDF (not on the same interval as the preceding plot since the NMR ranges from -1 to Infinity),
 
-
 ```{r,fig.align='center',fig.width=6,fig.height=6}
 Dplot_NMR <- seq(-1,2,len=1001) # The locations at which to plot the PDFs
 plot(Dplot_NMR,calcNMRDensityConstHaz(Dplot_NMR,.25,component="event"),type="l",xlim=c(-1,2),ylim=c(0,1),xlab="Residual Value",ylab="NMR PDF",lwd=3,col='gray',lty=2)
@@ -44,7 +43,7 @@ legend('topright',c('No Censoring','25% Censoring'),lwd=3,col=c('black','gray'))
 ## Illustration of the Kolmogorov-Smirnov statistic
 Our goodness-of-fit test for survival models relies on the Kolmogorov-Smirnov statistic, which in turn relies on the maximum distance between the empirical cumulative density function (empirical CDF or ECDF) and the CDF of the reference distribution. We illustrate this graphically. First, create some simulated data (with only four data points to aid visualization). The yada function `simLinHaz` creates simulated data with a linear event hazard and constant censoring hazard. To make this precise -- and using the notation in the article linked to above -- the event and censoring hazards are, respectively, 
 
-$$\lambda(t) = a_1 + b_1 \, t$$
+$$\lambda(t) = b_1 + a_1 \, t$$
 
 and
 
@@ -58,11 +57,11 @@ set.seed(60498) # Chosen to effectively illustrate the Kolmogorov-Smirnov statis
 
 n <- 4
 rho <- .2
-a1 <- 1/20
-a0 <- a1*rho/(1-rho) # Censoring rate [rho is only apporoximately the censoring ratio given a linear event hazard]
+b1 <- 1/20
+b2 <- b1*rho/(1-rho) # Censoring rate [rho is only apporoximately the censoring ratio given a linear event hazard]
 
-b1 <- a1/10
-survObjLin <- simLinHaz(n,a1,b1,a0)
+a1 <- b1/10
+survObjLin <- simLinHaz(n,b1,a1,b2)
 print(survObjLin)
 ```
 
@@ -70,8 +69,8 @@ Given the chosen seed, there are no censored events. We now fit the simulated da
 
 ```{r}
 fitConst <- fitConstHaz(survObjLin) # The wrong model
-cumHazEvent <- fitConst$a1 * survObjLin[,'time']
-cumHazCens  <- fitConst$a0 * survObjLin[,'time']
+cumHazEvent <- fitConst$b1 * survObjLin[,'time']
+cumHazCens  <- fitConst$b2 * survObjLin[,'time']
 cumHazTot <- cumHazEvent + cumHazCens
 print(cumHazTot)
 ```
@@ -137,3 +136,92 @@ print(ksTest)
 ```
 
 Since the p-value is greater than $0.05$, one cannot reject the possibility that this sample was drawn from the reference distribution (though in fact it was not). This is expected due to the small number of samples, $4$.
+
+## Goodness-of-fit for a correct model
+In this example, we create simulated data for which both the event and censoring hazards are constant, then fit the simulated date assuming the correct model -- that is, do a maximum likelhood fit assuming constant event and censoring hazards. First, create $1000$ simulated observations with an event hazard of $1/20$ and a censoring ratio of $0.2$:
+
+```{r}
+# Constant transition intensities for event and censoring, with a correct
+# candidate model that also has constant transition intensities.
+set.seed(387341) # From random.org between 1 and 1,000,000
+
+n <- 1000
+rho <- .2
+b1 <- 1/20 # Event rate
+b2 <- b1*rho/(1-rho) # Censoring rate
+
+# Create the simulated data
+survObjConst <- simConstHaz(n,b1,b2)
+```
+Next, do a maximum likelihood hood fit on the simualted data by calling the yada function `fitconstHaz` and calculate the event the cumulative hazards for events, censoring, and both events and censoring:
+
+```{r}
+fitConst <- fitConstHaz(survObjConst)
+cumHazEvent <- fitConst$b1 * survObjConst[,'time']
+cumHazCens  <- fitConst$b2 * survObjConst[,'time']
+cumHazTot <- cumHazEvent + cumHazCens
+```
+
+Calculate the Martingale Survival Residual for the total hazard (i.e., accounting also for censoring) and create a histogram of the residuals:
+
+```{r,fig.align='center',fig.width=6,fig.height=6}
+msrCr <- calcMSR(cumHazTot)
+hist(msrCr,40,xlim=c(-1/2,1/2),ylim=c(0,2),freq=FALSE,xlab="Residual Value",ylab="Probability Density",main=NULL)
+y <- seq(-1/2,1/2,len=1001)
+lines(y,calcMSRDensityConstHaz(y,0),lwd=3)
+```
+
+For a well-specified model, the Martingale Survival Residuals are uniformly distributed on the interval $-0.5$ to $0.5$. This seems plausible given the preceding figure, which shows the histogram of the residuals and reference uniform distribution (solid horizontal line). The Kolmogrov-Smirnov test can be used to statically test this,
+
+```{r}
+ksConst <- ks.test(msrCr,punif,-.5,.5) # The Kolmogorov-Smirnov test
+print(ksConst$statistic)
+print(ksConst$p.value)
+```
+
+Since the p-value for the test is greater than $0.05$, one cannot reject that the calculated residuals are drawn from the uniform distribution. Hence, the fit passes the goodness-of-fit test. In the next seection, we describe a fit that fails this goodness-of-fit of test.
+
+## Goodness-of-fit for an incorrect model
+In this example, we create simulated data for which the event hazard is linear and the censoring hazard is constant, then fit the simulated date assuming in incorrect model in which both hazards are assumed to be constant. First, create $1000$ simulated observations with an event hazard of $1/20$ and a censoring ratio of $0.2$:
+
+```{r}
+# Time dependent (linear) event intensity and constant censoring, with an incorrect
+# candidate model that has constant transition intensities.
+set.seed(51600) # From random.org between 1 and 1,000,000
+
+n <- 1000
+rho <- .2
+b1 <- 1/20 # Event rate
+b2 <- b1*rho/(1-rho) # Censoring rate [rho is only apporoximately the censoring ratio given a linear event hazard]
+a1 <- b1/10
+
+survObjLin <- simLinHaz(n,b1,a1,b2)
+```
+
+Next, do a maximum likelihood hood fit on the simualted data by calling the yada function `fitconstHaz` and calculate the event the cumulative hazards for events, censoring, and both events and censoring:
+
+```{r}
+fitConst <- fitConstHaz(survObjLin) # The wrong model
+cumHazEvent <- fitConst$b1 * survObjLin[,'time']
+cumHazCens  <- fitConst$b2 * survObjLin[,'time']
+cumHazTot <- cumHazEvent + cumHazCens
+```
+
+Calculate the Martingale Survival Residual for the total hazard (i.e., accounting also for censoring) and create a histogram of the residuals:
+
+```{r,fig.align='center',fig.width=6,fig.height=6}
+msrCr <- calcMSR(cumHazTot)
+hist(msrCr,40,xlim=c(-1/2,1/2),ylim=c(0,2),freq=FALSE,xlab="Residual Value",ylab="Probability Density",main=NULL)
+y <- seq(-1/2,1/2,len=1001)
+lines(y,calcMSRDensityConstHaz(y,0),lwd=th)
+```
+
+For a well-specified model, the Martingale Survival Residuals are uniformly distributed on the interval $-0.5$ to $0.5$. This does not seem plausible given the preceding figure, which shows the histogram of the residuals and reference uniform distribution (solid horizontal line). The Kolmogrov-Smirnov test can be used to statically test this,
+
+```{r}
+ksLin <- ks.test(msrCr,punif,-.5,.5) # The Kolmogorov-Smirnov test
+print(ksLin$statistic)
+print(ksLin$p.value)
+```
+
+Since the p-value for the test is less than $0.05$, one rejects that the calculated residuals are drawn from the uniform distribution. Hence, the fit fails the goodness-of-fit test.

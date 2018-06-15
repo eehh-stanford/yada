@@ -13,9 +13,9 @@ fitConstHaz(survObj)
 A list with three fields
 
 \describe{
-  \item{\code{a}}{Overall, combined event and censoring rate}
-  \item{\code{a1}}{Event rate}
-  \item{\code{a0}}{Censoring rate}
+  \item{\code{b}}{Overall, combined event and censoring rate}
+  \item{\code{b1}}{Event rate}
+  \item{\code{b2}}{Censoring rate}
 }
 }
 \description{

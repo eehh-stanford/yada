@@ -1,12 +1,12 @@
 #' @title Simulate event history data with constant event and censoring hazards
 #'  
-#' @description \code{simConstHaz} generates simulated event history data assuming the event hazard, a1, and censoring hazard, a0, are constants
+#' @description \code{simConstHaz} generates simulated event history data assuming the event hazard, b1, and censoring hazard, b2, are constants
 #' 
 # @details
 #'
 #' @param n Number of observations to simulate
-#' @param a1 Event hazard
-#' @param a0 Censoring hazard
+#' @param b1 Event hazard
+#' @param b2 Censoring hazard
 #' 
 # @keywords
 #' @export
@@ -24,9 +24,9 @@
 # @references 
 
 
-simConstHaz <- function(n,a1,a0) {
-    eventTime     <- rexp(n,rate=a1)
-    censoringTime <- rexp(n,rate=a0)
+simConstHaz <- function(n,b1,b2) {
+    eventTime     <- rexp(n,rate=b1)
+    censoringTime <- rexp(n,rate=b2)
     indCensored <- eventTime > censoringTime
     transTime <- eventTime
     transTime[indCensored] <- censoringTime[indCensored]

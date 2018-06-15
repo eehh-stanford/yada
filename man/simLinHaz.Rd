@@ -4,16 +4,16 @@
 \alias{simLinHaz}
 \title{Simulate event history data with linear event and constant censoring hazards}
 \usage{
-simLinHaz(n, a1, b1, a0)
+simLinHaz(n, b1, a1, b2)
 }
 \arguments{
 \item{n}{Number of observations to simulate}
 
-\item{a1}{Intercept for the linear event hazard}
+\item{b1}{Intercept for the linear event hazard}
 
-\item{b1}{Slope for the linear event hazard}
+\item{a1}{Slope for the linear event hazard}
 
-\item{a0}{Censoring hazard}
+\item{b2}{Censoring hazard}
 }
 \value{
 A Surv object (survival package) with:
@@ -23,7 +23,7 @@ A Surv object (survival package) with:
 }
 }
 \description{
-\code{simLinHaz} generates simulated event history data assuming the event hazard is linear, hazEvent = a1*t + b1, and the censoring hazard is constant, a0.
+\code{simLinHaz} generates simulated event history data assuming the event hazard is linear, hazEvent = b1 + a1*t, and the censoring hazard is constant, hazCens = b2.
 }
 \seealso{
 simConstHaz, fitConstHaz, fitLinHaz

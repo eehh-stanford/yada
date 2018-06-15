@@ -14,9 +14,9 @@
 #' @return A list with three fields
 #'
 #' \describe{
-#'   \item{\code{a}}{Overall, combined event and censoring rate}
-#'   \item{\code{a1}}{Event rate}
-#'   \item{\code{a0}}{Censoring rate}
+#'   \item{\code{b}}{Overall, combined event and censoring rate}
+#'   \item{\code{b1}}{Event rate}
+#'   \item{\code{b2}}{Censoring rate}
 #' }
 #'
 #' @author Michael Holton Price <MichaelHoltonPrice@gmail.com>
@@ -24,8 +24,8 @@
 # @references 
 
 fitConstHaz <- function(survObj) {
-    a <- 1/mean(survObj[,'time'])
-    a1 <- a * sum(survObj[,'status']) / length(survObj[,'status'])
-    a0 <- a * sum(!survObj[,'status']) / length(survObj[,'status'])
-    return(list(a=a,a1=a1,a0=a0))
+    b <- 1/mean(survObj[,'time'])
+    b1 <- b * sum(survObj[,'status']) / length(survObj[,'status'])
+    b2 <- b * sum(!survObj[,'status']) / length(survObj[,'status'])
+    return(list(b=b,b1=b1,b2=b2))
 }

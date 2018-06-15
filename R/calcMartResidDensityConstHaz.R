@@ -21,6 +21,6 @@
 #' @references 
 #' \url{https://www.biorxiv.org/content/early/2017/01/31/104406}
 
-calcMartResidDensity <- function(y,rho,component="both") {
-    return(calcNMRDensity(-y,rho,component))
+calcMartResidDensityConstHaz <- function(y,rho,component="both") {
+    return(calcNMRDensityConstHaz(-y,rho,component))
 }

@@ -4,14 +4,14 @@
 \alias{simConstHaz}
 \title{Simulate event history data with constant event and censoring hazards}
 \usage{
-simConstHaz(n, a1, a0)
+simConstHaz(n, b1, b2)
 }
 \arguments{
 \item{n}{Number of observations to simulate}
 
-\item{a1}{Event hazard}
+\item{b1}{Event hazard}
 
-\item{a0}{Censoring hazard}
+\item{b2}{Censoring hazard}
 }
 \value{
 A Surv object (survival package) with:
@@ -21,7 +21,7 @@ A Surv object (survival package) with:
 }
 }
 \description{
-\code{simConstHaz} generates simulated event history data assuming the event hazard, a1, and censoring hazard, a0, are constants
+\code{simConstHaz} generates simulated event history data assuming the event hazard, b1, and censoring hazard, b2, are constants
 }
 \seealso{
 simLinHaz, fitConstHaz, fitLinHaz

@@ -153,7 +153,7 @@ b2 <- b1*rho/(1-rho) # Censoring rate
 # Create the simulated data
 survObjConst <- simConstHaz(n,b1,b2)
 ```
-Next, do a maximum likelihood hood fit on the simualted data by calling the yada function `fitconstHaz` and calculate the event the cumulative hazards for events, censoring, and both events and censoring:
+Next, do a maximum likelihood hood fit on the simulated data by calling the yada function `fitconstHaz` and calculate the event the cumulative hazards for events, censoring, and both events and censoring:
 
 ```{r}
 fitConst <- fitConstHaz(survObjConst)
@@ -213,7 +213,7 @@ Calculate the Martingale Survival Residual for the total hazard (i.e., accountin
 msrCr <- calcMSR(cumHazTot)
 hist(msrCr,40,xlim=c(-1/2,1/2),ylim=c(0,2),freq=FALSE,xlab="Residual Value",ylab="Probability Density",main=NULL)
 y <- seq(-1/2,1/2,len=1001)
-lines(y,calcMSRDensityConstHaz(y,0),lwd=th)
+lines(y,calcMSRDensityConstHaz(y,0),lwd=3)
 ```
 
 For a well-specified model, the Martingale Survival Residuals are uniformly distributed on the interval $-0.5$ to $0.5$. This does not seem plausible given the preceding figure, which shows the histogram of the residuals and reference uniform distribution (solid horizontal line). The Kolmogrov-Smirnov test can be used to statically test this,
@@ -225,3 +225,55 @@ print(ksLin$p.value)
 ```
 
 Since the p-value for the test is less than $0.05$, one rejects that the calculated residuals are drawn from the uniform distribution. Hence, the fit fails the goodness-of-fit test.
+
+## Power calculation
+In this example, we extend the preceding example that assesses an incorrect model to determine the number of samples needed to reject an incorrect model. That is, how many observations are needed to determine that the (incorrect) constant intensity model is wrong? The effect size is $a_1$, which differs from zero (the null). The significance criterion is $\alpha=.05$ (Type 1 errors, mistakenly rejecting the null when it is true). The power is $1 - \beta(n)$, where $\beta$ is the rate of Type 2 errors (mistakenly accepting the null when it is false). $\beta$ is calculated repeatedly via simulation as a function of the number of observations, $n$. Often, n is chosen to achieve a power of $.8$ ($\beta=.2$).
+
+```{r}
+alpha <- .05
+nVect <- seq(10,500,by=10) # The vector of number of observations
+powerVect <- rep(NA,length(nVect)) # The vector in which to store the power (1-beta)
+
+Nmc <- 50000
+
+for(ii in 1:length(nVect)) {
+    numSig <- 0
+    n <- nVect[ii]
+    for(m in 1:Nmc) {
+        survObjLin <- simLinHaz(n,b1,a1,b2)
+        fitConst <- fitConstHaz(survObjLin) # The wrong model
+        cumHazEvent <- fitConst$b1 * survObjLin[,'time']
+        cumHazCens  <- fitConst$b2 * survObjLin[,'time']
+        cumHazTot <- cumHazEvent + cumHazCens
+        # Martingale Survival Residual treating censoring as a competing risk
+        msrCr <- calcMSR(cumHazTot)
+        ks2Pc <- ks.test(msrCr,punif,-.5,.5) # The Kolmogorov-Smirnov test
+        if(ks2Pc$p.value <= alpha) {
+            numSig <- numSig + 1
+        }
+        powerVect[ii] <- numSig / Nmc
+    }
+}
+
+# Make the power zero at the origin for plotting
+nVect <- c(0,nVect)
+powerVect <- c(0,powerVect)
+
+# Interpolate the curve's value for beta=.2 and beta = .1
+y1 <- .8
+y2 <- .9
+
+x1 <- approx(powerVect,nVect,y1)$y
+x2 <- approx(powerVect,nVect,y2)$y
+
+```
+
+Plot the results of the power calculation:
+
+```{r,fig.align='center',fig.width=6,fig.height=6}
+plot(c(0,x1),c(y1,y1),xlab="Sample Size",ylab="Power",xlim=c(0,500),ylim=c(0,1),type="l",col="gray",lwd=3,lty="dashed")
+lines(c(x1,x1),c(0,y1),col="gray",lwd=3,lty="dashed")
+lines(c(0,x2),c(y2,y2),col="gray",lwd=3,lty="dashed")
+lines(c(x2,x2),c(0,y2),col="gray",lwd=3,lty="dashed")
+lines(nVect,powerVect,lwd=3)
+```

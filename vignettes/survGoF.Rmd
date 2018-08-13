@@ -236,6 +236,7 @@ powerVect <- rep(NA,length(nVect)) # The vector in which to store the power (1-b
 
 Nmc <- 50000
 
+options(warn=-1) # The numerical simulation yields very occasional ties. Suppress warnings this creates in ks.test
 for(ii in 1:length(nVect)) {
     numSig <- 0
     n <- nVect[ii]
@@ -254,6 +255,7 @@ for(ii in 1:length(nVect)) {
         powerVect[ii] <- numSig / Nmc
     }
 }
+options(warn=0) # Turn warnings back on
 
 # Make the power zero at the origin for plotting
 nVect <- c(0,nVect)

@@ -279,3 +279,161 @@ lines(c(0,x2),c(y2,y2),col="gray",lwd=3,lty="dashed")
 lines(c(x2,x2),c(0,y2),col="gray",lwd=3,lty="dashed")
 lines(nVect,powerVect,lwd=3)
 ```
+
+## Another mis-specified model: Proportional hazards fit to an additive data
+A very common assumption in survival analysis is the proportional hazards assumption: the effect of some covariate on the baseline or reference hazard is multiplicative. MSRs can be used to assess this assumption, as we demonstrate in this simulation. To begin, load necessary libraries, set the random number seed, then generate simulated data
+
+```{r}
+library(survival)
+
+## Additive covariates incorrectly fit as proportional covariates
+set.seed(2105984)
+
+# Define the starting age (15 years)
+x0 <- 15
+
+# From Gage and Dyke 1986, Table 2, Level 15
+afem <- c(.175,1.40,.368*.01,.075*.001,.917*.1) # Female parameterization
+
+# Males are assumed to have a higher hazard by an additive (constant) amount
+maleBoost <- afem[3]*2
+amal <- afem + c(0,0,maleBoost,0,0)
+
+N <- 2000 # Number of simulated observations
+# Sample randomly for male/female
+female <- sample(c(TRUE,FALSE),N,replace=T)
+
+# Sample from the relevant Siler hazard
+x <- rep(NA,N) # vector of simulated ages
+x[ female] <- rsiler(sum( female),afem,x0)
+x[!female] <- rsiler(sum(!female),amal,x0)
+```
+
+In the preceding block of code, the mortality hazard for females is simulated with a Siler hazard, with the parameters drawn from Table 2 / Level 15 of Gage and Dyke (1986). Males are assumed to have an additive ``boost'' in hazard relative females. In particular, the constant term (third parameter) is simulated as being twice as high for males as for females. We assume contingent survival to $x_0 = 15$ for the simulation. The probabilities of being female and male are assumed equal, $0.5$, and simulated ages are sampled using the yada function `rsiler`.
+
+Next, define objective functions to do a maximum likelihood fit for two models: the correct additive model and an incorrect multiplicative model in which the male hazard is assumed to be equal to the female hazard times a constant.
+
+```{r}
+# Objective function for additive fit
+fadd <- function(param,x,female,x0,a0) {
+    # Calculate the objective function (negative log-likelihood)
+    # given the input parameters (param), age-at-death vector (x),
+    # and boolean vector indicating sex (female)
+    a <- a0 * exp(param)
+    afem <- a[1:5]
+    amal <- afem + c(0,0,a[6],0,0)
+
+    xFemale <- x[female]
+    xMale <- x[!female]
+
+    nll <- nllsiler(afem,xFemale,x0) + nllsiler(amal,xMale,x0)
+    return(nll)
+}
+
+# Objective function for multiplicative fit
+fmult <- function(param,x,female,x0,a0) {
+    # Calculate the objective function (negative log-likelihood)
+    # given the input parameters (param), age-at-death vector (x),
+    # and boolean vector indicating sex (female)
+    a <- a0 * exp(param)
+    afem <- a[1:5]
+    amal <- afem * c(a[6],1,a[6],1,a[6])
+
+    xFemale <- x[female]
+    xMale <- x[!female]
+
+    nll <- nllsiler(afem,xFemale,x0) + nllsiler(amal,xMale,x0)
+    return(nll)
+}
+```
+
+Use these objective functions to fit the additive (correct) and multiplicative (incorrect) models and extract the fit parameters.
+
+```{r}
+# Fit the additive and multiplicative models and extract the fit parameters
+a0_add <- c(afem,maleBoost)
+paramFitAdd <- optim(rep(0,6),fadd,x=x,female=female,x0=x0,a0=a0_add)
+afem_add <- a0_add[1:5] * exp(paramFitAdd$par[1:5])
+amal_add <- afem_add + c(0,0,a0_add[6]*exp(paramFitAdd$par[6]),0,0)
+
+a0_mult <- c(afem,1)
+paramFitMult <- optim(rep(0,6),fmult,x=x,female=female,x0=x0,a0=a0_mult)
+afem_mult <- a0_mult[1:5] * exp(paramFitMult$par[1:5])
+amal_mult <- afem_mult * c(a0_mult[6]*exp(paramFitMult$par[6]),1,a0_mult[6]*exp(paramFitMult$par[6]),1,a0_mult[6]*exp(paramFitMult$par[6]))
+```
+
+Apply these fits to calculate survivals, MSRs, and do the Kolmogorov-Smirnov test.
+
+```{r}
+# Calculate the survivals, Martingale Survival Residuals (MSRs), and do the Kolmogorov-Smirnov tests
+S_add <- rep(NA,N)
+S_add[ female] <- ssiler(x[ female],afem_add,x0)
+S_add[!female] <- ssiler(x[!female],amal_add,x0)
+
+S_mult <- rep(NA,N)
+S_mult[ female] <- ssiler(x[ female],afem_mult,x0)
+S_mult[!female] <- ssiler(x[!female],amal_mult,x0)
+
+Dhat_add <- 0.5*(1-2*S_add)
+ks_add <- ks.test(Dhat_add,punif,-.5,.5) # The Kolmogorov-Smirnov test
+ks_add_fem <- ks.test(Dhat_add[ female],punif,-.5,.5) # The Kolmogorov-Smirnov test
+ks_add_mal <- ks.test(Dhat_add[!female],punif,-.5,.5) # The Kolmogorov-Smirnov test
+
+Dhat_mult <- 0.5*(1-2*S_mult)
+ks_mult <- ks.test(Dhat_mult,punif,-.5,.5) # The Kolmogorov-Smirnov test
+ks_mult_fem <- ks.test(Dhat_mult[ female],punif,-.5,.5) # The Kolmogorov-Smirnov test
+ks_mult_mal <- ks.test(Dhat_mult[!female],punif,-.5,.5) # The Kolmogorov-Smirnov test
+```
+
+The Cox model also makes a proportional hazards assumption, but it is a semi-parametric model due to its use of a non-parametric baseline hazard. Repeat the preceding steps for a Cox model so that it can be compared against the additive and (parametric) multiplicative models.
+
+```{r}
+# Fit a Cox model, calculate the survivals / MSRs, and to the Kolmogorov-Smirnov tests 
+sampDf <- data.frame(x=x,female=female)
+coxFit <- coxph(Surv(x)~female,data=sampDf)
+cumHazCox <- as.numeric(predict(coxFit,sampDf,type="expected"))
+survCox <- exp(-cumHazCox)
+Dhat_cox <- 0.5*(1-2*survCox)
+ks_cox <- ks.test(Dhat_cox,punif,-.5,.5)
+ks_cox_fem <- ks.test(Dhat_cox[ female],punif,-.5,.5) # The Kolmogorov-Smirnov test
+ks_cox_mal <- ks.test(Dhat_cox[!female],punif,-.5,.5) # The Kolmogorov-Smirnov test
+```
+
+To aid interpretation, print out the p-values from the KS tests for the additive, multiplicative, and Cox models.
+
+```{r}
+# Create and print out a summary data frame
+testName <- c("Add All","Mlt All","Cox All","Add Fem","Add Mal","Mlt Fem","Mlt Mal","Cox Fem","Cox Mal")
+pvalVect <- c(ks_add$p.value,ks_mult$p.value,ks_cox$p.value,ks_add_fem$p.value,ks_add_mal$p.value,ks_mult_fem$p.value,ks_mult_mal$p.value,ks_cox_fem$p.value,ks_cox_mal$p.value)
+dfOut <- data.frame(test=testName,pval=pvalVect)
+print(dfOut)
+```
+
+When the KS-test is applied to the pooled residuals for female and male, none of the models can be rejected since the pertinent p-values are greater than $0.05$. However, the mis-specified models (multiplicative and Cox) are not good fits, which is apparent when the KS-test is applied separately for females and males. Both models are biased, which is reflected in non-uniformily distributed residuals. In contrast, the correct additive model is not rejected after stratifying by female/male. To gain additional insight, plot the histograms of stratified residuals.
+
+
+```{r,fig.align='center',fig.width=6,fig.height=6}
+# Plot the MSR histograms stratified by female/male
+femCol <- rgb(1,0,0,.5)
+malCol <- rgb(0,1,0,.5)
+hist(Dhat_add[ female],100,xlim=c(-1/2,1/2),ylim=c(0,2),freq=F,xlab="Residual Value",ylab="Probability Density",main=NULL,col=femCol)
+hist(Dhat_add[!female],100,add=T,freq=F,col=malCol)
+y <- seq(-1/2,1/2,len=1001)
+lines(y,calcMSRDensityConstHaz(y,0),lwd=3)
+box()
+```
+In the preceding histogram, residuals for females are plotted in red and those for males in green. Transparency is used to simultaneously visualize both sets of residuals together. For the additive model, there is no clear bias in the two distributions. However, for the multiplicative and Cox models (plotted next) there are clear biases in the residual disrtributions: each mis-specified fit yields an overall distribution of residuals that is close to uniform, but there are definite regions where a bias exists towards males or females in the histograms. Hence, we reject these two mis-specified fits.
+
+```{r,fig.align='center',fig.width=6,fig.height=6}
+hist(Dhat_mult[ female],100,xlim=c(-1/2,1/2),ylim=c(0,2),freq=F,xlab="Residual Value",ylab="Probability Density",main=NULL,col=femCol)
+hist(Dhat_mult[!female],100,add=T,freq=F,col=malCol)
+lines(y,calcMSRDensityConstHaz(y,0),lwd=3)
+box()
+```
+
+```{r,fig.align='center',fig.width=6,fig.height=6}
+hist(Dhat_cox[ female],100,xlim=c(-1/2,1/2),ylim=c(0,2),freq=F,xlab="Residual Value",ylab="Probability Density",main=NULL,col=femCol)
+hist(Dhat_cox[!female],100,add=T,freq=F,col=malCol)
+lines(y,calcMSRDensityConstHaz(y,0),lwd=3)
+box()
+```

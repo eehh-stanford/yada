@@ -424,6 +424,7 @@ hist(Dhat_add[ female],100,xlim=c(-1/2,1/2),ylim=c(0,2),freq=F,xlab="Residual Va
 hist(Dhat_add[!female],100,add=T,freq=F,col=malCol)
 y <- seq(-1/2,1/2,len=1001)
 lines(y,calcMSRDensityConstHaz(y,0),lwd=3)
+legend('topright',c("Female","Male"),fill=c("red","green"))
 box()
 ```
 In the preceding histogram, residuals for females are plotted in red and those for males in green. Transparency is used to simultaneously visualize both sets of residuals together. For the additive model, there is no clear bias in the two distributions. However, for the multiplicative and Cox models (plotted next) there are clear biases in the residual disrtributions: each mis-specified fit yields an overall distribution of residuals that is close to uniform, but there are definite regions where a bias exists towards males or females in the histograms. Hence, we reject these two mis-specified fits.
@@ -432,6 +433,7 @@ In the preceding histogram, residuals for females are plotted in red and those f
 hist(Dhat_mult[ female],100,xlim=c(-1/2,1/2),ylim=c(0,2),freq=F,xlab="Residual Value",ylab="Probability Density",main=NULL,col=femCol)
 hist(Dhat_mult[!female],100,add=T,freq=F,col=malCol)
 lines(y,calcMSRDensityConstHaz(y,0),lwd=3)
+legend('topright',c("Female","Male"),fill=c("red","green"))
 box()
 ```
 
@@ -439,5 +441,6 @@ box()
 hist(Dhat_cox[ female],100,xlim=c(-1/2,1/2),ylim=c(0,2),freq=F,xlab="Residual Value",ylab="Probability Density",main=NULL,col=femCol)
 hist(Dhat_cox[!female],100,add=T,freq=F,col=malCol)
 lines(y,calcMSRDensityConstHaz(y,0),lwd=3)
+legend('topright',c("Female","Male"),fill=c("red","green"))
 box()
 ```

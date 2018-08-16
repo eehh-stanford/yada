@@ -35,6 +35,6 @@ fitSilerMaxLik <- function(x,a0=c(.175,1.40,.368*.01,.075*.001,.917*.1),x0=0,cal
         H <- numDeriv::hessian(ll,afit)
         return(list(fit=fit,a=afit,hessian=H))
     } else {
-        return(list(fit=fit,a=fit))
+        return(list(fit=fit,a=afit))
     }
 }

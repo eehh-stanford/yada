@@ -518,7 +518,7 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 <a class="sourceLine" id="cb22-21" data-line-number="21">x &lt;-<span class="st"> </span><span class="kw">rep</span>(<span class="ot">NA</span>,N) <span class="co"># vector of simulated ages</span></a>
 <a class="sourceLine" id="cb22-22" data-line-number="22">x[ female] &lt;-<span class="st"> </span><span class="kw">rsiler</span>(<span class="kw">sum</span>( female),afem,x0)</a>
 <a class="sourceLine" id="cb22-23" data-line-number="23">x[<span class="op">!</span>female] &lt;-<span class="st"> </span><span class="kw">rsiler</span>(<span class="kw">sum</span>(<span class="op">!</span>female),amal,x0)</a></code></pre></div>
-<p>In the preceding block of code, the mortality hazard for females is simulated with a Siler hazard, with the parameters drawn from Table 2 / Level 15 of Gage and Dyke (1986). Males are assumed to have an additive boost in hazard relative females. In particular, the constant term (third parameter) is simulated as being twice as high for males as for females. We assume contingent survival to <span class="math inline">\(x_0 = 15\)</span> for the simulation. The probabilities of being female and male are assumed equal, <span class="math inline">\(0.5\)</span>, and simulated ages are sampled using the yada function <code>rsiler</code>.</p>
+<p>In the preceding block of code, the mortality hazard for females is simulated with a Siler hazard, with the parameters drawn from Table 2 / Level 15 of Gage and Dyke (1986). Males are assumed to have an additive boost in hazard relative to females. In particular, the constant term (third parameter) is simulated as being twice as high for males as for females. We assume contingent survival to <span class="math inline">\(x_0 = 15\)</span> for the simulation. The probabilities of being female and male are assumed equal, <span class="math inline">\(0.5\)</span>, and simulated ages are sampled using the yada function <code>rsiler</code>.</p>
 <p>Next, define objective functions to do a maximum likelihood fit for two models: the correct additive model and an incorrect multiplicative model in which the male hazard is assumed to be equal to the female hazard times a constant.</p>
 <div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb23-1" data-line-number="1"><span class="co"># Objective function for additive fit</span></a>
 <a class="sourceLine" id="cb23-2" data-line-number="2">fadd &lt;-<span class="st"> </span><span class="cf">function</span>(param,x,female,x0,a0) {</a>
@@ -595,18 +595,32 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 <div class="sourceCode" id="cb27"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb27-1" data-line-number="1"><span class="co"># Create and print out a summary data frame</span></a>
 <a class="sourceLine" id="cb27-2" data-line-number="2">testName &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;Add All&quot;</span>,<span class="st">&quot;Mlt All&quot;</span>,<span class="st">&quot;Cox All&quot;</span>,<span class="st">&quot;Add Fem&quot;</span>,<span class="st">&quot;Add Mal&quot;</span>,<span class="st">&quot;Mlt Fem&quot;</span>,<span class="st">&quot;Mlt Mal&quot;</span>,<span class="st">&quot;Cox Fem&quot;</span>,<span class="st">&quot;Cox Mal&quot;</span>)</a>
 <a class="sourceLine" id="cb27-3" data-line-number="3">pvalVect &lt;-<span class="st"> </span><span class="kw">c</span>(ks_add<span class="op">$</span>p.value,ks_mult<span class="op">$</span>p.value,ks_cox<span class="op">$</span>p.value,ks_add_fem<span class="op">$</span>p.value,ks_add_mal<span class="op">$</span>p.value,ks_mult_fem<span class="op">$</span>p.value,ks_mult_mal<span class="op">$</span>p.value,ks_cox_fem<span class="op">$</span>p.value,ks_cox_mal<span class="op">$</span>p.value)</a>
-<a class="sourceLine" id="cb27-4" data-line-number="4">dfOut &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">test=</span>testName,<span class="dt">pval=</span>pvalVect)</a>
-<a class="sourceLine" id="cb27-5" data-line-number="5"><span class="kw">print</span>(dfOut)</a>
-<a class="sourceLine" id="cb27-6" data-line-number="6"><span class="co">#&gt;      test         pval</span></a>
-<a class="sourceLine" id="cb27-7" data-line-number="7"><span class="co">#&gt; 1 Add All 6.678553e-01</span></a>
-<a class="sourceLine" id="cb27-8" data-line-number="8"><span class="co">#&gt; 2 Mlt All 5.536954e-01</span></a>
-<a class="sourceLine" id="cb27-9" data-line-number="9"><span class="co">#&gt; 3 Cox All 7.036147e-01</span></a>
-<a class="sourceLine" id="cb27-10" data-line-number="10"><span class="co">#&gt; 4 Add Fem 6.821200e-01</span></a>
-<a class="sourceLine" id="cb27-11" data-line-number="11"><span class="co">#&gt; 5 Add Mal 9.495975e-01</span></a>
-<a class="sourceLine" id="cb27-12" data-line-number="12"><span class="co">#&gt; 6 Mlt Fem 1.496860e-08</span></a>
-<a class="sourceLine" id="cb27-13" data-line-number="13"><span class="co">#&gt; 7 Mlt Mal 2.175484e-08</span></a>
-<a class="sourceLine" id="cb27-14" data-line-number="14"><span class="co">#&gt; 8 Cox Fem 6.737196e-04</span></a>
-<a class="sourceLine" id="cb27-15" data-line-number="15"><span class="co">#&gt; 9 Cox Mal 1.301728e-03</span></a></code></pre></div>
+<a class="sourceLine" id="cb27-4" data-line-number="4">ksStatVect &lt;-<span class="st"> </span><span class="kw">c</span>(ks_add<span class="op">$</span>statistic,ks_mult<span class="op">$</span>statistic,ks_cox<span class="op">$</span>statistic,ks_add_fem<span class="op">$</span>statistic,ks_add_mal<span class="op">$</span>statistic,ks_mult_fem<span class="op">$</span>statistic,ks_mult_mal<span class="op">$</span>statistic,ks_cox_fem<span class="op">$</span>statistic,ks_cox_mal<span class="op">$</span>statistic)</a>
+<a class="sourceLine" id="cb27-5" data-line-number="5">dfOut &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">test=</span>testName,<span class="dt">statistic=</span>ksStatVect,<span class="dt">pval=</span>pvalVect)</a>
+<a class="sourceLine" id="cb27-6" data-line-number="6"><span class="kw">print</span>(dfOut)</a>
+<a class="sourceLine" id="cb27-7" data-line-number="7"><span class="co">#&gt;      test  statistic         pval</span></a>
+<a class="sourceLine" id="cb27-8" data-line-number="8"><span class="co">#&gt; 1 Add All 0.01623086 6.678553e-01</span></a>
+<a class="sourceLine" id="cb27-9" data-line-number="9"><span class="co">#&gt; 2 Mlt All 0.01775765 5.536954e-01</span></a>
+<a class="sourceLine" id="cb27-10" data-line-number="10"><span class="co">#&gt; 3 Cox All 0.01575466 7.036147e-01</span></a>
+<a class="sourceLine" id="cb27-11" data-line-number="11"><span class="co">#&gt; 4 Add Fem 0.02250662 6.821200e-01</span></a>
+<a class="sourceLine" id="cb27-12" data-line-number="12"><span class="co">#&gt; 5 Add Mal 0.01658092 9.495975e-01</span></a>
+<a class="sourceLine" id="cb27-13" data-line-number="13"><span class="co">#&gt; 6 Mlt Fem 0.09595782 1.496860e-08</span></a>
+<a class="sourceLine" id="cb27-14" data-line-number="14"><span class="co">#&gt; 7 Mlt Mal 0.09652651 2.175484e-08</span></a>
+<a class="sourceLine" id="cb27-15" data-line-number="15"><span class="co">#&gt; 8 Cox Fem 0.06272928 6.737196e-04</span></a>
+<a class="sourceLine" id="cb27-16" data-line-number="16"><span class="co">#&gt; 9 Cox Mal 0.06105946 1.301728e-03</span></a>
+<a class="sourceLine" id="cb27-17" data-line-number="17"></a>
+<a class="sourceLine" id="cb27-18" data-line-number="18">dfOut &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">test=</span>testName,<span class="dt">pval=</span>pvalVect)</a>
+<a class="sourceLine" id="cb27-19" data-line-number="19"><span class="kw">print</span>(dfOut)</a>
+<a class="sourceLine" id="cb27-20" data-line-number="20"><span class="co">#&gt;      test         pval</span></a>
+<a class="sourceLine" id="cb27-21" data-line-number="21"><span class="co">#&gt; 1 Add All 6.678553e-01</span></a>
+<a class="sourceLine" id="cb27-22" data-line-number="22"><span class="co">#&gt; 2 Mlt All 5.536954e-01</span></a>
+<a class="sourceLine" id="cb27-23" data-line-number="23"><span class="co">#&gt; 3 Cox All 7.036147e-01</span></a>
+<a class="sourceLine" id="cb27-24" data-line-number="24"><span class="co">#&gt; 4 Add Fem 6.821200e-01</span></a>
+<a class="sourceLine" id="cb27-25" data-line-number="25"><span class="co">#&gt; 5 Add Mal 9.495975e-01</span></a>
+<a class="sourceLine" id="cb27-26" data-line-number="26"><span class="co">#&gt; 6 Mlt Fem 1.496860e-08</span></a>
+<a class="sourceLine" id="cb27-27" data-line-number="27"><span class="co">#&gt; 7 Mlt Mal 2.175484e-08</span></a>
+<a class="sourceLine" id="cb27-28" data-line-number="28"><span class="co">#&gt; 8 Cox Fem 6.737196e-04</span></a>
+<a class="sourceLine" id="cb27-29" data-line-number="29"><span class="co">#&gt; 9 Cox Mal 1.301728e-03</span></a></code></pre></div>
 <p>When the KS-test is applied to the pooled residuals for female and male, none of the models can be rejected since the pertinent p-values are greater than <span class="math inline">\(0.05\)</span>. However, the mis-specified models (multiplicative and Cox) are not good fits, which is apparent when the KS-test is applied separately for females and males. Both models are biased, which is reflected in non-uniformily distributed residuals. In contrast, the correct additive model is not rejected after stratifying by female/male. To gain additional insight, plot the histograms of stratified residuals.</p>
 <div class="sourceCode" id="cb28"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb28-1" data-line-number="1"><span class="co"># Plot the MSR histograms stratified by female/male</span></a>
 <a class="sourceLine" id="cb28-2" data-line-number="2">femCol &lt;-<span class="st"> </span><span class="kw">rgb</span>(<span class="dv">1</span>,<span class="dv">0</span>,<span class="dv">0</span>,.<span class="dv">5</span>)</a>

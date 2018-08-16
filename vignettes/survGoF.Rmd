@@ -405,6 +405,10 @@ To aid interpretation, print out the p-values from the KS tests for the additive
 # Create and print out a summary data frame
 testName <- c("Add All","Mlt All","Cox All","Add Fem","Add Mal","Mlt Fem","Mlt Mal","Cox Fem","Cox Mal")
 pvalVect <- c(ks_add$p.value,ks_mult$p.value,ks_cox$p.value,ks_add_fem$p.value,ks_add_mal$p.value,ks_mult_fem$p.value,ks_mult_mal$p.value,ks_cox_fem$p.value,ks_cox_mal$p.value)
+ksStatVect <- c(ks_add$statistic,ks_mult$statistic,ks_cox$statistic,ks_add_fem$statistic,ks_add_mal$statistic,ks_mult_fem$statistic,ks_mult_mal$statistic,ks_cox_fem$statistic,ks_cox_mal$statistic)
+dfOut <- data.frame(test=testName,statistic=ksStatVect,pval=pvalVect)
+print(dfOut)
+
 dfOut <- data.frame(test=testName,pval=pvalVect)
 print(dfOut)
 ```

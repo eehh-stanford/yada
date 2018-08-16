@@ -309,7 +309,7 @@ x[ female] <- rsiler(sum( female),afem,x0)
 x[!female] <- rsiler(sum(!female),amal,x0)
 ```
 
-In the preceding block of code, the mortality hazard for females is simulated with a Siler hazard, with the parameters drawn from Table 2 / Level 15 of Gage and Dyke (1986). Males are assumed to have an additive ``boost'' in hazard relative females. In particular, the constant term (third parameter) is simulated as being twice as high for males as for females. We assume contingent survival to $x_0 = 15$ for the simulation. The probabilities of being female and male are assumed equal, $0.5$, and simulated ages are sampled using the yada function `rsiler`.
+In the preceding block of code, the mortality hazard for females is simulated with a Siler hazard, with the parameters drawn from Table 2 / Level 15 of Gage and Dyke (1986). Males are assumed to have an additive boost in hazard relative to females. In particular, the constant term (third parameter) is simulated as being twice as high for males as for females. We assume contingent survival to $x_0 = 15$ for the simulation. The probabilities of being female and male are assumed equal, $0.5$, and simulated ages are sampled using the yada function `rsiler`.
 
 Next, define objective functions to do a maximum likelihood fit for two models: the correct additive model and an incorrect multiplicative model in which the male hazard is assumed to be equal to the female hazard times a constant.
 

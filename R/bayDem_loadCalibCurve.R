@@ -1,19 +1,20 @@
-# Description
-#   Parse and return the radiocarbon calibration curve stored in the input file
-#   calibFile.
-#
-# Example calls(s)
-#
-#   calibDf <- bayDem_loadCalibCurve(calibFile)
-# 
-# Input(s)
-#   Name         Type          Description
-#   calibCurve   string        Name of calibration curve
-#
-# Output(s)
-#   Name         Type          Description
-#   calibDf      dataframe     The calibration dataframe, with columns yearBP,
-#                              uncalYearBP, and uncalYearBPError
+#' @title Load Calibration Curve
+#'  
+#' @description Parse and return the radiocarbon calibration curve stored in data
+#' 
+# @details
+#'
+#' @param calibCurve Name of calibration curve
+#' @param status A vector of status indicators (length N)
+#' 
+# @keywords
+#' @export
+#' 
+# @examples
+#' 
+#' @return The calibration dataframe, with columns yearBP, uncalYearBP, and uncalYearBPError
+#'
+#' @author Michael Holton Price <MichaelHoltonPrice@gmail.com>
 
 bayDem_loadCalibCurve <- function(calibCurve) {
   if(calibCurve == 'intcal13') {

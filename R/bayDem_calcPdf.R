@@ -1,3 +1,5 @@
+# @keywords
+#' @export
 # Description
 #   Calculate the probability density function (pdf) for the input
 #   vector-like parameterization. The class of the pdf is either input or

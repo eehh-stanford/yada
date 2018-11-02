@@ -1,3 +1,5 @@
+# @keywords
+#' @export
 # Description
 #   Calculate the measurement matrix, which is the likelihood of the radiocarbon
 #   measurements phi_m with measurement uncertainty sig_m calculated at the
@@ -31,7 +33,7 @@
 #                           the likelihood of this measurement calculated for
 #                           the calendar dates in ygrid.
 
-bayDem_calcMeasMatrix <- function(ygrid,phi_m,sig_m,calibDf) {
+bayDem_calcMeasMatrix <- function(ygrid,phi_m,sig_m,calibDf,normRows=T,addCalibUnc=T) {
 	# ygrid is in AD
 	ygrid_BP <- 1950 - ygrid
 
@@ -50,11 +52,16 @@ bayDem_calcMeasMatrix <- function(ygrid,phi_m,sig_m,calibDf) {
 	SIG_m <- replicate(length(ygrid_BP),sig_m)
 
 	MU_k  <- t(replicate(length(phi_m),mu_k))
-	SIG_k <- t(replicate(length(sig_m),sig_k))
-
-	SIG_sq <- SIG_m^2 + SIG_k^2
+	if(addCalibUnc) {
+		SIG_k <- t(replicate(length(sig_m),sig_k))
+		SIG_sq <- SIG_m^2 + SIG_k^2
+	} else {
+		SIG_sq <- SIG_m^2
+	}
 
 	M <- exp(-(PHI_m - MU_k)^2 / (SIG_sq) / 2) / sqrt(SIG_sq) / sqrt(2*pi)
-	M <- M * matrix(1/rowSums(M),dim(M)[1],dim(M)[2]) # Normalize the rows to sum to 1
+	if(normRows) {
+		M <- M * matrix(1/rowSums(M),dim(M)[1],dim(M)[2]) # Normalize the rows to sum to 1
+	}
 	return(M)
 }

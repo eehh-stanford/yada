@@ -1,3 +1,5 @@
+# @keywords
+#' @export
 # Description
 #   Simulate the radiocarbon measurement process given a set of input
 #   calendar dates.

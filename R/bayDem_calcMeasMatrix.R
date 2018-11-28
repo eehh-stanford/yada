@@ -60,6 +60,17 @@ bayDem_calcMeasMatrix <- function(ygrid,phi_m,sig_m,calibDf,normRows=T,addCalibU
 	}
 
 	M <- exp(-(PHI_m - MU_k)^2 / (SIG_sq) / 2) / sqrt(SIG_sq) / sqrt(2*pi)
+
+	# Add the integration widths
+        G <- length(ygrid)
+        dyVect <- rep(NA,length(ygrid))
+        indCent <- 2:(G-1)
+        dyVect[indCent] <- (ygrid[indCent + 1] - ygrid[indCent-1])/2
+	dyVect[1] <- (ygrid[2]-ygrid[1])/2
+	dyVect[G] <- (ygrid[G]-ygrid[G-1])/2
+	dyMat  <- t(replicate(length(phi_m),dyVect))
+        M <- M * dyMat
+
 	if(normRows) {
 		M <- M * matrix(1/rowSums(M),dim(M)[1],dim(M)[2]) # Normalize the rows to sum to 1
 	}

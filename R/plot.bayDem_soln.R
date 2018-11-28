@@ -1,3 +1,5 @@
+# @keywords
+#' @export
 # Description
 #   Plot the result of Bayesian inference in the input soln object, which is of
 #   class bayDem_soln.

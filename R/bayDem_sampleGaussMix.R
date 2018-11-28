@@ -1,3 +1,5 @@
+# @keywords
+#' @export
 # Description
 #   Sample from a Gaussian mixture. This provides calendar dates of radiocarbon
 #   samples from the demographic model specified by Gaussian mixture.

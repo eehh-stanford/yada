@@ -1,3 +1,5 @@
+# @keywords
+#' @export
 # Description
 # Sample from the prior, given the type of fit and associated hyperparameters
 # for that type of fit
@@ -26,7 +28,7 @@ bayDem_samplePrior <- function(hp,N) {
   samps <- list()
   if(hp$fitType == 'gaussmix') {
     for(n in 1:N) {
-      samps[[n]] <- list(fitType=hp$fitType,sig=abs(rgamma(hp$K,shape=hp$sigAlpha,rate=hp$sigBeta)),mu=sort(runif(hp$K,hp$ymin,hp$ymax)),pi=as.vector(rdirichlet(1,rep(hp$dirichParam,hp$K))))
+      samps[[n]] <- list(fitType=hp$fitType,sig=abs(rgamma(hp$K,shape=hp$sigAlpha,rate=hp$sigBeta)),mu=sort(runif(hp$K,hp$ymin,hp$ymax)),pi=as.vector(gtools::rdirichlet(1,rep(hp$dirichParam,hp$K))))
     }
   } else {
     stop(paste('Unrecognized fit type:',hp$fitType))

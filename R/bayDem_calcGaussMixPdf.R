@@ -1,3 +1,5 @@
+# @keywords
+#' @export
 # Description
 #   Calculate the probability density function (pdf) for a Gaussian mixture with
 #   K components:

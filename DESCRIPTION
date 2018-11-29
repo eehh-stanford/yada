@@ -4,10 +4,10 @@ Title: Yet Another Demographic Analysis package
 Version: 0.1.0
 Author: Michael Holton Price
 Maintainer: Michael Holton Price <michaelholtonprice@sgmail.com>
-Description: yada, which stands for Yet Another Demographic
-    Analysis package, supports a variety of demographic tasks oriented,
+Description: yada—Yet Another Demographic
+    Analysis package—supports a variety of demographic tasks,
     with most applications drawn from forensic anthroplogy and
-    archaeology
+    archaeology.
 License: MIT + file LICENSE
 Imports:
     distr,
@@ -18,8 +18,11 @@ Imports:
     shape,
     survival,
     rlang (>= 0.1.2),
-    readr
-Suggests: testthat,
+    readr,
+    dplyr,
+    gtools,
+    magrittr
+Suggests:
     knitr,
     rmarkdown,
     testthat,

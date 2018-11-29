@@ -7,7 +7,9 @@
 addECDFLinesToPlot(pn, lwParam)
 }
 \arguments{
-\item{cdf}{An empirical CDF of the type output by calcStoppingCDF}
+\item{pn}{An empirical CDF of the type output by calcStoppingCDF}
+
+\item{lwParam}{A parameter}
 }
 \description{
 Point pairs for plotting an empirical cumulative density function (CDF; see \code{calcStoppingCDF} are created by \code{calcECDFPointPairs}. Add lines representing these point pairs to a plot.

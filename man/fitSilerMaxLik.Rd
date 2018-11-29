@@ -13,6 +13,8 @@ fitSilerMaxLik(x, a0 = c(0.175, 1.4, 0.368 * 0.01, 0.075 * 0.001, 0.917 *
 \item{a0}{Initial value for optimization. Default from Gage and Dyke 1986, Table 2, Level 15}
 
 \item{x0}{x-offset. The default is 0 (no offset).}
+
+\item{calcHessian}{Whether to calculate the Hessian}
 }
 \value{
 A list consisting of the fit (on the transformed variable abar) and maximum likelihood estimate of a. Optionally, the Hessian of the log-likelihood is returned, which allows estimation of the standard errors of the maximum likelihood estimate via the observed Fisher information matrix.

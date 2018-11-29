@@ -4,7 +4,8 @@
 #'
 # @details
 #'
-#' @param cdf An empirical CDF of the type output by calcStoppingCDF
+#' @param pn An empirical CDF of the type output by calcStoppingCDF
+#' @param lwParam A parameter
 #'
 # @keywords
 #' @export

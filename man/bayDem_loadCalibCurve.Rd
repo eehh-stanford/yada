@@ -8,8 +8,6 @@ bayDem_loadCalibCurve(calibCurve)
 }
 \arguments{
 \item{calibCurve}{Name of calibration curve}
-
-\item{status}{A vector of status indicators (length N)}
 }
 \value{
 The calibration dataframe, with columns yearBP, uncalYearBP, and uncalYearBPError

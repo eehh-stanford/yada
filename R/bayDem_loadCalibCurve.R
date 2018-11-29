@@ -5,7 +5,6 @@
 # @details
 #'
 #' @param calibCurve Name of calibration curve
-#' @param status A vector of status indicators (length N)
 #'
 # @keywords
 #' @export

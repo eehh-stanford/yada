@@ -7,6 +7,7 @@
 #' @param x Locations at which to evaluate probability density function
 #' @param a0 Initial value for optimization. Default from Gage and Dyke 1986, Table 2, Level 15
 #' @param x0 x-offset. The default is 0 (no offset).
+#' @param calcHessian Whether to calculate the Hessian
 #'
 # @keywords
 #' @export

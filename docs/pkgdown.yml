@@ -1,0 +1,7 @@
+pandoc: '2.5'
+pkgdown: 1.2.0
+pkgdown_sha: ~
+articles:
+  siler: siler.html
+  survGoF: survGoF.html
+

@@ -28,13 +28,15 @@ rsiler(N, a, x0 = 0)
 nllsiler(a, x, x0 = 0)
 }
 \arguments{
-\item{x, q}{vector of quantiles}
+\item{x}{the ending point}
 
 \item{a}{parameterization vector}
 
-\item{p}{vector of probabilities}
+\item{x0}{the initial point}
 
-\item{n}{number of observations}
+\item{qvect}{vector of quantiles}
+
+\item{N}{number of observations}
 }
 \value{
 A numeric vector of length equal to the input

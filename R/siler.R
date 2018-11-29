@@ -22,10 +22,11 @@
 #'
 #' \deqn{f(x_0,x) = \frac{d}{dx} F(x_0,x) = \lambda(x) S(x_0,x)}.
 #'
-#' @param x,q vector of quantiles
-#' @param p vector of probabilities
-#' @param n number of observations
+#' @param x the ending point
+#' @param x0 the initial point
 #' @param a parameterization vector
+#' @param qvect vector of quantiles
+#' @param N number of observations
 #'
 #' @keywords Siler, hazard, survival, demography
 #' @export

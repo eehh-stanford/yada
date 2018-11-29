@@ -234,7 +234,8 @@ alpha <- .05
 nVect <- seq(10, 500, by = 10) # The vector of number of observations
 powerVect <- rep(NA, length(nVect)) # The vector in which to store the power (1-beta)
 
-Nmc <- 50000
+# Nmc <- 50000
+Nmc <- 500
 
 options(warn = -1) # The numerical simulation yields very occasional ties. Suppress warnings this creates in ks.test
 for (ii in 1:length(nVect)) {

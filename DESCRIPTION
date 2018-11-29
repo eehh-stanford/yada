@@ -27,7 +27,9 @@ Suggests:
     rmarkdown,
     testthat,
     roxygen2,
-    covr
+    covr,
+    DBI,
+    RMySQL
 VignetteBuilder: 
     knitr
 Encoding: UTF-8

@@ -72,3 +72,28 @@ shcal13 <- readr::read_csv("data-raw/shcal13.14c", skip = 9)[-1, ] %>%
 usethis::use_data(shcal13,
   overwrite = T
 )
+
+# Raw data for IntCal13
+# You must have access to the SQL server where the data are hosted; see http://intcal.qub.ac.uk/shcal13/query/Rhelp.html
+library(DBI)
+library(RMySQL)
+library(writexl)
+
+con <- dbConnect(MySQL(),
+                 user = "customer",
+                 dbname = "intcalx",
+                 host = "intcal.qub.ac.uk")
+
+intcal13_raw <- dbListTables(con) %>%
+  magrittr::set_names(.,.) %>%
+  purrr::map(function(x){
+    con %>%
+      dbGetQuery(paste0("select * from ", x)) %>%
+      tibble::as_tibble()
+  }) %T>%
+  writexl::write_xlsx("data-raw/intcal13_raw.xlsx")
+
+usethis::use_data(intcal13_raw,
+                  overwrite = T
+)
+

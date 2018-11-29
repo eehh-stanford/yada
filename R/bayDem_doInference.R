@@ -70,7 +70,7 @@ bayDem_doInference <- function(prob) {
     sigBeta <- prob$hp$sigBeta
     dirichParam <- prob$hp$dirichParam
     K <- prob$hp$K
-    filePath <- system.file("data/gaussmix.stan",
+    filePath <- system.file("stan/gaussmix.stan",
       package = "yada"
     )
     options(mc.cores = parallel::detectCores())

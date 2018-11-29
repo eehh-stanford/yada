@@ -1,19 +1,19 @@
 #' @title Do Demographic Bayesian Inference
-#'  
+#'
 #' @description This is the core function that implements the Bayesian inference. The input is a problem statement object (a list), prob, that consists of the input data (the vectors phi_m and sig_m) and the hyperparameters (hp). stan is called via the rstan package to sample from the posterior. The output is the variable soln of class bayDem_soln, which is a list with the fields prob (the input) and fit (the result of the stan fit). prob can also have an optional field control that specifies the following control parameters for the Bayesian inference [default in brackets]:
 #'   numChains     -- [4]    Number of chains
 #'   sampsPerChain -- [2000] Number of samples per chain
 #'   initList      --        The initializations for each chain. The default is
 #'                           to sample from prior using hyperparameters
-#' 
+#'
 # @details
 #' @param prob List with the fields phi_m (vector of radiocarbon measurements as fraction modern), sig_m (vector of measurement errors for phi_m), hp (list of hyperparameters), and calibDf (calibration dataframe). In addition, the field control is optional (see above).
-#' 
+#'
 # @keywords
 #' @export
-#' 
+#'
 # @examples
-#' 
+#'
 #' @return soln, a list with three fields: prob (the input), fit (the result of the call to stan), and control (the control parameters used)
 #'
 #' @author Michael Holton Price <MichaelHoltonPrice@gmail.com>
@@ -70,7 +70,8 @@ bayDem_doInference <- function(prob) {
     sigBeta <- prob$hp$sigBeta
     dirichParam <- prob$hp$dirichParam
     K <- prob$hp$K
-    filePath <- system.file('data/gaussmix.stan',package='yada')
+    filePath <- system.file('data/gaussmix.stan',
+                            package='yada')
     options(mc.cores = parallel::detectCores())
     if(haveStanControl) {
       fit <- stan(filePath,chains=numChains,iter=sampsPerChain,init=initList,control=stanControl)

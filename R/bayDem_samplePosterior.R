@@ -4,7 +4,7 @@
 # Example calls(s)
 #
 #   samp <- bayDem_samplePosterior(fit,N)
-# 
+#
 # Input(s)
 #   Name    Type           Description
 #   fit     rstan          The rstan fit object
@@ -24,10 +24,9 @@
 #                          ymin         -- minimum calendar date
 #                          ymax         -- maximum calendar date
 
-bayDem_samplePosterior <- function(fit,hp,N) {
-  samps <- bayDem_extractParam(fit,hp,asList=T)
+bayDem_samplePosterior <- function(fit, hp, N) {
+  samps <- bayDem_extractParam(fit, hp, asList = T)
   numSamp <- length(samps)
-  ind <- sample.int(numSamp,size=N)
+  ind <- sample.int(numSamp, size = N)
   return(samps[ind])
 }
-

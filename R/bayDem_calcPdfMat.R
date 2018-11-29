@@ -10,7 +10,7 @@
 #
 #   fMat <- bayDem_calcPdfMat(TH,y)
 #   fMat <- bayDem_calcPdfMat(TH,y,'gaussmix')
-# 
+#
 # Input(s)
 #   Name    Type           Description
 #   TH      matrix         A matrix of parameters [numSamp x numParam]
@@ -22,19 +22,19 @@
 # Output(s)
 #   Name    Type           Description
 #   fMat    matrix         Output pdf matrix [numSamp x numGrid]
-bayDem_calcPdfMat <- function(TH,y,fitType=NA) {
-  if(is.na(fitType)) {
+bayDem_calcPdfMat <- function(TH, y, fitType = NA) {
+  if (is.na(fitType)) {
     fitType <- class(TH)
   }
   numSamp <- dim(TH)[1]
   numGrid <- length(y)
-  fMat <- matrix(NA,numSamp,numGrid)
+  fMat <- matrix(NA, numSamp, numGrid)
 
   # Even though bayDem_calcPdfMat merely calls bayDem_calcPdf, generation of
   # the pdf matrix is centralized here so that, in the future, it can be
   # calculated in C or via parallelization.
-  for(n in 1:numSamp) {
-    fMat[n,] <- bayDem_calcPdf(TH[n,],y,fitType)
+  for (n in 1:numSamp) {
+    fMat[n, ] <- bayDem_calcPdf(TH[n, ], y, fitType)
   }
   return(fMat)
 }

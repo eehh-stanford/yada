@@ -6,7 +6,7 @@
 # Example calls(s)
 #
 #   Q <- bayDem_calcQuantiles(fMat)
-# 
+#
 # Input(s)
 #   Name    Type           Description
 #   fMat    matrix         The pdf matrix [numSamp x numGrid]
@@ -16,13 +16,13 @@
 # Output(s)
 #   Name    Type           Description
 #   Q       matrix         Matrix of quantiles [length(probs) x numGrid]
-bayDem_calcQuantiles <- function(fMat,probs=c(.025,.5,.975)) {
+bayDem_calcQuantiles <- function(fMat, probs = c(.025, .5, .975)) {
   numQuant <- length(probs)
   numSamp <- dim(fMat)[1]
   numGrid <- dim(fMat)[2]
-  Q <- matrix(NA,numQuant,numGrid)
-  for(g in 1:numGrid) {
-    Q[,g] <- quantile(fMat[,g],probs=probs)
+  Q <- matrix(NA, numQuant, numGrid)
+  for (g in 1:numGrid) {
+    Q[, g] <- quantile(fMat[, g], probs = probs)
   }
   return(Q)
 }

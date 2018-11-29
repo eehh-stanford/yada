@@ -9,7 +9,7 @@
 #
 #   f <- bayDem_calcPdf(th,y)
 #   f <- bayDem_calcPdf(th,y,'gaussmix')
-# 
+#
 # Input(s)
 #   Name    Type           Description
 #   th      vector-like    A vector-like object that parameterizes the pdf
@@ -20,15 +20,14 @@
 # Output(s)
 #   Name    Type           Description
 #   f       vector         Output pdf
-bayDem_calcPdf <- function(th,y,fitType=NA) {
-  if(is.na(fitType)) {
+bayDem_calcPdf <- function(th, y, fitType = NA) {
+  if (is.na(fitType)) {
     fitType <- class(th)
   }
 
- if(fitType=='gaussmix') {
-    return(bayDem_calcGaussMixPdf(th,y))
+  if (fitType == "gaussmix") {
+    return(bayDem_calcGaussMixPdf(th, y))
   } else {
-    stop(paste('Unrecognized fit type:',hp$fitType))
+    stop(paste("Unrecognized fit type:", hp$fitType))
   }
-
 }

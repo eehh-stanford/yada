@@ -19,50 +19,50 @@
 #' @author Michael Holton Price <MichaelHoltonPrice@gmail.com>
 
 bayDem_doInference <- function(prob) {
-# Unpack and/or define the control parameters
-  if(exists('control',where=prob) == T) {
-    haveNumChains <- exists('numChains',where=prob$control) == T
-    haveSampsPerChain <- exists('sampsPerChain',where=prob$control) == T
-    haveInitList <- exists('initList',where=prob$control) == T
-    haveStanControl <- exists('stanControl',where=prob$control) == T
+  # Unpack and/or define the control parameters
+  if (exists("control", where = prob) == T) {
+    haveNumChains <- exists("numChains", where = prob$control) == T
+    haveSampsPerChain <- exists("sampsPerChain", where = prob$control) == T
+    haveInitList <- exists("initList", where = prob$control) == T
+    haveStanControl <- exists("stanControl", where = prob$control) == T
   } else {
     haveNumChains <- F
     haveSampsPerChain <- F
     haveInitList <- F
   }
 
-  if(haveNumChains) {
+  if (haveNumChains) {
     numChains <- prob$control$numChains
   } else {
     numChains <- 4
   }
 
-  if(haveSampsPerChain) {
+  if (haveSampsPerChain) {
     sampsPerChain <- prob$control$sampsPerChain
   } else {
     sampsPerChain <- 2000
   }
 
-  if(haveInitList) {
+  if (haveInitList) {
     initList <- prob$control$initList
   } else {
-    initList <- bayDem_samplePrior(prob$hp,numChains)
+    initList <- bayDem_samplePrior(prob$hp, numChains)
   }
 
-  if(haveStanControl) {
+  if (haveStanControl) {
     stanControl <- prob$control$stanControl
   } else {
     stanControl <- NA
   }
 
-  controlFinal <- list(numChains=numChains,sampsPerChain=sampsPerChain,initList=initList,stanControl=stanControl)
+  controlFinal <- list(numChains = numChains, sampsPerChain = sampsPerChain, initList = initList, stanControl = stanControl)
 
-  if(prob$hp$fitType=='gaussmix') {
+  if (prob$hp$fitType == "gaussmix") {
     # Stan needs all the inputs and hyperparameters as variables in R's workspace
     ymin <- prob$hp$ymin
     ymax <- prob$hp$ymax
-    ygrid <- seq(ymin,ymax,by=prob$hp$dy)
-    M <- bayDem_calcMeasMatrix(ygrid,prob$phi_m,prob$sig_m,calibDf)
+    ygrid <- seq(ymin, ymax, by = prob$hp$dy)
+    M <- bayDem_calcMeasMatrix(ygrid, prob$phi_m, prob$sig_m, calibDf)
     Mt <- t(M)
     N <- dim(M)[1]
     G <- dim(M)[2]
@@ -70,19 +70,20 @@ bayDem_doInference <- function(prob) {
     sigBeta <- prob$hp$sigBeta
     dirichParam <- prob$hp$dirichParam
     K <- prob$hp$K
-    filePath <- system.file('data/gaussmix.stan',
-                            package='yada')
+    filePath <- system.file("data/gaussmix.stan",
+      package = "yada"
+    )
     options(mc.cores = parallel::detectCores())
-    if(haveStanControl) {
-      fit <- stan(filePath,chains=numChains,iter=sampsPerChain,init=initList,control=stanControl)
+    if (haveStanControl) {
+      fit <- stan(filePath, chains = numChains, iter = sampsPerChain, init = initList, control = stanControl)
     } else {
-      fit <- stan(filePath,chains=numChains,iter=sampsPerChain,init=initList)
+      fit <- stan(filePath, chains = numChains, iter = sampsPerChain, init = initList)
     }
   } else {
-    stop(paste('Unrecognized fit type:',prob$hp$fitType))
+    stop(paste("Unrecognized fit type:", prob$hp$fitType))
   }
 
-  soln <- list(prob=prob,fit=fit,control=controlFinal)
-  class(soln) <- 'bayDem_soln'
+  soln <- list(prob = prob, fit = fit, control = controlFinal)
+  class(soln) <- "bayDem_soln"
   return(soln)
 }

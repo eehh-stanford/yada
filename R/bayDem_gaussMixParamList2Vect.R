@@ -9,7 +9,7 @@
 # Example calls(s)
 #
 #   th <- bayDem_gaussMixParamList2Vect(samp)
-# 
+#
 # Input(s)
 #   Name    Type           Description
 #   samp    list           A list that parameterizes the Gaussian mixture.
@@ -21,6 +21,6 @@
 #                          See bayDem_calcGaussMixPdf.R
 bayDem_gaussMixParamList2Vect <- function(samp) {
   K <- length(samp$sig)
-  th <- c(samp$pi,samp$mu,samp$sig)
+  th <- c(samp$pi, samp$mu, samp$sig)
   return(th)
 }

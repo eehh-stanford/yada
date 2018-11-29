@@ -7,7 +7,7 @@
 # Example calls(s)
 #
 #   samp <- bayDem_samplePrior(hp,N)
-# 
+#
 # Input(s)
 #   Name    Type           Description
 #   hp      list           The hyperparameters
@@ -24,15 +24,14 @@
 #                          mu  [K x 1]  -- vector of means
 #                          pi  [K x 1]  -- vector of mixture proportions
 
-bayDem_samplePrior <- function(hp,N) {
+bayDem_samplePrior <- function(hp, N) {
   samps <- list()
-  if(hp$fitType == 'gaussmix') {
-    for(n in 1:N) {
-      samps[[n]] <- list(fitType=hp$fitType,sig=abs(rgamma(hp$K,shape=hp$sigAlpha,rate=hp$sigBeta)),mu=sort(runif(hp$K,hp$ymin,hp$ymax)),pi=as.vector(gtools::rdirichlet(1,rep(hp$dirichParam,hp$K))))
+  if (hp$fitType == "gaussmix") {
+    for (n in 1:N) {
+      samps[[n]] <- list(fitType = hp$fitType, sig = abs(rgamma(hp$K, shape = hp$sigAlpha, rate = hp$sigBeta)), mu = sort(runif(hp$K, hp$ymin, hp$ymax)), pi = as.vector(gtools::rdirichlet(1, rep(hp$dirichParam, hp$K))))
     }
   } else {
-    stop(paste('Unrecognized fit type:',hp$fitType))
+    stop(paste("Unrecognized fit type:", hp$fitType))
   }
-    return(samps)
+  return(samps)
 }
-

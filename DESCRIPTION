@@ -31,7 +31,9 @@ Suggests:
     covr,
     DBI,
     RMySQL,
-    writexl
+    writexl,
+    httr,
+    rvest
 VignetteBuilder: 
     knitr
 Encoding: UTF-8

@@ -16,10 +16,16 @@ Imports:
     parallel,
     rstan,
     shape,
+<<<<<<< HEAD
     survival,
     survival,
     rlang (>= 0.1.2)
 Suggests: 
+=======
+    survival
+RoxygenNote: 6.1.1
+Suggests: testthat,
+>>>>>>> 899e20ab730df777fbfc58a13bccad6c161a4bff
     knitr,
     rmarkdown,
     testthat,

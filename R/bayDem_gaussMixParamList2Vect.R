@@ -1,3 +1,5 @@
+# @keywords
+#' @export
 # Description
 #   For the input, parameterized Guassian mixture convert from a list
 #   representation (required by stan) to a vector representation (which is

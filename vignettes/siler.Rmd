@@ -46,43 +46,43 @@ $$ f(x_0,x) = \frac{d}{dx} F(x_0,x) = \lambda(x) \, S(x_0,x) \mbox{.}$$
 Gage and Dyke (1986) [Parameterizing Abridged Mortality Tables] describe sensible parameterizations of the Siler hazard for human mortality. The parameterization for Level 15 in Table 2 in Gage and Dyke (1986) is 
 
 ```{r}
-a0 <- c(0.175,1.40,0.368*0.01,0.075*0.001,0.917*0.1) 
+a0 <- c(0.175, 1.40, 0.368 * 0.01, 0.075 * 0.001, 0.917 * 0.1)
 ```
 
 Create a vector of ages $x$ from age 0 to 100 and calculate the hazard,
 
 ```{r,fig.align='center',fig.width=6,fig.height=6}
 library(yada)
-x <- seq(0,100,by=.1)
-hazSiler <- hsiler(x,a0)
+x <- seq(0, 100, by = .1)
+hazSiler <- hsiler(x, a0)
 th <- 3 # Line width for plots
-plot(x,hazSiler,type='l',xlab='Age [years]',ylab='Hazard',lwd=th)
+plot(x, hazSiler, type = "l", xlab = "Age [years]", ylab = "Hazard", lwd = th)
 ```
 The cumulative hazard is
 
 ```{r,fig.align='center',fig.width=6,fig.height=6}
-cumHazSiler <- chsiler(x,a0)
-plot(x,cumHazSiler,type='l',xlab='Age [years]',ylab='Cumulative Hazard',lwd=th)
+cumHazSiler <- chsiler(x, a0)
+plot(x, cumHazSiler, type = "l", xlab = "Age [years]", ylab = "Cumulative Hazard", lwd = th)
 ```
 The survival is
 
 ```{r,fig.align='center',fig.width=6,fig.height=6}
-survSiler <- ssiler(x,a0)
-plot(x,survSiler,type='l',xlab='Age [years]',ylab='Survival',lwd=th)
+survSiler <- ssiler(x, a0)
+plot(x, survSiler, type = "l", xlab = "Age [years]", ylab = "Survival", lwd = th)
 ```
 
 The cumulative probability density function (CDF) is
 
 ```{r,fig.align='center',fig.width=6,fig.height=6}
-cdfSiler <- psiler(x,a0)
-plot(x,cdfSiler,type='l',xlab='Age [years]',ylab='Cumulative Density',lwd=th)
+cdfSiler <- psiler(x, a0)
+plot(x, cdfSiler, type = "l", xlab = "Age [years]", ylab = "Cumulative Density", lwd = th)
 ```
 
 The probability density function (PDF) is
 
 ```{r,fig.align='center',fig.width=6,fig.height=6}
-pdfSiler <- dsiler(x,a0)
-plot(x,pdfSiler,type='l',xlab='Age [years]',ylab='Density',lwd=th)
+pdfSiler <- dsiler(x, a0)
+plot(x, pdfSiler, type = "l", xlab = "Age [years]", ylab = "Density", lwd = th)
 ```
 
 ## Using $x_0$
@@ -90,11 +90,11 @@ Sometimes demographers work with data for which survival to some age $x_0$ is gi
 
 ```{r,fig.align='center',fig.width=6,fig.height=6}
 x0 <- 15
-x2 <- seq(x0,100,by=.1)
-survSilerCont <- ssiler(x2,a0,x0)
-plot(x2,survSilerCont,type='l',xlab='Age [years]',ylab='Survival',lwd=th)
-pdfSilerCont <- dsiler(x2,a0,x0)
-plot(x2,pdfSilerCont,type='l',xlab='Age [years]',ylab='Density',lwd=th)
+x2 <- seq(x0, 100, by = .1)
+survSilerCont <- ssiler(x2, a0, x0)
+plot(x2, survSilerCont, type = "l", xlab = "Age [years]", ylab = "Survival", lwd = th)
+pdfSilerCont <- dsiler(x2, a0, x0)
+plot(x2, pdfSilerCont, type = "l", xlab = "Age [years]", ylab = "Density", lwd = th)
 ```
 
 ## Maximum likelihood estimation
@@ -103,13 +103,13 @@ yada provides code to solve for the maximum likelihood Siler parameter vector gi
 ```{r}
 set.seed(896354) # from random.org
 N <- 10000
-xsamp <- rsiler(N,a0)
+xsamp <- rsiler(N, a0)
 ```
 
 "Jitter" $a_0$ a little to provide a starting point for the maximum likelihood estimation that differs from $a_0$, then do the fit:
 ```{r}
-a1 <- a0 * runif(5,min=.9,max=1.1)
-silerFit <- fitSilerMaxLik(xsamp,a1,calcHessian=TRUE)
+a1 <- a0 * runif(5, min = .9, max = 1.1)
+silerFit <- fitSilerMaxLik(xsamp, a1, calcHessian = TRUE)
 print(silerFit$a)
 ```
 
@@ -122,11 +122,11 @@ print(silerFit$fit)
 Naturally, the variable `a` in `silerFit` (printed above) and the `hessian` (optional; see below) account for this transformation. Now plot the histogram for the sampled data, target curve (solid black line; from $a_0$); initial estimate (dashed red line; from $a_1$), and maximum likelihood fit (solid red line):
 
 ```{r,fig.align='center',fig.width=6,fig.height=6}
-hist(xsamp,100,freq=F,main=NA,xlab='Age [years]',ylab='Density')
-lines(x,dsiler(x,a0),lty=1,col='1',lwd=th)
-lines(x,dsiler(x,a1),lty=2,col='red',lwd=th)
-lines(x,dsiler(x,silerFit$a),col='red',lwd=th)
-legend('topright',c('Target','Initial','Max Lik'),col=c('black','red','red'),lty=c(1,2,1))
+hist(xsamp, 100, freq = F, main = NA, xlab = "Age [years]", ylab = "Density")
+lines(x, dsiler(x, a0), lty = 1, col = "1", lwd = th)
+lines(x, dsiler(x, a1), lty = 2, col = "red", lwd = th)
+lines(x, dsiler(x, silerFit$a), col = "red", lwd = th)
+legend("topright", c("Target", "Initial", "Max Lik"), col = c("black", "red", "red"), lty = c(1, 2, 1))
 ```
 
 A common (frequentist) question is whether the estimated parameter values differ from $0$. This can be assessed by calculating the standard errors using the Hessian, which is the negative of the observed Fisher information matrix (for pertinent assumptions see https://en.wikipedia.org/wiki/Fisher_information). The covariance matrix for the standard error is 

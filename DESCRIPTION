@@ -21,7 +21,8 @@ Imports:
     readr,
     dplyr,
     gtools,
-    magrittr
+    magrittr,
+    tibble
 Suggests:
     knitr,
     rmarkdown,
@@ -29,7 +30,8 @@ Suggests:
     roxygen2,
     covr,
     DBI,
-    RMySQL
+    RMySQL,
+    writexl
 VignetteBuilder: 
     knitr
 Encoding: UTF-8

@@ -1,0 +1,54 @@
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/README-",
+  out.width = "100%"
+)
+```
+# yada
+[![Travis build status](https://travis-ci.org/eehh-stanford/yada.svg?branch=identif)](https://travis-ci.org/eehh-stanford/yada)
+[![Coverage status](https://codecov.io/gh/eehh-stanford/yada/branch/identif/graph/badge.svg)](https://codecov.io/github/eehh-stanford/yada?branch=identif)
+
+The goal of yada is to ...
+
+## Installation
+
+You can install the released version of yada from [CRAN](https://CRAN.R-project.org) with:
+
+``` r
+install.packages("yada")
+```
+
+## Example
+
+This is a basic example which shows you how to solve a common problem:
+
+```{r example}
+## basic example code
+```
+
+What is special about using `README.Rmd` instead of just `README.md`? You can include R chunks like so:
+
+```{r cars}
+summary(cars)
+```
+
+You'll still need to render `README.Rmd` regularly, to keep `README.md` up-to-date.
+
+You can also embed plots, for example:
+
+```{r pressure, echo = FALSE}
+plot(pressure)
+```
+
+In that case, don't forget to commit and push the resulting figure files, so they display on GitHub!
+
+## Contributing
+Please note that the 'yada' project is released with a [Contributor Code of Conduct](.github/CODE_OF_CONDUCT.md). By contributing to this project, you agree to abide by its terms.

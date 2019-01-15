@@ -20,7 +20,7 @@
 #' @seealso \code{dsiler}
 # @references
 
-fitSilerMaxLik <- function(x, a0 = c(.175, 1.40, .368 * .01, .075 * .001, .917 * .1), x0 = 0, calcHessian = FALSE) {
+fitSilerMaxLik <- function(x, a0 = c(.175, 1.40, .368 * .01, .075 * .001, .917 * .1), x0 = 0, calcHessian = FALSE,hessEps=1e-10) {
   nllbar <- function(abar, x, a0) {
     a <- a0 * exp(abar)
     -sum(log(dsiler(x, a, x0)))
@@ -33,7 +33,7 @@ fitSilerMaxLik <- function(x, a0 = c(.175, 1.40, .368 * .01, .075 * .001, .917 *
     ll <- function(a) { # log likelihood as a function of a
       sum(log(dsiler(x, a, x0)))
     }
-    H <- numDeriv::hessian(ll, afit)
+    H <- numDeriv::hessian(ll, afit,method.args=list(eps=hessEps))
     return(list(fit = fit, a = afit, hessian = H))
   } else {
     return(list(fit = fit, a = afit))

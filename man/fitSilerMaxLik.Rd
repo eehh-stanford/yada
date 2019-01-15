@@ -5,7 +5,7 @@
 \title{Maximum likelihood fit for Siler distribution}
 \usage{
 fitSilerMaxLik(x, a0 = c(0.175, 1.4, 0.368 * 0.01, 0.075 * 0.001, 0.917 *
-  0.1), x0 = 0, calcHessian = FALSE)
+  0.1), x0 = 0, calcHessian = FALSE, hessEps = 1e-10)
 }
 \arguments{
 \item{x}{Locations at which to evaluate probability density function}

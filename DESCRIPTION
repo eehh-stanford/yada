@@ -22,7 +22,14 @@ Imports:
     dplyr,
     gtools,
     magrittr,
-    tibble
+    tibble,
+    matrixStats,
+    MASS,
+    condMVNorm,
+    mvtnorm,
+    foreach,
+    doParallel,
+    RColorBrewer
 Suggests:
     knitr,
     rmarkdown,

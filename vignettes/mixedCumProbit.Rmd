@@ -161,3 +161,38 @@ lines(xv2,genCrraOrd(xv2,paramTrue),col='green',lwd=2)
 lines(xv2,genCrraOrd(xv2,param2),col='red',lwd=2)
 ```
 
+## Bayesian inference on simulated data
+We now demonstrate how to implement the Bayesian inference describing above on simulated data. First, define the model by specifying the number of ordinal and continuous variables (and number of categories per ordinal variable) in a hyperparameter variable, hp, and setting the true values of $\greekbf{\theta}$:
+
+
+```{r}
+N <- 1000 # number of observations / individuals
+hp <- list(paramModel='genCrra') # The parametric model to use for the mean
+hp$varRange <- matrix(c(0,0,-Inf,-Inf,4,4,Inf,Inf),ncol=2)
+hp$J <- 2 # number of ordinal variables
+hp$K <- 2 # number of continuous variables
+hp$M <- c(4,4) # Number of categories for each ordinal variable
+
+theta_y0_list <- list(paramModel='genCrra')
+theta_y0_list$alpha <- c(2,3)
+theta_y0_list$rho <- c(.4,.7)
+theta_y0_list$a <- c(3,1.75)
+theta_y0_list$r <- c(-.25,.6)
+theta_y0_list$b <- c(2,-4)
+theta_y0_list$tau[[1]] <- c(1,2,3.5,4.5)
+theta_y0_list$tau[[2]] <- c(0,2,3,5.5)
+theta_y0_list$Sigma <- diag(4)
+theta_y0_list$Sigma[1,4] <- .2
+theta_y0_list$Sigma[4,1] <- theta$Sigma[1,4]
+theta_y0_list$Sigma[3,4] <- -.3
+theta_y0_list$Sigma[4,3] <- theta$Sigma[3,4]
+```
+
+$\greekbf{theta}_y$ can be represented as either a list, which is more readable for humans, or a vector. Conversion between representations is done with \code{theta_yList2Vect} and \code{theta_yVect2List}.
+
+```{r}
+theta_y0 <- theta_yList2Vect(theta_y0_list)
+print(theta_y0_list)
+print(theta_y0)
+print(theta_yList2Vect(theta_yVect2List(theta_y0,hp)))
+```

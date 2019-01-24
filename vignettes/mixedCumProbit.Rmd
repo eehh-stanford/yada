@@ -107,3 +107,57 @@ We adopt a conservative, flat prior for $\greekbf{\theta}_y$ so that $p(\greekbf
 $$C_t = \left\{ \begin{array}{ll}C_0 \mbox{,} & t \leq t_0 \\ s_d \, \mathrm{cov}(\greekbf{\theta}_y^{(0)},\cdots,\greekbf{\theta}_y^{(t-1)}) + s_d \, \epsilon I_d & t > t_0 \end{array} \right.$$
 
 where $s_d$ depends on the dimension $d$ of $\greekbf{\theta}_y$ and $I_d$ is the identity matrix of dimension $d$. The term with the parameter $\epsilon$ ensures that $C_t$ is never singular. Following Gelman et al. (1996) [Efficient Metropolis jumping rules] we use $s_d = (2.4)^2 / d$. Efficient recursive algorithms exist to recursively update the covariance of the proposal distribution.
+
+
+## Fitting single variables
+yada provides tools for working with observations of single ordinal or continuous variables. \code{simGenCrra} creates simulated data with a mean of $g(x) = a x^{1-r} + b$ with noise added via a draw from the normal distribution with a standard deviation of $1$. Create a vector of exponentially distributed observations $x$ and call the simGenCrra function (setting the random number seed for reproducible results) with $a=4$, $r=.7$, and $b=-2$:
+
+```{r}
+set.seed(971484) # Seed from random.org between 1 and 1,000,000
+x <- rexp(100)
+paramTrue <- c(4,.75,-2)
+y <- simGenCrra(x,paramTrue)
+```
+
+Fit this data and then plot the resulting fit along with the data and true (simulated) curve:
+```{r,fig.align='center',fig.width=6,fig.height=6}
+plot(x,y,xlab='x',ylab='y')
+xv <- seq(0,max(x),len=500)
+param <- fitGenCrra(x,y)
+lines(xv,genCrra(xv,paramTrue),col='green',lwd=2)
+lines(xv,genCrra(xv,param),col='red',lwd=2)
+```
+
+Ordinal data can be simulated with \code{simGenCrraOrd}. By default, only the ordinal categories are returned, but both the ordinal categories and latent underlying continuous trait can be returned by setting the input latent variable to True. Simulate data using $\alpha=4$, $\rho=.75$, $\tau_1=2.5$, and $\tau_2=4$:
+
+```{r}
+paramTrue <- c(4,.75,2.5,4)
+ordData <- simGenCrraOrd(x,paramTrue,latent=T)
+print(names(ordData))
+print(table(ordData$y))
+```
+Fit this data and then plot the resulting fit along with the latent data and true (simulated) curve:
+
+```{r,fig.align='center',fig.width=6,fig.height=6}
+plot(x,ordData$ystar,xlab='x',ylab='ystar')
+param <- fitGenCrraOrd(x,ordData$y)
+lines(xv,genCrraOrd(xv,paramTrue),col='green',lwd=2)
+lines(xv,genCrraOrd(xv,param),col='red',lwd=2)
+#lines(c(0,max(x)),c(1,1)*paramTrue[3],col='green',lwd='2',lty=2)
+#lines(c(0,max(x)),c(1,1)*paramTrue[4],col='green',lwd='2',lty=2)
+#lines(c(0,max(x)),c(1,1)*param[3],col='red',lwd='2',lty=2)
+#lines(c(0,max(x)),c(1,1)*param[4],col='red',lwd='2',lty=2)
+```
+
+Fitting ordinal data is more challenging since only the ordinal categories are observed. With sufficient data, however, the parameters can be accurately estimated. Repeat the preceding steps for $10000$ observations:
+
+```{r,fig.align='center',fig.width=6,fig.height=6}
+x2 <- rexp(10000)
+xv2 <- seq(0,max(x2),len=500)
+ordData2 <- simGenCrraOrd(x2,paramTrue,latent=T)
+plot(x2,ordData2$ystar,xlab='x',ylab='ystar')
+param2 <- fitGenCrraOrd(x2,ordData2$y)
+lines(xv2,genCrraOrd(xv2,paramTrue),col='green',lwd=2)
+lines(xv2,genCrraOrd(xv2,param2),col='red',lwd=2)
+```
+

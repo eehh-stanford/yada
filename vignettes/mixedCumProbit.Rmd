@@ -1,0 +1,109 @@
+---
+title: "Mixed cumulative probit"
+author: "Michael Holton Price"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+\newcommand{\greekbf}[1]{\boldsymbol{\mathrm{#1}}}
+\newcommand \diff{\mathop{}\!\mathrm{d}}
+
+
+## Introduction
+Cumulative probit models provide a way to parameterically model ordinal data, such as data on party identification and skeletal age categories -- for example, see Chapter 8 of Jackman 2009 [Bayesian Analysis for the Social Sciences] and Kongisberg 2015 [Multivariate cumulative probit for age estimation using ordinal categorical data]. To our knowledge, however, no method exists for analyzing mixed sets of responses variables that can be both ordinal and continuous, though Gueorguieva and Agresti 2001 [A Correlated Probit Model for Joint Modeling of Clustered Binary and Continuous Responses] describe a two variable model involving a single continuous variable and a single binary variable. This vignette describes a mixed cumulative probit model implemented in the R package 'yada'. By mixed we mean that response variables can be either continuous or ordinal. The package supports, in principle, any number of variables and any numbers of categories for each ordinal variable. We allow only one independent variable and utilize a specific parametric form for the dependence of latent dependent variables on the independent variable, but generalizes that relax these assumptions would be straightforward.
+
+## Application
+Although this model and associated R code should have wide application, we had a specific application in mind when we developed it: forensic juvenile age estimation. The independent variable is $x$, age, and the dependent variables can be a mix of continuous skeletal traits (for example, femur length) and ordinal skeletal traits (for example, epyphiseal fusion). Ultimately, our goal is to predict posterior age given skeletal traits, which requires a specification of the prior probability $p(x|\alpha)$, where $\alpha$ is a hyperparameter that parameterizes the prior, and a model for the likelihood, $p(\theta|x)$. We adopt a fully Bayesian approach in which we sample the posterior distribution $p(\theta|D,\alpha)$ for $\theta$ using an adapative Metropolis algorithm, where $D$ stands for observed data.
+
+## Preliminaries
+Let $x$ be a (scalar) independent variable and let $\mathbf{v}^*$ and $\mathbf{w}$ be, respectively, a vector of latent ordinal response variables indexed by $j=1,2,\cdots J$ and a vector of directly observed continuous variables indexed by $k=1,2,\cdots,K$. We assume the overall response vector $\mathbf{y}^* = [\mathbf{v}^*,\mathbf{w}]^T$ is distributed as 
+
+$$\mathbf{y}^*_n \sim \mathbf{f}(x_n) + \mathcal{N}(0,\Sigma)$$
+
+where $n=1,2,\cdots,N$ indexes observations, $\mathbf{f} = [\mathbf{g},\mathbf{h}]^T$ is a mean vector that depends on $x$, $\mathbf{g}(x)$ is the mean vector for ordinal response variables, $\mathbf{h}(x)$ is the mean vector for continuous response variables, and $\Sigma$ is the covariance matrix for the normal draw. For identifiability, the diagonal values of $\Sigma$ are $1$. For elements of $\mathbf{g}$, we adopt the parametric form
+
+$$g_j(x) = \alpha_j \, x^{1 - \rho_j}$$
+
+and for elements of $\mathbf{h}$ we adopt the parametric form
+
+$$h_k(x) = a_k \, x^{1 - r_k} + b_k$$
+
+The intercept term is omitted for ordinal variables to ensure identifiability. For each ordinal variable $j$, the category ($m_j=0,1,\cdots,M_j$) is directly observed, and we model the mapping between the latent vector $\mathbf{v}^*$ and observed ordinal categories $\mathbf{v}$ via the threshold parameters $\greekbf{\tau}^{(j)}$ [$j=1,2,\cdots,J$]. 
+
+$$v_{j,n} = 0 \Longleftrightarrow v^*_{j,n} <= \tau^{(j)}_1$$
+$$v_{j,n} = m \Longleftrightarrow \tau^{(j)}_m < v^*_{j,n} <= \tau^{(j)}_{m+1}$$
+$$v_{j,n} = M \Longleftrightarrow v^*_{j,n} > \tau^{(j)}_M$$
+
+where here (and elsewhere) we drop the indices on $m_j$ and $M_j$ as (when) they are clear from context. Finally, as we expand on below, we assume that observations $x_n$ are independently drawn from a probability distribution parameterized by $\greekbf{\theta}_x$.
+
+## Bayesian inference
+The full set of parameters to be estimated for the model described in the preceding section is $\greekbf{\theta} = [\greekbf{\theta}_x,\greekbf{\theta}_y]$, where $\greekbf{\theta}_y = [\greekbf{\alpha},\greekbf{\rho},\mathbf{a},\mathbf{r},\mathbf{b},\greekbf{\tau},\mathbf{s}]^T$, $\greekbf{\tau} = [\greekbf{\tau}^{(1)},\cdots,\greekbf{\tau}^{(J)}]$ is the complete vector of threshold parameters and $\mathbf{s} = [\Sigma_{12},\Sigma_{13},\cdots,\Sigma_{1J},\Sigma_{23},\cdots]^T$ is the vector of ${J+K \choose 2}$ unique off-diagonal terms in the covariance matrix (unwrapped by row). We assume that both the prior and likelihood are conditionally separable. That is:
+
+$$p(\greekbf{\theta}|\greekbf{\alpha}) = (\greekbf{\theta}_x|\greekbf{\alpha}_y) \, (\greekbf{\theta}_x|\greekbf{\alpha}_y)$$
+
+and
+
+$$p(\mathbf{x},\mathbf{Y}|\greekbf{\theta}) = p(\mathbf{Y}|\greekbf{\theta}_y,\mathbf{x}) \, p(\mathbf{x}|\greekbf{\theta}_x)$$
+
+where $\greekbf{\alpha} = [\greekbf{\alpha}_x,\greekbf{\alpha}_y]^T$ is a hyperparameter that parameterizes the prior distribution. Given this assumption of conditional separability and using $D = \{\mathbf{x},\mathbf{Y}\}$ for all the observed data, posterior inference on $\greekbf{\theta}$ simplifies to
+
+
+$$p(\greekbf{\theta}|D,\greekbf{\alpha}) = \frac{\left[ p(\greekbf{\theta}_y|\greekbf{\alpha}_y) \displaystyle \prod_{n=1}^{N} p(\mathbf{y}_n|x_n,\greekbf{\theta}_y) \right] \left[p(\greekbf{\theta}_x|\greekbf{\alpha}_x) \displaystyle \prod_{n=1}^{N} p(x_n|\greekbf{\theta}_x)\right]}{p(D|\greekbf{\alpha})}$$
+
+Similarly, Bayesian inference for new observations simplifies to
+
+$$p(x'|\mathbf{y}',D,\greekbf{\alpha}) = \frac{\left[\int_{\Theta_y} p(\greekbf{y}'|\greekbf{\theta}_y,x') \, p(\greekbf{\theta}_y|D,\greekbf{\alpha}) \, \diff\greekbf{\theta}_y\right] \left[\int_{\Theta_x} p(x'|\greekbf{\theta}_x) \, p(\greekbf{\theta}_x|D,\greekbf{\alpha}) \, \diff\greekbf{\theta}_x\right]}{p(\mathbf{y}'|D,\greekbf{\alpha})}$$
+
+where $\mathbf{y}'$ is a new set of observed outcome variables and $x'$ is the corresponding independent variable. That is, given a set of forensic observations ($\mathbf{y}'$) predict age ($x'$). In summary, there are problems to be solved. First, posterior inference on $\greekbf{\theta}$ must be done given a set of training data. We do so by sampling from the posterior of $\greekbf{\theta}$ using an adaptive Metropolis algorithm. Given our assumption of conditional independence, $\greekbf{\theta}_y$ can be sampled independently from $\greekbf{\theta}_x$. Second, unknown $x'$ (age) must be predicted from a new set of observations $\mathbf{y}'$ (forensic data). Since missing data are common in many applications, we allow for missing data in both training and prediction for new observations.
+
+## Likelihood of $\greekbf{\theta}_y$
+Sampling from the posterior distribution of $p(\greekbf{\theta}_y|D,\greekbf{\alpha})$ requires calculation of the likelihood
+
+$$L^{(y)} = \displaystyle \prod_{n=1}^{N} p(\mathbf{y}_n|x_n,\greekbf{\theta}_y) = \displaystyle \prod_{n=1}^{N} l^{(y)}_n$$
+
+and prior $p(\greekbf{\theta}_y|\greekbf{\alpha}_y)$ for each observation $n$. In turn, calculation of the individual likelihoods, $l^{(y)}_n$, requires calculation of a multivariate Gaussian integral with (possibly infinite) rectangular limits and a dimension less than or equal to $J+K$. To specify this integral precisely, let $\mathbf{c}_1$ be a vector of variables known to lie between the limits $\greekbf{\tau}^{(c_1-)}$ and $\greekbf{\tau}^{(c_1+)}$ and let $\mathbf{c}_2$ be a vector of known variables for which
+
+$$[\mathbf{c}_1,\mathbf{c}_2]^T \sim \mathcal{N}(\greekbf{\mu},\Sigma)$$
+
+where the mean has components $\greekbf{\mu}^T = [\greekbf{\mu}_1,\greekbf{\mu}_2]^T$ and $\Sigma$ has the corresponding blocks $\Sigma_{11}$, $\Sigma_{22}$, and $\Sigma_{12} = \Sigma_{21}^T$. Conditioning on the known vector $\mathbf{c}_1$ allows a decomposition of the probability density of the vector $\mathbf{c}=[\mathbf{c}_1,\mathbf{c}_2]^T$,
+
+$$\phi(\mathbf{c};\greekbf{\mu},\Sigma) = \phi(\mathbf{c}_2;\greekbf{\mu}_2,\Sigma_{22}) \phi(\mathbf{c}_1;\bar{\greekbf{\mu}}_1,\bar{\Sigma}_{22})$$
+
+where $\phi$ is the probability density function of the multivariate Gaussian distribution and
+
+$$\bar{\greekbf{\mu}}_1 = \greekbf{\mu}_1 + \Sigma_{12} \Sigma_{22}^{-1} (\mathbf{c}_2 - \greekbf{\mu}_2)$$
+
+and
+
+$$\bar{\Sigma}_{11} = \Sigma_{11} - \Sigma_{12} \Sigma_{22}^{-1} \Sigma_{12}^T$$
+
+In general, $\mathbf{c}_1$ corresponds to ordinal variables with the limits set by the observed category and $\mathbf{c}_2$ corresponds to the continuous variables. However, for missing observations the variable is simply assumed to lie on the interval $-\infty$ to $-\infty$ and if all continuous variables are missing for an observation then $\mathbf{c}_1$ has length $J+K$ and $\mathbf{c}_2$ length $0$.
+
+$$\mathbf{b}|\mathbf{c},\greekbf{\mu},\Sigma \sim \mathcal{N}(\bar{\greekbf{\mu}},\bar{\Sigma})$$
+
+The likelihood of the observation $[\mathbf{c}_1,\mathbf{c}_2]^T$ is
+
+$$ l(\mathbf{c}_1,\mathbf{c}_2) = \phi(\mathbf{c}_2;\greekbf{\mu}_2,\Sigma_{22}) \int_{\greekbf{\tau}^{(c)}} \phi(\mathbf{c}_1;\bar{\greekbf{\mu}}_1,\bar{\Sigma})_{11} \diff\mathbf{c}_1 $$
+
+where ${\greekbf{\tau}^{(c)}}$ is shorthand for the integration limits.
+
+## Sampling $\greekbf{\theta}_y$
+To sample from $\greekbf{\theta}_y$, we utilize the adaptive Metropolis algorithm described in Haario et al. (2001) [An adaptive Metropolis algorithm]. The algorithm adapts the proposal distribution based on the full history of samples, with a burn-in period prior to adaption that has a fixed proposal distribution. The posterior probability is proportional to
+
+$$\eta(\mathbf{y};\greekbf{\theta}_y,\greekbf{\alpha}_y) = L^{(y)}(\mathbf{y};\greekbf{\theta}_y) \, p(\greekbf{\theta}_y|\greekbf{\alpha}_y)$$
+
+We adopt a conservative, flat prior for $\greekbf{\theta}_y$ so that $p(\greekbf{\theta}_y|\greekbf{\alpha}_y)$ can be assumed constant. The candidate distribution is a normal draw with a mean of the previous sample at step $t-1$ and covariance equal to
+
+$$C_t = \left\{ \begin{array}{ll}C_0 \mbox{,} & t \leq t_0 \\ s_d \, \mathrm{cov}(\greekbf{\theta}_y^{(0)},\cdots,\greekbf{\theta}_y^{(t-1)}) + s_d \, \epsilon I_d & t > t_0 \end{array} \right.$$
+
+where $s_d$ depends on the dimension $d$ of $\greekbf{\theta}_y$ and $I_d$ is the identity matrix of dimension $d$. The term with the parameter $\epsilon$ ensures that $C_t$ is never singular. Following Gelman et al. (1996) [Efficient Metropolis jumping rules] we use $s_d = (2.4)^2 / d$. Efficient recursive algorithms exist to recursively update the covariance of the proposal distribution.

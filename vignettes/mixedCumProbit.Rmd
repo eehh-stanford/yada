@@ -210,5 +210,7 @@ In the variable sim, x is the vector of independent observations, Y the matrix o
 
 ```{r}
 registerDoParallel(8)
-samp <- sample_theta_y(sim$x,sim$Y,hp,200,100,verbose=F)
+samp <- sample_theta_y(sim$x,sim$Y,hp,20,10,verbose=F)
+bundle <- bundle_theta_y_sample(samp,x,Y,hp,varNames=c('ord1','ord2','cont1','cont2'),known=list(theta_y=theta_y0_list))
+print(names(bundle))
 ```

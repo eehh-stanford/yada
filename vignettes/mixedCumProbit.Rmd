@@ -110,7 +110,7 @@ where $s_d$ depends on the dimension $d$ of $\greekbf{\theta}_y$ and $I_d$ is th
 
 
 ## Fitting single variables
-yada provides tools for working with observations of single ordinal or continuous variables. \code{simGenCrra} creates simulated data with a mean of $g(x) = a x^{1-r} + b$ with noise added via a draw from the normal distribution with a standard deviation of $1$. Create a vector of exponentially distributed observations $x$ and call the simGenCrra function (setting the random number seed for reproducible results) with $a=4$, $r=.7$, and $b=-2$:
+yada provides tools for working with observations of single ordinal or continuous variables. simGenCrra creates simulated data with a mean of $g(x) = a x^{1-r} + b$ with noise added via a draw from the normal distribution with a standard deviation of $1$. Create a vector of exponentially distributed observations $x$ and call the simGenCrra function (setting the random number seed for reproducible results) with $a=4$, $r=.7$, and $b=-2$:
 
 ```{r}
 set.seed(971484) # Seed from random.org between 1 and 1,000,000
@@ -128,7 +128,7 @@ lines(xv,genCrra(xv,paramTrue),col='green',lwd=2)
 lines(xv,genCrra(xv,param),col='red',lwd=2)
 ```
 
-Ordinal data can be simulated with \code{simGenCrraOrd}. By default, only the ordinal categories are returned, but both the ordinal categories and latent underlying continuous trait can be returned by setting the input latent variable to True. Simulate data using $\alpha=4$, $\rho=.75$, $\tau_1=2.5$, and $\tau_2=4$:
+Ordinal data can be simulated with simGenCrraOrd. By default, only the ordinal categories are returned, but both the ordinal categories and latent underlying continuous trait can be returned by setting the input latent variable to True. Simulate data using $\alpha=4$, $\rho=.75$, $\tau_1=2.5$, and $\tau_2=4$:
 
 ```{r}
 paramTrue <- c(4,.75,2.5,4)
@@ -183,16 +183,32 @@ theta_y0_list$tau[[1]] <- c(1,2,3.5,4.5)
 theta_y0_list$tau[[2]] <- c(0,2,3,5.5)
 theta_y0_list$Sigma <- diag(4)
 theta_y0_list$Sigma[1,4] <- .2
-theta_y0_list$Sigma[4,1] <- theta$Sigma[1,4]
+theta_y0_list$Sigma[4,1] <- theta_y0_list$Sigma[1,4]
 theta_y0_list$Sigma[3,4] <- -.3
-theta_y0_list$Sigma[4,3] <- theta$Sigma[3,4]
+theta_y0_list$Sigma[4,3] <- theta_y0_list$Sigma[3,4]
 ```
 
-$\greekbf{theta}_y$ can be represented as either a list, which is more readable for humans, or a vector. Conversion between representations is done with \code{theta_yList2Vect} and \code{theta_yVect2List}.
+$\greekbf{theta}_y$ can be represented as either a list, which is more readable for humans, or a vector. Conversion between representations is done with theta_yList2Vect and theta_yVect2List.
 
 ```{r}
 theta_y0 <- theta_yList2Vect(theta_y0_list)
 print(theta_y0_list)
 print(theta_y0)
 print(theta_yList2Vect(theta_yVect2List(theta_y0,hp)))
+```
+
+Next, create simulated data with $1000$ observations and a missing data proportion of $0.05$ by calling simMixedCumProbit:
+
+```{r}
+  theta_x <- 1/3
+  sim <- simMixedCumProbit(theta_y0_list,N,theta_x,hp,0.05)
+  print(names(sim))
+  print(dim(sim$Y))
+```
+
+In the variable sim, x is the vector of independent observations, Y the matrix of actual observations, Ystar the matrix of latent observations, and Y0 the matrix of actual observations with no missing data.
+
+```{r}
+registerDoParallel(8)
+samp <- sample_theta_y(sim$x,sim$Y,hp,200,100,verbose=F)
 ```

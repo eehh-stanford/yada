@@ -16,6 +16,6 @@
 
 theta_yList2Vect <- function(theta_y_list) {
   tau <- unlist(theta_y_list$tau)
-  s <- covMat2corrVect(theta_y_list$Sigma)
+  s <- covMat2CorrVect(theta_y_list$Sigma)
   return(c(theta_y_list$alpha,theta_y_list$rho,theta_y_list$a,theta_y_list$r,theta_y_list$b,tau,s))
 }

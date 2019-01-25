@@ -4,14 +4,13 @@
 #'
 #' @param theta_y theta_y as a vector
 #' @param hp Hyperparameters (needed to guide conversion)
-#' @param theta_y_list theta_y as a list
 #'
 # @keywords
 #' @export
 #'
 # @examples
 #'
-#' @return theta_y as a vector
+#' @return theta_y as a list (theta_y_list)
 #'
 #' @author Michael Holton Price <MichaelHoltonPrice@gmail.com>
 
@@ -50,7 +49,7 @@ theta_yVect2List <- function(theta_y,hp) {
   # Add covariance matrix
   last <- last + number
   number <- choose(hp$K+hp$J,2)
-  theta_y_list$Sigma <- corrVect2covMat(theta_y[(last+1):(last+number)])
+  theta_y_list$Sigma <- corrVect2CovMat(theta_y[(last+1):(last+number)])
 
   return(theta_y_list)
 }

@@ -14,6 +14,6 @@
 #'
 #' @author Michael Holton Price <MichaelHoltonPrice@gmail.com>
 
-covMat2corrVect <- function(Sigma) {
+covMat2CorrVect <- function(Sigma) {
   return(Sigma[which(lower.tri(Sigma))])
 }

@@ -214,3 +214,9 @@ samp <- sample_theta_y(sim$x,sim$Y,hp,20,10,verbose=F)
 bundle <- bundle_theta_y_sample(samp,x,Y,hp,varNames=c('ord1','ord2','cont1','cont2'),known=list(theta_y=theta_y0_list))
 print(names(bundle))
 ```
+
+Now plot alpha samples:
+
+```{r,fig.align='center',fig.width=6,fig.height=6}
+theta_y_plot_sample_variable(bundle,'alpha')
+```

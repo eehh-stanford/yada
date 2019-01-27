@@ -31,7 +31,7 @@ theta_yIsValid <- function(theta_y_list,hp,forceFinite=F,x=x,Y=Y) {
   }
 
   # Check if Sigma is positive definite
-  if(!is.positive.definite(theta_y_list$Sigma)) {
+  if(!matrixcalc::is.positive.definite(theta_y_list$Sigma)) {
     return(F)
   }
 

@@ -4,9 +4,8 @@
 #'
 #' @param bundle The bundle of variables (see \code{bundle_theta_y_sample})
 #' @param variable Which variable to plot
+#' @param decim An integer for sampling (decimating) data to reduce the number of points for very large samples [optional; default = 1 for all samples]
 #' @param fileName Filename for pdf save file [optional]
-
-#' @param hp
 #'
 # @keywords
 #' @export
@@ -14,14 +13,22 @@
 #' @author Michael Holton Price <MichaelHoltonPrice@gmail.com>
 
 theta_y_plot_sample_variable <- function(bundle,variable,decim=1,fileName=NA) {
+  if(!bundle$haveNames) {
+    varNames <- sapply(as.character(1:bundle$hp$J),function(s){paste('ord',s,sep='')})
+    varNames <- c(varNames,sapply(as.character(1:bundle$hp$K),function(s){paste('cont',s,sep='')}))
+  } else {
+    varNames <- bundle$varNames
+  }
   ind <- seq(1,length(bundle$theta_yList),by=decim)
   toFile <- !is.na(fileName)
   isOrd <- variable %in% c('alpha','rho')
  options(warn=-1) # in case J < 3
   if(isOrd) {
-    colVect <- brewer.pal(n=bundle$hp$J,name='Set1')
+    colVect <- RColorBrewer::brewer.pal(n=bundle$hp$J,name='Set1')
+    varNames <- varNames[1:bundle$hp$J]
   } else {
-    colVect <- brewer.pal(n=bundle$hp$K,name='Set1')
+    colVect <- RColorBrewer::brewer.pal(n=bundle$hp$K,name='Set1')
+    varNames <- varNames[hp$K+1:bundle$hp$J]
   }
   options(warn=0)
 
@@ -48,8 +55,16 @@ theta_y_plot_sample_variable <- function(bundle,variable,decim=1,fileName=NA) {
         lines(c(0,max(ind)),c(1,1)*v[j],col=colVect[j],lwd=3)
       }
     }
+   } else {
+    for(k in 1:bundle$hp$K) {
+      points(ind,sapply(valList,function(x){x[k]})[ind],col=colVect[k],pch=20)
+      if(bundle$haveKnown) {
+        lines(c(0,max(ind)),c(1,1)*v[k],col=colVect[k],lwd=3)
+      }
+    }
   }
 
+  legend('left',legend=varNames,col=colVect,lty=1,lwd=3)
   if(toFile) {
     dev.off()
   }

@@ -25,25 +25,44 @@ getIntegInfo_theta_y <- function(theta_y_list,Y) {
   isCont <- c(rep(F,J),rep(T,J)) # Is the variable continuous?
   # For non-missing observations, columns of doIntegral are T for ordinal variables and F for continuous variables
   # doIntegral has dimensions (J+K) x N
-  doIntegral <- matrix(rep(!isCont,ncol(Y)),nrow=nrow(Y))
+  if(is.matrix(Y)) {
+    doIntegral <- matrix(rep(!isCont,ncol(Y)),nrow=nrow(Y))
+  } else {
+    doIntegral <- !isCont
+  }
   # The other possibility for a T is that there is missing data
   doIntegral[is.na(Y)] <- T
   
-  # Create the limit array for observations requiring int3egration
+  # Create the limit array for observations requiring integration
   # limArray has dimensions (J+K) x N x 2
-  limArray <- array(rep(NA,nrow(Y)*ncol(Y)*2),dim=c(nrow(Y),ncol(Y),2))
-  # Add limits for missing variables
-  limArray[,,1][is.na(Y)] <- -Inf
-  limArray[,,2][is.na(Y)] <-  Inf
+  if(is.matrix(Y)) {
+    limArray <- array(rep(NA,nrow(Y)*ncol(Y)*2),dim=c(nrow(Y),ncol(Y),2))
+    # Add limits for missing variables
+    limArray[,,1][is.na(Y)] <- -Inf
+    limArray[,,2][is.na(Y)] <-  Inf
+  } else {
+    limArray <- matrix(NA,length(Y),2)
+    # Add limits for missing variables
+    limArray[,1][is.na(Y)] <- -Inf
+    limArray[,2][is.na(Y)] <-  Inf
+  }
+
 
   # Add limits for non-missing ordinal variables
   for(j in 1:J) {
     tau <- c(-Inf,theta_y_list$tau[[j]],Inf)
-    for(n in 1:ncol(Y)) {
-      if(!is.na(Y[j,n])) {
-        limArray[j,n,1] <- tau[Y[j,n]+1]
-        limArray[j,n,2] <- tau[Y[j,n]+2]
+    if(is.matrix(Y)) {
+      for(n in 1:ncol(Y)) {
+        if(!is.na(Y[j,n])) {
+          limArray[j,n,1] <- tau[Y[j,n]+1]
+          limArray[j,n,2] <- tau[Y[j,n]+2]
+        }
       }
+    } else {
+        if(!is.na(Y[j])) {
+          limArray[j,1] <- tau[Y[j]+1]
+          limArray[j,2] <- tau[Y[j]+2]
+        }
     }
   }
   return(list(doIntegral=doIntegral,limArray=limArray))

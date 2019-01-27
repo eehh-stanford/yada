@@ -18,38 +18,39 @@
 
 #' @export
 calcLogLik_theta_y <- function(theta_y_list,x,Y,hp) {
+
   integInfo <- getIntegInfo_theta_y(theta_y_list,Y)
-
-  logLikVect <- rep(0,length(x))
-
-  # Calculate the log-likelihood using a parallel for loop
-  logLikVect <- foreach(n=1:ncol(Y), .combine=cbind) %dopar% {
-    logLik <- 0
-    intAll <- all(integInfo$doIntegral[,n])
+  if(is.matrix(Y)) {
+    # For more than one variable, call calcLogLik_theta_y for each observation in parallel
+    logLikVect <- rep(0,length(x))
+    logLikVect <- foreach(n=1:ncol(Y), .combine=cbind) %dopar% {
+      logLik <- calcLogLik_theta_y(theta_y_list,x[n],Y[,n],hp)
+    }
+    return(sum(logLikVect))
+  } else {
+    # The calculation for one observation
+    intAll <- all(integInfo$doIntegral)
     # If all variables are integrated, the conditional calculations are not needed
     if(intAll) {
-      lo <- integInfo$limArray[,n,1]
-      hi <- integInfo$limArray[,n,2]
-      p <- mvtnorm::pmvnorm(lower=lo, upper=hi,mean=calc_theta_y_means(x[n],theta_y_list),sigma=theta_y_list$Sigma)
-      logLik <- logLik + log(as.numeric(p))
+      lo <- integInfo$limArray[,1]
+      hi <- integInfo$limArray[,2]
+      p <- mvtnorm::pmvnorm(lower=lo, upper=hi,mean=calc_theta_y_means(x,theta_y_list),sigma=theta_y_list$Sigma)
+      logLik <- log(as.numeric(p))
     } else {
-      dep <- which(integInfo$doIntegral[,n]) # dep for dependent (conditioned on known variables)
-      giv <- which(!integInfo$doIntegral[,n]) # giv for given (variables conditioned on)
-      lo <- integInfo$limArray[dep,n,1]
-      hi <- integInfo$limArray[dep,n,2]
-      condNorm <- condMVNorm::condMVN(mean=calc_theta_y_means(x[n],theta_y_list),sigma=theta_y_list$Sigma, dependent=dep, given=giv,X.given=Y[giv,n])
+      dep <- which(integInfo$doIntegral) # dep for dependent (conditioned on known variables)
+      giv <- which(!integInfo$doIntegral) # giv for given (variables conditioned on)
+      lo <- integInfo$limArray[dep,1]
+      hi <- integInfo$limArray[dep,2]
+      condNorm <- condMVNorm::condMVN(mean=calc_theta_y_means(x,theta_y_list),sigma=theta_y_list$Sigma, dependent=dep, given=giv,X.given=Y[giv])
       p <- mvtnorm::pmvnorm(lower=lo, upper=hi,mean=condNorm$condMean,sigma=condNorm$condVar) # The integral
-      logLik <- logLik + log(as.numeric(p))
+      logLik <- log(as.numeric(p))
       if(length(giv) == 1) { # The contribution if no integral
-        logLik <- logLik + log(dnorm(Y[giv,n],mean=calc_theta_y_means(x[n],theta_y_list,giv),sd=sqrt(theta_y_list$Sigma[giv,giv])))
+        logLik <- logLik + log(dnorm(Y[giv],mean=calc_theta_y_means(x,theta_y_list,giv),sd=sqrt(theta_y_list$Sigma[giv,giv])))
       } else {
-        logLik <- logLik + mvtnorm::dmvnorm(Y[giv,n],mean=calc_theta_y_means(x[n],theta_y_list,giv),sigma=theta_y_list$Sigma[giv,giv],log=T)
+        logLik <- logLik + mvtnorm::dmvnorm(Y[giv],mean=calc_theta_y_means(x,theta_y_list,giv),sigma=theta_y_list$Sigma[giv,giv],log=T)
       }
     }
-    logLik <- logLik
   }
- # print(logLikVect)
-  return(sum(logLikVect))
 }
 
 # A wrapper function to calculate the mean for each variable

@@ -20,7 +20,7 @@ knitr::opts_chunk$set(
 
 
 ## Introduction
-Cumulative probit models provide a way to parameterically model ordinal data, such as data on party identification and skeletal age categories -- for example, see Chapter 8 of Jackman 2009 [Bayesian Analysis for the Social Sciences] and Kongisberg 2015 [Multivariate cumulative probit for age estimation using ordinal categorical data]. To our knowledge, however, no method exists for analyzing mixed sets of responses variables that can be both ordinal and continuous, though Gueorguieva and Agresti 2001 [A Correlated Probit Model for Joint Modeling of Clustered Binary and Continuous Responses] describe a two variable model involving a single continuous variable and a single binary variable. This vignette describes a mixed cumulative probit model implemented in the R package 'yada'. By mixed we mean that response variables can be either continuous or ordinal. The package supports, in principle, any number of variables and any numbers of categories for each ordinal variable. We allow only one independent variable and utilize a specific parametric form for the dependence of latent dependent variables on the independent variable, but generalizes that relax these assumptions would be straightforward.
+Cumulative probit models provide a way to parameterically model ordinal data, such as data on party identification and skeletal age categories -- for example, see Chapter 8 of Jackman 2009 [Bayesian Analysis for the Social Sciences] and Kongisberg 2015 [Multivariate cumulative probit for age estimation using ordinal categorical data]. To our knowledge, however, no method exists for analyzing mixed sets of responses variables that can be both ordinal and continuous, though Gueorguieva and Agresti 2001 [A Correlated Probit Model for Joint Modeling of Clustered Binary and Continuous Responses] describe a two variable model involving a single continuous variable and a single binary variable. This vignette describes a mixed cumulative probit model implemented in the R package 'yada'. By mixed we mean that response variables can be either continuous or ordinal. The package supports, in principle, any number of variables and any numbers of categories for each ordinal variable. We allow only one independent variable and utilize a specific parametric form for the dependence of latent dependent variables on the independent variable, but generalizations that relax these assumptions would be straightforward.
 
 ## Application
 Although this model and associated R code should have wide application, we had a specific application in mind when we developed it: forensic juvenile age estimation. The independent variable is $x$, age, and the dependent variables can be a mix of continuous skeletal traits (for example, femur length) and ordinal skeletal traits (for example, epyphiseal fusion). Ultimately, our goal is to predict posterior age given skeletal traits, which requires a specification of the prior probability $p(x|\alpha)$, where $\alpha$ is a hyperparameter that parameterizes the prior, and a model for the likelihood, $p(\theta|x)$. We adopt a fully Bayesian approach in which we sample the posterior distribution $p(\theta|D,\alpha)$ for $\theta$ using an adapative Metropolis algorithm, where $D$ stands for observed data.
@@ -38,7 +38,7 @@ and for elements of $\mathbf{h}$ we adopt the parametric form
 
 $$h_k(x) = a_k \, x^{1 - r_k} + b_k$$
 
-The intercept term is omitted for ordinal variables to ensure identifiability. For each ordinal variable $j$, the category ($m_j=0,1,\cdots,M_j$) is directly observed, and we model the mapping between the latent vector $\mathbf{v}^*$ and observed ordinal categories $\mathbf{v}$ via the threshold parameters $\greekbf{\tau}^{(j)}$ [$j=1,2,\cdots,J$]. 
+The intercept term is omitted for ordinal variables to ensure identifiability. For each ordinal variable $j$, only the category ($m_j=0,1,\cdots,M_j$) is directly observed, and we model the mapping between the latent vector $\mathbf{v}^*$ and observed ordinal categories $\mathbf{v}$ via the threshold parameters $\greekbf{\tau}^{(j)}$ [$j=1,2,\cdots,J$]. 
 
 $$v_{j,n} = 0 \Longleftrightarrow v^*_{j,n} <= \tau^{(j)}_1$$
 $$v_{j,n} = m \Longleftrightarrow \tau^{(j)}_m < v^*_{j,n} <= \tau^{(j)}_{m+1}$$
@@ -64,7 +64,7 @@ Similarly, Bayesian inference for new observations simplifies to
 
 $$p(x'|\mathbf{y}',D,\greekbf{\alpha}) = \frac{\left[\int_{\Theta_y} p(\greekbf{y}'|\greekbf{\theta}_y,x') \, p(\greekbf{\theta}_y|D,\greekbf{\alpha}) \, \diff\greekbf{\theta}_y\right] \left[\int_{\Theta_x} p(x'|\greekbf{\theta}_x) \, p(\greekbf{\theta}_x|D,\greekbf{\alpha}) \, \diff\greekbf{\theta}_x\right]}{p(\mathbf{y}'|D,\greekbf{\alpha})}$$
 
-where $\mathbf{y}'$ is a new set of observed outcome variables and $x'$ is the corresponding independent variable. That is, given a set of forensic observations ($\mathbf{y}'$) predict age ($x'$). In summary, there are problems to be solved. First, posterior inference on $\greekbf{\theta}$ must be done given a set of training data. We do so by sampling from the posterior of $\greekbf{\theta}$ using an adaptive Metropolis algorithm. Given our assumption of conditional independence, $\greekbf{\theta}_y$ can be sampled independently from $\greekbf{\theta}_x$. Second, unknown $x'$ (age) must be predicted from a new set of observations $\mathbf{y}'$ (forensic data). Since missing data are common in many applications, we allow for missing data in both training and prediction for new observations.
+where $\mathbf{y}'$ is a new set of observed outcome variables and $x'$ is the corresponding independent variable. That is, given a set of forensic observations ($\mathbf{y}'$) predict age ($x'$). In summary, there are two problems to be solved. First, posterior inference on $\greekbf{\theta}$ must be done given a set of training data. We do so by sampling from the posterior of $\greekbf{\theta}$ using an adaptive Metropolis algorithm. Given our assumption of conditional independence, $\greekbf{\theta}_y$ can be sampled independently from $\greekbf{\theta}_x$. Second, unknown $x'$ (age) must be predicted from a new set of observations $\mathbf{y}'$ (forensic data). Since missing data are common in many applications, we allow for missing data in both training and prediction for new observations.
 
 ## Likelihood of $\greekbf{\theta}_y$
 Sampling from the posterior distribution of $p(\greekbf{\theta}_y|D,\greekbf{\alpha})$ requires calculation of the likelihood
@@ -87,11 +87,7 @@ and
 
 $$\bar{\Sigma}_{11} = \Sigma_{11} - \Sigma_{12} \Sigma_{22}^{-1} \Sigma_{12}^T$$
 
-In general, $\mathbf{c}_1$ corresponds to ordinal variables with the limits set by the observed category and $\mathbf{c}_2$ corresponds to the continuous variables. However, for missing observations the variable is simply assumed to lie on the interval $-\infty$ to $-\infty$ and if all continuous variables are missing for an observation then $\mathbf{c}_1$ has length $J+K$ and $\mathbf{c}_2$ length $0$.
-
-$$\mathbf{b}|\mathbf{c},\greekbf{\mu},\Sigma \sim \mathcal{N}(\bar{\greekbf{\mu}},\bar{\Sigma})$$
-
-The likelihood of the observation $[\mathbf{c}_1,\mathbf{c}_2]^T$ is
+In general, $\mathbf{c}_1$ corresponds to ordinal variables with the limits set by the observed category and $\mathbf{c}_2$ corresponds to the continuous variables. However, for missing observations the variable is simply assumed to lie on the interval $-\infty$ to $-\infty$ and if all continuous variables are missing for an observation then $\mathbf{c}_1$ has length $J+K$ and $\mathbf{c}_2$ length $0$. The likelihood of the observation $[\mathbf{c}_1,\mathbf{c}_2]^T$ is
 
 $$ l(\mathbf{c}_1,\mathbf{c}_2) = \phi(\mathbf{c}_2;\greekbf{\mu}_2,\Sigma_{22}) \int_{\greekbf{\tau}^{(c)}} \phi(\mathbf{c}_1;\bar{\greekbf{\mu}}_1,\bar{\Sigma})_{11} \diff\mathbf{c}_1 $$
 
@@ -113,6 +109,7 @@ where $s_d$ depends on the dimension $d$ of $\greekbf{\theta}_y$ and $I_d$ is th
 yada provides tools for working with observations of single ordinal or continuous variables. simGenCrra creates simulated data with a mean of $g(x) = a x^{1-r} + b$ with noise added via a draw from the normal distribution with a standard deviation of $1$. Create a vector of exponentially distributed observations $x$ and call the simGenCrra function (setting the random number seed for reproducible results) with $a=4$, $r=.7$, and $b=-2$:
 
 ```{r}
+library(yada)
 set.seed(971484) # Seed from random.org between 1 and 1,000,000
 x <- rexp(100)
 paramTrue <- c(4,.75,-2)
@@ -188,7 +185,7 @@ theta_y0_list$Sigma[3,4] <- -.3
 theta_y0_list$Sigma[4,3] <- theta_y0_list$Sigma[3,4]
 ```
 
-$\greekbf{theta}_y$ can be represented as either a list, which is more readable for humans, or a vector. Conversion between representations is done with theta_yList2Vect and theta_yVect2List.
+$\greekbf{\theta}_y$ can be represented as either a list, which is more readable for humans, or a vector. Conversion between representations is done with theta_yList2Vect and theta_yVect2List.
 
 ```{r}
 theta_y0 <- theta_yList2Vect(theta_y0_list)
@@ -204,14 +201,16 @@ Next, create simulated data with $1000$ observations and a missing data proporti
   sim <- simMixedCumProbit(theta_y0_list,N,theta_x,hp,0.05)
   print(names(sim))
   print(dim(sim$Y))
+  print(sum(is.na(sim$Y)) / prod(dim(sim$Y)))
 ```
 
 In the variable sim, x is the vector of independent observations, Y the matrix of actual observations, Ystar the matrix of latent observations, and Y0 the matrix of actual observations with no missing data.
 
 ```{r}
-registerDoParallel(8)
-samp <- sample_theta_y(sim$x,sim$Y,hp,20,10,verbose=F)
-bundle <- bundle_theta_y_sample(samp,x,Y,hp,varNames=c('ord1','ord2','cont1','cont2'),known=list(theta_y=theta_y0_list))
+library(doParallel)
+registerDoParallel(detectCores()-2)
+samp <- sample_theta_y(sim$x,sim$Y,hp,10,20,verbose=F,start=theta_y0_list)
+bundle <- bundle_theta_y_sample(samp,sim$x,sim$Y,hp,varNames=c('ord1','ord2','cont1','cont2'),known=list(theta_y=theta_y0_list))
 print(names(bundle))
 ```
 
@@ -219,4 +218,43 @@ Now plot alpha samples:
 
 ```{r,fig.align='center',fig.width=6,fig.height=6}
 theta_y_plot_sample_variable(bundle,'alpha')
+```
+
+Now plot a samples:
+
+```{r,fig.align='center',fig.width=6,fig.height=6}
+theta_y_plot_sample_variable(bundle,'a')
+```
+
+Now plot tau for first ordinal variable:
+
+```{r,fig.align='center',fig.width=6,fig.height=6}
+theta_y_plot_tau(bundle,1)
+```
+
+Now plot all correlations for first ordinal variable:
+
+```{r,fig.align='center',fig.width=6,fig.height=6}
+theta_y_plot_corr(bundle)
+```
+
+
+Repeat without setting start
+
+```{r}
+samp2 <- sample_theta_y(sim$x,sim$Y,hp,10,20,verbose=F)
+bundle2 <- bundle_theta_y_sample(samp2,sim$x,sim$Y,hp,varNames=c('ord1','ord2','cont1','cont2'),known=list(theta_y=theta_y0_list))
+print(names(bundle))
+```
+
+Now plot alpha samples:
+
+```{r,fig.align='center',fig.width=6,fig.height=6}
+theta_y_plot_sample_variable(bundle2,'alpha')
+```
+
+Now plot a samples:
+
+```{r,fig.align='center',fig.width=6,fig.height=6}
+theta_y_plot_sample_variable(bundle2,'a')
 ```

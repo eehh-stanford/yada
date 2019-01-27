@@ -20,9 +20,13 @@
 # @references
 
 
-sample_theta_y <- function(x,Y,hp,numSamp,burnIn,verbose=T) {
+sample_theta_y <- function(x,Y,hp,numSamp,burnIn,verbose=T,start=NA) {
   # Initialize theta_y and get ready for sampling
-  theta_y_t_list <- init_theta_y(x,Y,hp$J)
+  if(any(is.na(start))) {
+    theta_y_t_list <- init_theta_y(x,Y,hp$J)
+  } else {
+    theta_y_t_list <- start
+  }
   theta_y_t <- theta_yList2Vect(theta_y_t_list)
   logLik_t <- calcLogLik_theta_y(theta_y_t_list,x,Y,hp)
 

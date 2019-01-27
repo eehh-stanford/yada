@@ -5,6 +5,7 @@
 # @details
 #'
 #' @param theta_yList A list of samples of theta_y (samples are a list, not a vector)
+#' @param logLikeVect A vector of likelihoods calculated for each sample
 #' @param x Vector of indepenent variable observations
 #' @param Y Matrix of dependent variable observations
 #' @param hp Hyperparameters
@@ -21,8 +22,8 @@
 # @references
 
 #' @export
-bundle_theta_y_sample <- function(theta_yList,x,Y,hp,varNames=NA,known=NA) {
-  bundle <- list(theta_yList=theta_yList,Y=Y,x=x,hp=hp)
+bundle_theta_y_sample <- function(theta_yList,logLikVect,x,Y,hp,varNames=NA,known=NA) {
+  bundle <- list(theta_yList=theta_yList,logLikVect=logLikVect,Y=Y,x=x,hp=hp)
   if(!all(is.na(known))) {
     bundle$known <- known
     bundle$haveKnown <- T

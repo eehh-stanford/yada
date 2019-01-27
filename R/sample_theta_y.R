@@ -40,6 +40,7 @@ sample_theta_y <- function(x,Y,hp,numSamp,burnIn,verbose=T,start=NA) {
   c0 <- 1e-6
   C0 <- diag(c(rep(c0,length(theta_y_t))))
   thetaList <- list()
+  logLikVect <- vector()
   for(tt in 1:(burnIn+numSamp)) {
     if(tt <= burnIn) {
       if(verbose) {
@@ -91,6 +92,10 @@ sample_theta_y <- function(x,Y,hp,numSamp,burnIn,verbose=T,start=NA) {
       logLik_tp1 <- logLik_t
     }
     thetaList[[tt]] <- theta_y_tp1_list
+    logLikVect[tt] <- logLik_tp1
+
+
+    # Get ready for next sample
     theta_y_t <- theta_y_tp1
     theta_y_t_list <- theta_y_tp1_list
     #logPrior_k <- logPrior_kp1
@@ -113,5 +118,5 @@ sample_theta_y <- function(x,Y,hp,numSamp,burnIn,verbose=T,start=NA) {
 #    }
   }
 
-  return(thetaList)
+  return(list(theta_yList=thetaList,logLikVect=logLikVect))
 }

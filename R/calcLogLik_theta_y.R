@@ -23,7 +23,7 @@ calcLogLik_theta_y <- function(theta_y_list,x,Y,hp) {
   if(is.matrix(Y)) {
     # For more than one variable, call calcLogLik_theta_y for each observation in parallel
     logLikVect <- rep(0,length(x))
-    logLikVect <- foreach(n=1:ncol(Y), .combine=cbind) %dopar% {
+    logLikVect <- foreach::foreach(n=1:ncol(Y), .combine=cbind) %dopar% {
       logLik <- calcLogLik_theta_y(theta_y_list,x[n],Y[,n],hp)
     }
     return(sum(logLikVect))

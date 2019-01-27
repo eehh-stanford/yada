@@ -209,8 +209,8 @@ In the variable sim, x is the vector of independent observations, Y the matrix o
 ```{r}
 library(doParallel)
 registerDoParallel(detectCores()-2)
-samp <- sample_theta_y(sim$x,sim$Y,hp,10,20,verbose=F,start=theta_y0_list)
-bundle <- bundle_theta_y_sample(samp,sim$x,sim$Y,hp,varNames=c('ord1','ord2','cont1','cont2'),known=list(theta_y=theta_y0_list))
+samp <- sample_theta_y(sim$x,sim$Y,hp,100,2000,verbose=F,start=theta_y0_list)
+bundle <- bundle_theta_y_sample(samp$theta_yList,samp$logLikVect,sim$x,sim$Y,hp,varNames=c('ord1','ord2','cont1','cont2'),known=list(theta_y=theta_y0_list))
 print(names(bundle))
 ```
 
@@ -242,8 +242,8 @@ theta_y_plot_corr(bundle)
 Repeat without setting start
 
 ```{r}
-samp2 <- sample_theta_y(sim$x,sim$Y,hp,10,20,verbose=F)
-bundle2 <- bundle_theta_y_sample(samp2,sim$x,sim$Y,hp,varNames=c('ord1','ord2','cont1','cont2'),known=list(theta_y=theta_y0_list))
+samp2 <- sample_theta_y(sim$x,sim$Y,hp,100,10000,verbose=F)
+bundle2 <- bundle_theta_y_sample(samp2$theta_yList,samp2$logLikVect,sim$x,sim$Y,hp,varNames=c('ord1','ord2','cont1','cont2'),known=list(theta_y=theta_y0_list))
 print(names(bundle))
 ```
 
@@ -257,4 +257,19 @@ Now plot a samples:
 
 ```{r,fig.align='center',fig.width=6,fig.height=6}
 theta_y_plot_sample_variable(bundle2,'a')
+```
+
+Plot six test observations:
+
+```{r,fig.align='center',fig.width=6,fig.height=6}
+simTest <- simMixedCumProbit(theta_y0_list,6,theta_x,hp,0.05)
+xv3 <- seq(0,10,len=1000)
+thBest <- samp2$theta_yList[[which.max(samp$logLikVect)]] # Roughly maximum likelihood
+theta_x <- 1/mean(sim$x)
+print(simTest$x)
+print(simTest$Y)
+par(mfrow=c(3,2))
+for(n in 1:length(simTest$x)) {
+  plot_mixed_cum_probit_posterior(thBest,theta_x,xv3,simTest$Y[,n],hp,simTest$x[n])
+}
 ```

@@ -6,7 +6,15 @@
 #'
 #' @param x Vector of indepenent variable observations
 #' @param Y Matrix of dependent variable observations
-#' @param J Number of latent variables
+#' @param hp Hyperparameters
+#' @param numSamp Number of samples
+#' @param burnIn Number of burn-in samples
+#' @param verbose Whether to print out information as the run proceeds [optional]
+#' @param start Starting value of theta_y_list for sampling [optional]
+#' @param fileName File name for saving [optional]
+#' @param savePeriod Period (of samples) for saving [optiona; default 1000]
+#' @param known Known values, a list with the field theta_y, which is also a list [optional]
+#' @param varNames Variable names for saving to file [optional]
 #'
 # @keywords
 #' @export
@@ -20,13 +28,14 @@
 # @references
 
 
-sample_theta_y <- function(x,Y,hp,numSamp,burnIn,verbose=T,start=NA) {
+sample_theta_y <- function(x,Y,hp,numSamp,burnIn,verbose=T,start=NA,fileName=NA,savePeriod=1000,known=NA,varNames=NA) {
   # Initialize theta_y and get ready for sampling
   if(any(is.na(start))) {
     theta_y_t_list <- init_theta_y(x,Y,hp$J)
   } else {
     theta_y_t_list <- start
   }
+
   theta_y_t <- theta_yList2Vect(theta_y_t_list)
   logLik_t <- calcLogLik_theta_y(theta_y_t_list,x,Y,hp)
 
@@ -110,13 +119,11 @@ sample_theta_y <- function(x,Y,hp,numSamp,burnIn,verbose=T,start=NA) {
     if(verbose) {
       print(accept)
     }
-#    if(tt %% summaryPeriod == 1 ) {
-#      known <- list(theta=theta,Ystar=Ystar)
-#      saveMH('mh_save.rds',thetaList,Y,x,hp,vars,known)
-#      mh <- readRDS('mh_save.rds')
-#      summarizeResults(mh,floor(tt/1000))
-#    }
+    if(!is.na(fileName)) {
+      if(tt %% savePeriod == 0 ) {
+        save_theta_y_sample(fileName,thetaList,logLikVect,x,Y,hp,varNames,known)
+      }
+    }
   }
-
   return(list(theta_yList=thetaList,logLikVect=logLikVect))
 }

@@ -22,7 +22,7 @@
 # @references
 
 #' @export
-save_theta_y_sample <- function(fileName,thetaList,x,Y,hp,varNames=NA,known=NA) {
-  bundle <- bundle_theta_y_sample(thetaList,x,Y,hp,varNames,known)
+save_theta_y_sample <- function(fileName,thetaList,logLikVect,x,Y,hp,varNames=NA,known=NA) {
+  bundle <- bundle_theta_y_sample(thetaList,logLikVect,x,Y,hp,varNames,known)
   saveRDS(bundle,fileName)
 }

@@ -28,7 +28,7 @@ theta_y_plot_sample_variable <- function(bundle,variable,decim=1,fileName=NA) {
     varNames <- varNames[1:bundle$hp$J]
   } else {
     colVect <- RColorBrewer::brewer.pal(n=bundle$hp$K,name='Set1')
-    varNames <- varNames[hp$K+1:bundle$hp$J]
+    varNames <- varNames[bundle$hp$K+1:bundle$hp$J]
   }
   options(warn=0)
 

@@ -7,8 +7,6 @@
 #' @param theta_x Rate parameter for independent variable draw from exponential distribution
 #' @param hp Hyperparameters (needed to guide generation of simulated data)
 #' @param missDataProp Proportion of missing data [default 0]
-
-#' @param hp
 #'
 # @keywords
 #' @export

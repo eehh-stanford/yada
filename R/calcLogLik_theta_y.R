@@ -18,7 +18,7 @@
 
 #' @export
 calcLogLik_theta_y <- function(theta_y_list,x,Y,hp) {
-
+  '%dopar%' <- foreach::'%dopar%'
   integInfo <- getIntegInfo_theta_y(theta_y_list,Y)
   if(is.matrix(Y)) {
     # For more than one variable, call calcLogLik_theta_y for each observation in parallel

@@ -21,7 +21,7 @@
 #' @author Michael Holton Price <MichaelHoltonPrice@gmail.com>
 # @references
 
-
+#' @export
 sample_theta_y <- function(x,Y,hp,numSamp,burnIn,verbose=T,start=NA,fileName=NA,savePeriod=1000,known=NA,varNames=NA) {
   # Initialize theta_y and get ready for sampling
   if(any(is.na(start))) {

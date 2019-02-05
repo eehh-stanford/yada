@@ -43,6 +43,10 @@ theta_y_plot_corr <- function(bundle,sub1=NA,sub2=NA,decim=1,fileName=NA) {
   colVect <- RColorBrewer::brewer.pal(n=length(comb),name='Set1')
   options(warn=0)
 
+  if(length(colVect) < bundle$hp$M[j]) {
+    colVect <- colVect[0:(length(comb)-1) %% length(colVect) + 1]
+  }
+
   valList <- lapply(bundle$theta_yList,function(x){covMat2CorrVect(x$Sigma)[comb]})
 
   yMin <- Inf

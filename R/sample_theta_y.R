@@ -16,15 +16,9 @@
 #' @param known Known values, a list with the field theta_y, which is also a list [optional]
 #' @param varNames Variable names for saving to file [optional]
 #'
-# @keywords
-#' @export
-#'
-# @examples
-#'
 #' @return theta_y as a list
 #'
 #' @author Michael Holton Price <MichaelHoltonPrice@gmail.com>
-#' @seealso simConstHaz, fitConstHaz, fitLinHaz
 # @references
 
 

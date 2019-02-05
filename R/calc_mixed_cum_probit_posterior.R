@@ -30,7 +30,7 @@ calc_mixed_cum_probit_posterior <- function(theta_y,theta_x,xv,y,hp,asLog=F) {
   if(singleVal) {
     logPost <- foreach::foreach(n=1:length(xv), .combine=cbind) %dopar% {
       logPost <- calcLogLik_theta_y(theta_y,xv[n],y,hp)
-      logPost <- logPost + dexp(xv[n],theta_x,log=T)
+      logPost <- logPost + log(calc_x_density(xv[n],theta_x))
     }
     logPost <- as.numeric(logPost)
     if(!asLog) {

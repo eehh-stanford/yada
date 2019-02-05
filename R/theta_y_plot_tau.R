@@ -24,6 +24,10 @@ theta_y_plot_tau <- function(bundle,j,decim=1,fileName=NA) {
   colVect <- RColorBrewer::brewer.pal(n=bundle$hp$M[j],name='Set1')
   options(warn=0)
 
+  if(length(colVect) < bundle$hp$M[j]) {
+    colVect <- colVect[0:(bundle$hp$M[j]-1) %% length(colVect) + 1]
+  }
+
   valList <- lapply(bundle$theta_yList,function(x){x$tau[[j]]})
 
   yMin <- Inf

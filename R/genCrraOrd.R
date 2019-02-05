@@ -63,7 +63,10 @@ fitGenCrraOrd <- function(x,y) {
   y <- y[!B]
 
   M <- max(y) # Categories are m = 0,1,...,M
-  param0 <- c(1/mean(x),0,1,rep(0,M-1))
+  paramCont <- fitGenCrra(x,y)
+  renorm <- max(y-genCrra(x,paramCont))
+  param0 <- c(paramCont[1]/renorm,paramCont[2],1,rep(log(1/renorm),M-1))
+  #param0 <- c(1/mean(x),0,1,rep(0,M-1))
 
   fit <- optim(param0,genCrraOrdLik,x=x,y=y,transformVar=T,control=list(fnscale=-1))
   param <- fit$par

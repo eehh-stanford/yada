@@ -40,6 +40,7 @@ genCrraLogLik <- function(param,x,y,transformW=F) {
   return(logLik)
 }
 
+#' @export
 genCrraLik <- function(param,x,y,transformW=F,asLog=F) {
   # param has ordering [a,r,b,sig]
   lik <- dnorm(y,genCrra(x,param[1:3]),param[4],log=asLog)

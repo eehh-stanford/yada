@@ -11,9 +11,9 @@ genCrraOrd(x, param, transformVar = F)
 
 \item{y}{Vector of dependent variable observations}
 
-\item{\deqn{\alpha}}{Multiplicative coefficient}
-
 \item{\deqn{\rho}}{Scaling exponent}
+
+\item{\deqn{\sigma}}{Standard deviation of noise term [sig in code]}
 
 \item{\deqn{\tau}}{Vector of category boundaries (one fewer elements than number of categories)}
 }
@@ -21,9 +21,9 @@ genCrraOrd(x, param, transformVar = F)
 \code{genCrraOrd} calculates the response (y). \code{genCrraOrdProb} calculates the category probabilities. fitGenCrraOrd returns the least squares fit. simGenCrraOrd creates simulated data.
 }
 \details{
-The parametric form of the generalized Coefficient of Relative Risk Aversion (CRRA) for ordinal data is (no intercept):
+The parametric form of the generalized Coefficient of Relative Risk Aversion (CRRA) for ordinal data is (no slope or intercept):
 
-\deqn{y = \alpha*x^(1-\rho)}
+\deqn{y = x^(1-\rho)}
 
 where \deqn{x} is the independent variable, \deqn{y} the latent dependent (response) variable, \deqn{\alpha} the multiplicative coefficient, \deqn{\rho} the scaling exponent, and  there is no offset.
 }

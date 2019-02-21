@@ -56,23 +56,21 @@ calcLogLik_theta_y <- function(theta_y_list,x,Y,hp) {
 # A wrapper function to calculate the mean for each variable
 calc_theta_y_means <- function(xScalar,theta_y_list,giv=NA) {
   if(tolower(theta_y_list$paramModel) == 'gencrra') {
-    alpha <- theta_y_list$alpha
     rho <- theta_y_list$rho
     a <- theta_y_list$a
     r <- theta_y_list$r
     b <- theta_y_list$b
     if(!any(is.na(giv))) {
-      J <- length(alpha)
+      J <- length(rho)
       givOrd  <- giv[giv <= J]
       givCont <- giv[giv > J]
-      alpha <- alpha[givOrd]
       rho <- rho[givOrd]
       a <- a[givCont-J]
       r <- r[givCont-J]
       b <- b[givCont-J]
     }
 
-    meanVectOrd  <- alpha*xScalar^(1-rho)
+    meanVectOrd  <- xScalar^(1-rho)
     meanVectCont <- a*xScalar^(1-r) + b
     return(c(meanVectOrd,meanVectCont))
   } else {

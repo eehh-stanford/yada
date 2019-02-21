@@ -23,27 +23,29 @@
 init_theta_y <- function(x,Y,J) {
   K <- nrow(Y) - J # Remaining variables are continuous
   
-  alpha <- rep(NA,J)
   rho <- rep(NA,J)
+  sig_ord <- rep(NA,J)
   tau <- list()
   for(j in 1:J) {
     param <- fitGenCrraOrd(x,Y[j,])
-    alpha[j] <- param[1]
-    rho[j] <- param[2]
+    rho[j] <- param[1]
+    sig_ord[j] <- param[2]
     tau[[j]] <- param[3:length(param)]
   }
 
   a <- rep(NA,hp$K)
   r <- rep(NA,hp$K)
   b <- rep(NA,hp$K)
+  sig_cont <- rep(NA,hp$K)
   for(k in 1:hp$K) {
-    param <- fitGenCrra(x,Y[J+k,])
+    param <- fitGenCrra(x,Y[J+k,],fitSig=T)
     a[k] <- param[1]
     r[k] <- param[2]
     b[k] <- param[3]
+    sig_cont[k] <- param[4]
   }
 
-  Sigma <- diag(J+K)
+  Sigma <- diag(c(sig_ord,sig_cont)^2)
   
-  return(list(paramModel='GenCRRA',alpha=alpha,rho=rho,a=a,r=r,b=b,tau=tau,Sigma=Sigma))
+  return(list(paramModel='GenCRRA',rho=rho,a=a,r=r,b=b,tau=tau,Sigma=Sigma))
 }

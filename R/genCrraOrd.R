@@ -29,7 +29,7 @@ genCrraOrd <- function(x,param,transformVar=F) {
 
 #' @export
 genCrraOrdProb <- function(param,x,y,transformVar=F) {
-  # param has ordering [alpha,rho,tau]
+  # param has ordering [rho,sig,tau]
   J <- length(param) - 2
   sig <- param[2]
   if(!transformVar) {
@@ -51,7 +51,7 @@ genCrraOrdProb <- function(param,x,y,transformVar=F) {
 
 #' @export
 genCrraOrdLik <- function(param,x,y,transformVar=F) {
-  # param has ordering [alpha,rho,tau]
+  # param has ordering [rho,sig,tau]
   return(sum(log(genCrraOrdProb(param,x,y,transformVar))))
 }
 

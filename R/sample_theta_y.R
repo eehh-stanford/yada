@@ -36,7 +36,7 @@ sample_theta_y <- function(x,Y,hp,numSamp,burnIn,verbose=T,start=NA,fileName=NA,
   theta_y_0 <- theta_y_t
 
   s_d <- (2.4)^2 / length(theta_y_t)
-  epsilon <- 1e-10
+  epsilon <- 1e-12
   I_d <- diag(length(theta_y_t))
   mean_theta_y <- theta_y_t
 
@@ -66,6 +66,10 @@ sample_theta_y <- function(x,Y,hp,numSamp,burnIn,verbose=T,start=NA,fileName=NA,
       # Reject the new sample
       #theta_tp1 <- theta_t
       accept <- F 
+      print('**')
+      print('**')
+      print('**')
+      print('**')
     } else {
       # Calculate the acceptance ratio
       # By construction, the proposal distribution is symmetric. Hence:
@@ -78,6 +82,13 @@ sample_theta_y <- function(x,Y,hp,numSamp,burnIn,verbose=T,start=NA,fileName=NA,
       #logA <- logPrior_kp1 + logLik_kp1 - logPrior_k - logLik_k
       logA <- logLik_tp1 - logLik_t
       if(verbose) {
+        if(tt <= burnIn) {
+          print(C0[1,1])
+          print(C0[100,100])
+        } else {
+          print(C_t[1,1])
+          print(C_t[100,100])
+        }
         print(logA)
         print(max(logLik_t,logLik_tp1))
       }

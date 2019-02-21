@@ -20,8 +20,8 @@
 #' @author Michael Holton Price <MichaelHoltonPrice@gmail.com>
 
 getIntegInfo_theta_y <- function(theta_y_list,Y) {
-  J <- length(theta_y_list$alpha)
-  K <- length(theta_y_list$a)
+  J <- length(theta_y_list$rho)
+  K <- length(theta_y_list$r)
   isCont <- c(rep(F,J),rep(T,J)) # Is the variable continuous?
   # For non-missing observations, columns of doIntegral are T for ordinal variables and F for continuous variables
   # doIntegral has dimensions (J+K) x N

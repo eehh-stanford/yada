@@ -25,10 +25,10 @@ theta_yIsValid <- function(theta_y_list,hp,forceFinite=F,x=x,Y=Y) {
     }
   }
 
-  # Check that correlations are between -1 and 1
-  if(any(abs(covMat2CorrVect(theta_y_list$Sigma)) > 1)) {
-    return(F)
-  }
+#  # Check that correlations are between -1 and 1
+#  if(any(abs(theta_y_list$Sigma[lower.tri(theta_y_list$Sigma)]) > 1)) {
+#    return(F)
+#  }
 
   # Check if Sigma is positive definite
   if(!matrixcalc::is.positive.definite(theta_y_list$Sigma)) {

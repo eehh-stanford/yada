@@ -1,6 +1,6 @@
 #' @title Siler hazard model
 #'
-#' @description \code{dsiler} gives the probability density function, \code{psiler} the cumulative density function, \code{qsiler} the quantile function, \code{rsiler} random draws, \code{hsiler} the hazard, \code{chsiler} the cumulative hazard, \code{ssiler} the survival, and \code{nllsiler} the negative log-likelihood.
+#' @description \code{dsiler} gives the probability density function, \code{psiler} the cumulative density function, \code{qsiler} the quantile function, \code{rsiler} random draws, \code{hsiler} the hazard, \code{chsiler} the cumulative hazard, \code{ssiler} the survival, \code{nllsiler} the negative log-likelihood, and \code{hesiler} the Hessian.
 #'
 #' @details The Siler hazard is
 #'
@@ -117,4 +117,29 @@ rsiler <- function(N, a, x0 = 0) {
 # a is the first input as expected by most R optimization routines
 nllsiler <- function(a, x, x0 = 0) {
   return(-sum(log(dsiler(x, a, x0))))
+}
+
+#' @export
+#' @rdname Siler
+hesiler <- function(a, x, x0 = 0) {
+  aStr <- c('a1','a2','a3','a4','a5')
+
+  H <- matrix(NA,5,5) # Initialize the matrix
+
+  # eta is the log-likelihood
+  eta <- function(x,a1,a2,a3,a4,a5,x0) {log(a1*exp(-a2*x)+a3+a4*exp(a5*x)) + a1*(exp(-a2*x)-exp(-a2*x0))/a2 - a3*(x-x0) - a4*(exp(a5*x)-exp(a5*x0))/a5}
+
+  # Analytically calculate Hessian diagonals
+  for(n in 1:5) {
+    H[n,n] <- sum(Deriv::Deriv(Deriv::Deriv(eta,aStr[n]),aStr[n])(x,a[1],a[2],a[3],a[4],a[5],x0))
+  }
+
+  # Analytically calculate Hessian off-diagonals
+  for(n1 in 1:4) {
+    for(n2 in (n1+1):5) {
+      H[n1,n2] <- sum(Deriv::Deriv(Deriv::Deriv(eta,aStr[n1]),aStr[n2])(x,a[1],a[2],a[3],a[4],a[5],x0))
+      H[n2,n1] <- H[n1,n2]
+    }
+  }
+  return(H)
 }

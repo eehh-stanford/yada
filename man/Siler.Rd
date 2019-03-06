@@ -9,6 +9,7 @@
 \alias{qsiler}
 \alias{rsiler}
 \alias{nllsiler}
+\alias{hesiler}
 \title{Siler hazard model}
 \usage{
 hsiler(x, a)
@@ -26,6 +27,8 @@ qsiler(qvect, a, x0 = 0)
 rsiler(N, a, x0 = 0)
 
 nllsiler(a, x, x0 = 0)
+
+hesiler(a, x, x0 = 0)
 }
 \arguments{
 \item{x}{the ending point}
@@ -42,7 +45,7 @@ nllsiler(a, x, x0 = 0)
 A numeric vector of length equal to the input
 }
 \description{
-\code{dsiler} gives the probability density function, \code{psiler} the cumulative density function, \code{qsiler} the quantile function, \code{rsiler} random draws, \code{hsiler} the hazard, \code{chsiler} the cumulative hazard, \code{ssiler} the survival, and \code{nllsiler} the negative log-likelihood.
+\code{dsiler} gives the probability density function, \code{psiler} the cumulative density function, \code{qsiler} the quantile function, \code{rsiler} random draws, \code{hsiler} the hazard, \code{chsiler} the cumulative hazard, \code{ssiler} the survival, \code{nllsiler} the negative log-likelihood, and \code{hesiler} the Hessian.
 }
 \details{
 The Siler hazard is

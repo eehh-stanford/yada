@@ -30,10 +30,7 @@ fitSilerMaxLik <- function(x, a0 = c(.175, 1.40, .368 * .01, .075 * .001, .917 *
 
   afit <- a0 * exp(fit$par)
   if (calcHessian) {
-    ll <- function(a) { # log likelihood as a function of a
-      sum(log(dsiler(x, a, x0)))
-    }
-    H <- numDeriv::hessian(ll, afit,method.args=list(eps=hessEps))
+    H <- hesiler(afit,x,x0)
     return(list(fit = fit, a = afit, hessian = H))
   } else {
     return(list(fit = fit, a = afit))

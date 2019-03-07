@@ -22,7 +22,7 @@ adaptiveSA <- function(costFunc,X_0,...,control=list()) {
   }
 
   if(!('tempVect' %in% names(control))) {
-    control$tempVect <- 4*(3.5/4)^(0:12)
+    control$tempVect <- 16*(15/16)^(0:60)
     #control$tempVect <- c(2,1.75,1.5,1.25,1,.75,.25)
     #control$tempVect <- c(4,2,1)
   }
@@ -30,22 +30,18 @@ adaptiveSA <- function(costFunc,X_0,...,control=list()) {
   sampList <- list()
   print('xxxx')
   print(1)
-  targetDist <- function(X) {exp(-costFunc(X,...)/control$tempVect[1])}
   sampControls$temp <- control$tempVect[1]
-  sampList[[1]] <- adaptiveMetrop(targetDist,X_0,control=sampControls)
+  sampList[[1]] <- saMetrop(costFunc,X_0,control$tempVect[1],...,control=sampControls)
   saveRDS(sampList,'sampList.rds')
+  sampControls 
   for(n in 2:length(control$tempVect)) {
     print('xxxx')
     print(n)
-    targetDist <- function(X) {exp(-costFunc(X,...)/control$tempVect[n])}
-    X_0 <- sampList[[n-1]]$X_list
-    X_0 <- X_0[[length(X_0)]]
-    C_0 <- sampList[[n-1]]$C_t * control$tempVect[n] / control$tempVect[n-1]
-    #C_0 <- sampList[[n-1]]$covX
-    #print(C_0)
-    sampControls$C_0 <- C_0
+    numSamp <- nrow(sampList[[n-1]]$X_mat)
+    X_0 <- sampList[[n-1]]$X_mat[,numSamp]
+    sampControls$C <- cov(t(sampList[[n-1]]$X_mat)) * control$tempVect[n] / control$tempVect[n-1]
     sampControls$temp <- control$tempVect[n]
-    sampList[[n]] <- adaptiveMetrop(targetDist,X_0,control=sampControls)
+    sampList[[n]] <- saMetrop(costFunc,X_0,control$tempVect[n],...,control=sampControls)
     saveRDS(sampList,'sampList.rds')
   }
   return(list(sampList=sampList,control=control))

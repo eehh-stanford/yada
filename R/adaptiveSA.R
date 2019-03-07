@@ -21,28 +21,46 @@ adaptiveSA <- function(costFunc,X_0,...,control=list()) {
     sampControls <- control$sampControls
   }
 
-  if(!('tempVect' %in% names(control))) {
-    control$tempVect <- 16*(15/16)^(0:60)
-    #control$tempVect <- c(2,1.75,1.5,1.25,1,.75,.25)
-    #control$tempVect <- c(4,2,1)
+  if(!('T0' %in% names(control))) {
+    control$T0 <- 10
+  }
+
+  if(!('tempRed' %in% names(control))) {
+    control$tempRed <- .95
+  }
+
+  if(!('costTol' %in% names(control))) {
+    control$costTol <- 1e-7
+  }
+
+  if(!('saveFile' %in% names(control))) {
+    doSave <- F
+  } else {
+    doSave <- T
   }
 
   sampList <- list()
-  print('xxxx')
-  print(1)
-  sampControls$temp <- control$tempVect[1]
-  sampList[[1]] <- saMetrop(costFunc,X_0,control$tempVect[1],...,control=sampControls)
-  saveRDS(sampList,'sampList.rds')
-  sampControls 
-  for(n in 2:length(control$tempVect)) {
-    print('xxxx')
-    print(n)
+  # First temperature
+  sampControls <- control$sampControls
+  temp <- control$T0
+  sampList[[1]] <- saMetrop(costFunc,X_0,temp,...,control=sampControls)
+  if(doSave) {
+    saveRDS(sampList,control$saveFile)
+  }
+
+  done <- F
+  n <- 2
+  while(!done) {
+    temp <- temp * control$tempRed
     numSamp <- nrow(sampList[[n-1]]$X_mat)
     X_0 <- sampList[[n-1]]$X_mat[,numSamp]
-    sampControls$C <- cov(t(sampList[[n-1]]$X_mat)) * control$tempVect[n] / control$tempVect[n-1]
-    sampControls$temp <- control$tempVect[n]
-    sampList[[n]] <- saMetrop(costFunc,X_0,control$tempVect[n],...,control=sampControls)
-    saveRDS(sampList,'sampList.rds')
+    sampControls$C <- cov(t(sampList[[n-1]]$X_mat)) * control$tempRed
+    sampList[[n]] <- saMetrop(costFunc,X_0,temp,...,control=sampControls)
+    if(doSave) {
+      saveRDS(sampList,control$saveFile)
+    }
+    done <- sd(sampList[[n]]$cost) <= control$costTol
+    n <- n + 1
   }
   return(list(sampList=sampList,control=control))
 }

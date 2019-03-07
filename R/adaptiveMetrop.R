@@ -25,7 +25,7 @@
 #' @author Michael Holton Price <MichaelHoltonPrice@gmail.com>
 
 #' @export
-adaptiveMetrop <- function(targetDist,X_0,...,control=list()) {
+adaptiveMetrop <- function(costFunc,X_0,temp,...,control=list()) {
 
   # If necessary, set control defaults
   if(!('numInit' %in% names(control))) {
@@ -65,18 +65,18 @@ adaptiveMetrop <- function(targetDist,X_0,...,control=list()) {
   #}
 
   I_d <- diag(length(X_0))
-  td <- function(X) targetDist(X,...)
+  cf <- function(X) costFunc(X,...)
 
   # Initialize variables
   X_t <- X_0
-  targetVal_t <- td(X_0)
+  cost_t <- cf(X_0)
 
-  targetVal_0 <- targetVal_t
+  cost_0 <- cost_t
 
   meanX <- X_t
 
   X_list <- list()
-  targetValVect <- vector()
+  costVect <- vector()
   for(tt in 1:(control$numInit + control$numSamp)) {
     if(tt <= control$numInit) {
       if(control$verbose) {
@@ -101,6 +101,7 @@ adaptiveMetrop <- function(targetDist,X_0,...,control=list()) {
     }
     if(control$verbose) {
       print(tt)
+      print(temp)
     }
     
     # Calculate the acceptance ratio, alpha
@@ -108,28 +109,24 @@ adaptiveMetrop <- function(targetDist,X_0,...,control=list()) {
     # A = p(theta_tp1|alpha,D) / p(theta_t|alpha,D)
     # A = p(D|theta_tp1) * p(theta_tp1|alpha) / 
     #     p(D|theta_t) / p(theta_t|alpha) 
-    targetVal_tp1 <- td(X_tp1)
-    if(!is.finite(targetVal_tp1)) {
+    cost_tp1 <- cf(X_tp1)
+    if(!is.finite(cost_tp1)) {
       accept <- F
     } else {
-      alpha <- min(1,targetVal_tp1/targetVal_t)
-      if(is.na(alpha)) {
-        print(targetVal_t)
-        print(targetVal_tp1)
-      }
+      alpha <- min(1,exp(-(cost_tp1-cost_t)/temp))
       accept <- runif(1) < alpha
     }
 
     if(!accept) {
       X_tp1 <- X_t
-      targetVal_tp1 <- targetVal_t
+      cost_tp1 <- cost_t
     }
     X_list[[tt]] <- X_tp1
-    targetValVect[tt] <- targetVal_tp1
+    costVect[tt] <- cost_tp1
 
     # Get ready for next sample
     X_t <- X_tp1
-    targetVal_t <- targetVal_tp1
+    cost_t <- cost_tp1
     meanX <- meanX * tt/(tt+1) + X_t/(tt+1)
     if(tt == 1) {
       B_t <- tcrossprod(X_0,X_0) + tcrossprod(X_t,X_t)
@@ -139,9 +136,9 @@ adaptiveMetrop <- function(targetDist,X_0,...,control=list()) {
     covX <- B_t - (tt+1)*tcrossprod(meanX,meanX)/tt
     #covX <- (covX + t(covX))/2 # ensures covX remains positive definite
     if(control$verbose) {
-      print(log(targetVal_t)*control$temp)
+      print(cost_t)
       print(accept)
     }
   }
-  return(list(X_list=X_list,target=targetValVect,C_t=C_t))
+  return(list(X_list=X_list,cost=costVect,C_t=C_t))
 }

@@ -55,24 +55,52 @@ calcLogLik_theta_y <- function(theta_y_list,x,Y,hp) {
 
 # A wrapper function to calculate the mean for each variable
 calc_theta_y_means <- function(xScalar,theta_y_list,giv=NA) {
+  haveOrd <- 'rho' %in% names(theta_y_list)
+  haveCont <- 'r' %in% names(theta_y_list)
   if(tolower(theta_y_list$paramModel) == 'gencrra') {
-    rho <- theta_y_list$rho
-    a <- theta_y_list$a
-    r <- theta_y_list$r
-    b <- theta_y_list$b
-    if(!any(is.na(giv))) {
-      J <- length(rho)
-      givOrd  <- giv[giv <= J]
-      givCont <- giv[giv > J]
-      rho <- rho[givOrd]
-      a <- a[givCont-J]
-      r <- r[givCont-J]
-      b <- b[givCont-J]
+    if(haveOrd) {
+      rho <- theta_y_list$rho
     }
 
-    meanVectOrd  <- xScalar^(1-rho)
-    meanVectCont <- a*xScalar^(1-r) + b
-    return(c(meanVectOrd,meanVectCont))
+    if(haveCont) {
+      a <- theta_y_list$a
+      r <- theta_y_list$r
+      b <- theta_y_list$b
+    }
+
+    if(!any(is.na(giv))) {
+      if(haveOrd && haveCont) {
+        J <- length(rho)
+        givOrd  <- giv[giv <= J]
+        givCont <- giv[giv > J]
+        rho <- rho[givOrd]
+        a <- a[givCont-J]
+        r <- r[givCont-J]
+        b <- b[givCont-J]
+      } else if(haveOrd && !haveCont) {
+        givOrd  <- giv
+        rho <- rho[givOrd]
+      } else {
+        # !haveOrd && haveCont
+        givCont  <- giv
+        a <- a[givCont-J]
+        r <- r[givCont-J]
+        b <- b[givCont-J]
+      }
+    }
+    if(haveOrd && haveCont) {
+      meanVectOrd  <- xScalar^(1-rho)
+      meanVectCont <- a*xScalar^(1-r) + b
+      return(c(meanVectOrd,meanVectCont))
+    } else if(haveOrd && !haveCont) {
+      meanVectOrd  <- xScalar^(1-rho)
+      return(meanVectOrd)
+    } else {
+      # !haveOrd && haveCont
+      meanVectCont <- a*xScalar^(1-r) + b
+      return(meanVectCont)
+    }
+
   } else {
     stop(paste('Unsupported parametric model specification:',hp$paramModel))
   }

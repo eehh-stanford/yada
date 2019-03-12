@@ -18,17 +18,14 @@
 #' @author Michael Holton Price <MichaelHoltonPrice@gmail.com>
 
 theta_yIsValid <- function(theta_y_list,hp,forceFinite=F,x=x,Y=Y) {
-  # Check if tau is ordered
-  for(j in 1:hp$J) {
-    if(is.unsorted(theta_y_list$tau[[j]])) {
-      return(F)
+  if(hp$J > 0) {
+    # Check if tau is ordered
+    for(j in 1:hp$J) {
+      if(is.unsorted(theta_y_list$tau[[j]])) {
+        return(F)
+      }
     }
   }
-
-#  # Check that correlations are between -1 and 1
-#  if(any(abs(theta_y_list$Sigma[lower.tri(theta_y_list$Sigma)]) > 1)) {
-#    return(F)
-#  }
 
   # Check if Sigma is positive definite
   if(!matrixcalc::is.positive.definite(theta_y_list$Sigma)) {

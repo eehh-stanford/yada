@@ -20,9 +20,22 @@
 #' @author Michael Holton Price <MichaelHoltonPrice@gmail.com>
 
 getIntegInfo_theta_y <- function(theta_y_list,Y) {
-  J <- length(theta_y_list$rho)
-  K <- length(theta_y_list$r)
-  isCont <- c(rep(F,J),rep(T,J)) # Is the variable continuous?
+  haveOrd <- 'rho' %in% names(theta_y_list)
+  haveCont <- 'r' %in% names(theta_y_list)
+
+  if(haveOrd) {
+    J <- length(theta_y_list$rho)
+  } else {
+    J <- 0
+  }
+
+  if(haveCont) {
+    K <- length(theta_y_list$r)
+  } else {
+    K <- 0
+  }
+
+  isCont <- c(rep(F,J),rep(T,K)) # Is the variable continuous?
   # For non-missing observations, columns of doIntegral are T for ordinal variables and F for continuous variables
   # doIntegral has dimensions (J+K) x N
   if(is.matrix(Y)) {
@@ -49,20 +62,22 @@ getIntegInfo_theta_y <- function(theta_y_list,Y) {
 
 
   # Add limits for non-missing ordinal variables
-  for(j in 1:J) {
-    tau <- c(-Inf,theta_y_list$tau[[j]],Inf)
-    if(is.matrix(Y)) {
-      for(n in 1:ncol(Y)) {
-        if(!is.na(Y[j,n])) {
-          limArray[j,n,1] <- tau[Y[j,n]+1]
-          limArray[j,n,2] <- tau[Y[j,n]+2]
+  if(haveOrd) {
+    for(j in 1:J) {
+      tau <- c(-Inf,theta_y_list$tau[[j]],Inf)
+      if(is.matrix(Y)) {
+        for(n in 1:ncol(Y)) {
+          if(!is.na(Y[j,n])) {
+            limArray[j,n,1] <- tau[Y[j,n]+1]
+            limArray[j,n,2] <- tau[Y[j,n]+2]
+          }
         }
+      } else {
+          if(!is.na(Y[j])) {
+            limArray[j,1] <- tau[Y[j]+1]
+            limArray[j,2] <- tau[Y[j]+2]
+          }
       }
-    } else {
-        if(!is.na(Y[j])) {
-          limArray[j,1] <- tau[Y[j]+1]
-          limArray[j,2] <- tau[Y[j]+2]
-        }
     }
   }
   return(list(doIntegral=doIntegral,limArray=limArray))

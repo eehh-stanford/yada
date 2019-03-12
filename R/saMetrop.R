@@ -24,52 +24,119 @@
 #' @author Michael Holton Price <MichaelHoltonPrice@gmail.com>
 
 #' @export
-saMetrop <- function(costFunc,X_0,temp,...,control=list()) {
+saMetrop <- function(costFunc,init,temp,...,control=list()) {
+
+  # init is either a vector (X_0) or list (continuing a chain)
+  haveChain <- is.list(init)
+  if(!haveChain) {
+    X_0 <- init
+  } else {
+    X_0 <- as.vector(init$X_mat[,ncol(init$X_mat)])
+    control0 <- control
+    control <- init$control # These will get reset if the input control is not empty
+  }
 
   # If necessary, set control defaults
-  if(!('numSamp' %in% names(control))) {
+  if(!haveChain && !('numSamp' %in% names(control))) {
     control$numSamp <- 1000
   }
 
-  if(!('verbose' %in% names(control))) {
+  if(haveChain && ('numSamp' %in% names(control0))) {
+    control$numSamp <- control0$numSamp
+  }
+
+  if(!haveChain && !('verbose' %in% names(control))) {
     control$verbose <- F
   }
 
-  if(!('C' %in% names(control))) {
+  if(haveChain && ('verbose' %in% names(control0))) {
+    control$verbose <- control0$verbose
+  }
+
+
+  if(!haveChain && !('C_0' %in% names(control))) {
     if(length(X_0) == 1) {
-      control$C <- 1e-6
+      control$C_0 <- 1e-6
     } else {
-      control$C <- diag(c(rep(1e-6,length(X_0))))
+      control$C_0 <- diag(c(rep(1e-6,length(X_0))))
     }
   }
 
-  if(!('temp' %in% names(control))) {
-    control$temp <- 1
+  if(haveChain && ('C_0' %in% names(control0))) {
+    control$C_0 <- control0$C_0
   }
 
+  if(!haveChain && !('t0' %in% names(control))) {
+    control$t0 <- 100
+  }
+
+  if(haveChain && ('t0' %in% names(control0))) {
+    control$t0 <- control0$t0
+  }
+
+  if(!haveChain && !('s_d' %in% names(control))) {
+    control$s_d <- (2.4)^2 / length(X_0)
+  }
+
+  if(haveChain && ('s_d' %in% names(control0))) {
+    control$s_d <- control0$s_d
+  }
+
+  if(!haveChain && !('epsilon' %in% names(control))) {
+    control$epsilon <- 1e-12
+  }
+
+  if(haveChain && ('epsilon' %in% names(control0))) {
+    control$epsilon <- control0$epsilon
+  }
+
+  I_d <- diag(length(X_0))
   cf <- function(X) costFunc(X,...)
 
   # Initialize variables
   X_t <- X_0
   cost_t <- cf(X_t)
 
+  if(!haveChain) {
+    covObj <- updateCov(X_t)
+    ttOffset <- 0
+  } else {
+    covObj <- init$covObj
+    ttOffset <- ncol(init$X_mat)
+  }
+
   X_mat <- matrix(NA,length(X_0),control$numSamp)
   costVect <- vector()
   acceptVect <- vector()
   for(tt in 1:control$numSamp) {
+    if(tt+ttOffset <= control$t0) {    
+      if(control$verbose) {
+        print('-- C_0 --')
+      }
+
+      if(length(X_t)==1) {
+        X_tp1 <- X_t +  rnorm(1,sd=sqrt(control$C_0))
+      } else {
+        X_tp1 <- MASS::mvrnorm(1,mu=X_t,Sigma=control$C_0)
+      }
+    } else {
+      # tt > t0 [accounting for offset]
+      if(control$verbose) {
+        print('-- C_t --')
+      }
+
+      C_t <- control$s_d * (covObj$cov + control$epsilon*I_d)
+      if(length(X_t)==1) {
+        X_tp1 <- X_t +  rnorm(1,sd=sqrt(C_t))
+      } else {
+        X_tp1 <- MASS::mvrnorm(1,mu=X_t,Sigma=C_t)
+      }
+    }
     if(control$verbose) {
-      print('----')
-      print(tt)
+      print(tt+ttOffset)
       print(temp)
     }
-
-    if(length(X_t)==1) {
-      X_tp1 <- X_t +  rnorm(1,sd=sqrt(control$C))
-    } else {
-      X_tp1 <- MASS::mvrnorm(1,mu=X_t,Sigma=control$C)
-    }
-
-    
+ 
     # Calculate the acceptance ratio, alpha
     # By construction, the proposal distribution is symmetric. Hence:
     # A = p(theta_tp1|alpha,D) / p(theta_t|alpha,D)
@@ -94,10 +161,22 @@ saMetrop <- function(costFunc,X_0,temp,...,control=list()) {
     # Get ready for next sample
     X_t <- X_tp1
     cost_t <- cost_tp1
+    covObj <- updateCov(X_t,covObj)
     if(control$verbose) {
       print(cost_t)
       print(accept)
     }
+  } # end main loop
+  if(haveChain) {
+    X_mat <- cbind(init$X_mat,X_mat)
+    costVect <- c(init$costVect,costVect)
+    acceptVect <- c(init$acceptVect,acceptVect)
   }
-  return(list(X_mat=X_mat,cost=costVect,acceptVect=acceptVect))
+  returnList <- list(X_mat=X_mat,costVect=costVect,acceptVect=acceptVect,covObj=covObj,control=control,temp=temp)
+  if(!haveChain) {
+    returnList$firstX <- X_0
+  } else {
+    returnList$firstX <- init$firstX
+  }
+  return(returnList)
 }

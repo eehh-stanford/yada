@@ -13,7 +13,20 @@
 #' @author Michael Holton Price <MichaelHoltonPrice@gmail.com>
 
 theta_yList2Vect <- function(theta_y_list) {
-  tau <- unlist(theta_y_list$tau)
+  haveOrd <- 'rho' %in% names(theta_y_list)
+  haveCont <- 'r' %in% names(theta_y_list)
+
+  if(haveOrd) {
+    tau <- unlist(theta_y_list$tau)
+  }
   s <- Sigma2s(theta_y_list$Sigma)
-  return(c(theta_y_list$rho,theta_y_list$a,theta_y_list$r,theta_y_list$b,tau,s))
+
+  if(haveOrd && haveCont) {
+    return(c(theta_y_list$rho,theta_y_list$a,theta_y_list$r,theta_y_list$b,tau,s))
+  } else if(haveOrd && !haveCont) {
+    return(c(theta_y_list$rho,tau,s))
+  } else {
+    # !haveOrd && haveCont
+    return(c(theta_y_list$a,theta_y_list$r,theta_y_list$b,s))
+  }
 }

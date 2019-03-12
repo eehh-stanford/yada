@@ -21,5 +21,8 @@ calc_joint <- function(xcalc,y,theta_x,theta_y,hp) {
   for(n in 1:length(xcalc)) {
     logJoint[n] <- logJoint[n] + calcLogLik_theta_y(theta_y,xcalc[n],y,hp)
   }
-  return(exp(logJoint))
+
+  fv <- exp(logJoint)
+  fv[!is.finite(fv)] <- 0
+  return(fv)
 }

@@ -70,31 +70,47 @@ fitGenCrraOrd <- function(x,y) {
   tauVect <- rep(NA,M)
   for(m in 0:M) {
     xm[m+1] <- mean(x[y == m])
-    ym[m+1] <- xm[m+1]^paramCont[2]
+    ym[m+1] <- xm[m+1]^(1-paramCont[2])
     yPred[[m+1]] <- genCrra(x[y==m],c(1,paramCont[2],0))
     if(m > 0) {
       tauVect[m] <- mean(c(mean(yPred[[m]]),mean(yPred[[m+1]])))
     }
   }
+  tauVect <- sort(tauVect) # In case of inversions
   ycat <- rep(NA,length(x))
   for(n in 1:length(x)) {
     ycat[n] <- as.numeric(cut(genCrra(x[n],c(1,paramCont[2],0)),c(-Inf,tauVect,Inf))) - 1 # The ordinal observation
   }
 
+  # param has ordering [rho,sig,tau]
   propRight <- sum(ycat == y) / length(y)
-  tauScale <- mean(diff(tauVect))/2 # Characteristic tau scale for random draws
-  param0 <- c(-log(1-paramCont[2]),-tauScale / qnorm(propRight/2,0,1),tauVect[1],log(diff(tauVect)))
+  if(M > 1) {
+    tauScale <- mean(diff(tauVect))/2 # Characteristic tau scale for random draws
+    param0 <- c(-log(1-paramCont[2]),-tauScale / qnorm(propRight/2,0,1),tauVect[1],log(diff(tauVect)))
+  } else {
+    tauScale <- mean(x)/2
+    param0 <- c(-log(1-paramCont[2]),-tauScale / qnorm(propRight/2,0,1),tauVect)
+  }
 
   #renorm <- max(y-genCrra(x,paramCont))
   #param0 <- c(paramCont[1]/renorm,paramCont[2],1,rep(log(1/renorm),M-1))
   #param0 <- c(1/mean(x),0,1,rep(0,M-1))
 
+  # Before calling the optimizer, remove any observations that numerically have zero probability
+  p <- genCrraOrdProb(param0,x,y,T)
+  x <- x[which(p!=0)]
+  y <- y[which(p!=0)]
   fit <- optim(param0,genCrraOrdLik,x=x,y=y,transformVar=T,control=list(fnscale=-1))
+  # param has ordering [rho,sig,tau]
   param <- fit$par
   param[1] <- 1 - exp(-param[1])
   tau0 <- param[3]
-  dtau <- exp(param[4:length(param)])
-  tau <- tau0 + c(0,cumsum(dtau))
+  if(M > 1) {
+    dtau <- exp(param[4:length(param)])
+    tau <- tau0 + c(0,cumsum(dtau))
+  } else {
+    tau <- tau0
+  }
   param[3:length(param)] <- tau
 
   #ycat2 <- rep(NA,length(x))

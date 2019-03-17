@@ -24,7 +24,7 @@
 #' @author Michael Holton Price <MichaelHoltonPrice@gmail.com>
 
 #' @export
-saMetrop <- function(costFunc,init,temp,...,control=list()) {
+saMetrop <- function(costFunc,init,temp=NA,...,control=list()) {
 
   # init is either a vector (X_0) or list (continuing a chain)
   haveChain <- is.list(init)
@@ -37,6 +37,13 @@ saMetrop <- function(costFunc,init,temp,...,control=list()) {
   }
 
   # If necessary, set control defaults
+  if(is.na(temp)) {
+    if(!haveChain) {
+      stop('Cannot initialize a new chain without an input temperature')
+    }
+    temp <- init$temp
+  }
+
   if(!haveChain && !('numSamp' %in% names(control))) {
     control$numSamp <- 1000
   }

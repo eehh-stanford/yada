@@ -7,7 +7,7 @@ processKidStatsInput <- function(kidStatsInput,cumProbitModel) {
   # Extract the input data
   y <- rep(NA,length(cumProbitModel$varNames))
   for(v in 1:length(cumProbitModel$varNames)) {
-    if(cumProbitModel$varNames[v] %in% names(kidStatsInputs$varVal)) {
+    if(cumProbitModel$varNames[v] %in% names(kidStatsInput$varVal)) {
       y[v] <- as.numeric(kidStatsInput$varVal[cumProbitModel$varNames[v]])
     }
   }

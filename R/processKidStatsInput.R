@@ -12,7 +12,7 @@ processKidStatsInput <- function(kidStatsInput,cumProbitModel) {
     }
   }
 
-  fv <- calc_x_posterior(kidStatsInput$xcalc,y,cumProbitModel$theta_x,cumProbitModel$theta_y_list,hp)
-  post <- analyze_x_posterior(kidStatsInput$xcalc,fv,inputData$x[n])
+  fv <- calc_x_posterior(kidStatsInput$xcalc,y,cumProbitModel$theta_x,cumProbitModel$theta_y_list,cumProbitModel$hp)
+  post <- analyze_x_posterior(kidStatsInput$xcalc,fv)
   return(post)
 }

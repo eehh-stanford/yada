@@ -57,14 +57,19 @@ saTemper <- function(costFunc,init,tempVect=NA,...,control=list()) {
   }
 
   # Run each chain once [if not picking up from a previous set of runs]
-  for(m in 1:numTemp) {
-    if(!haveChains) {
+  if(!haveChains) {
+    for(m in 1:numTemp) {
       chainList[[m]] <- saMetrop(costFunc,as.vector(X_0[m,]),tempVect[m],...,control=metropControl)
+    }
+    # If this is the first run and the number of cycles is 1, return without swapping
+    if(control$numCycles == 1) {
+      return(list(chainList=chainList,control=control,tempVect=tempVect))
     }
   }
 
+
   done <- F
-  swapList <- list()
+  #swapList <- list()
   if(!haveChains) {
     cycle <- 1
   } else {
@@ -93,11 +98,11 @@ saTemper <- function(costFunc,init,tempVect=NA,...,control=list()) {
       } else {
         accept <- runif(1) <= alpha_swap
       }
-      if(length(swapList) == m-1) {
-        swapList[[m]] <- accept
-      } else {
-        swapList[[m]] <- c(swapList[[m]],accept)
-      }
+      #if(length(swapList) == m-1) {
+      #  swapList[[m]] <- accept
+      #} else {
+      #  swapList[[m]] <- c(swapList[[m]],accept)
+      #}
 
       if(accept) {
         X_i <- chainList[[m]]$X_mat[,ncol(chainList[[m]]$X_mat)]
@@ -132,5 +137,6 @@ saTemper <- function(costFunc,init,tempVect=NA,...,control=list()) {
     cycle <- cycle + 1
     done <- cycle == control$numCycles
   }
-  return(list(chainList=chainList,swapList=swapList,control=control,tempVect=tempVect))
+  return(list(chainList=chainList,control=control,tempVect=tempVect))
+  #return(list(chainList=chainList,swapList=swapList,control=control,tempVect=tempVect))
 }

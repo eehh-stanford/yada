@@ -20,11 +20,10 @@ calc_x_density <- function(x,theta_x) {
   } else if (tolower(theta_x$fitType) == 'weibmix') { 
     return(calcPdfWeibMix(x,theta_x$fit$z,theta_x$fit$theta))
   } else if (tolower(theta_x$fitType) == 'uniform') { 
-    if(x < theta_x$xmin || theta_x$xmax < x) {
-      return(0)
-    } else {
-      return(1 / (theta_x$xmax-theta_x$xmin))
-    }
+    x <- rep(1,length(x))
+    ind0 <- x < theta_x$xmin | theta_x$xmax < x
+    x[ind0] <- 0
+    return(x)
   } else {
     stop(paste('Unsupported fit type:',theta_x$fitType))
   }

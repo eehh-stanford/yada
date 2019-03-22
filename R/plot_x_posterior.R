@@ -10,22 +10,31 @@
 
 #' @export
 plot_x_posterior <- function(post) {
-  plot(1, type="n", xlab="x", ylab="density", xlim=c(min(post$x),max(post$x)),ylim=c(0,max(post$density)))
-  xv <- c(post$x[(post$x < post$xlo)],post$xlo)
-  fv <- c(post$density[(post$x < post$xlo)],post$flo)
+  locut <- post$xlolo
+  if(locut <=1) {
+    locut <- 0
+  }
+  hicut <- post$xhihi
+  x <- post$x
+  ind <- locut <= x & x <= hicut
+  x <- x[ind]
+  f <- post$density[ind]
+
+  plot(1, type="n", xlab="x", ylab="density", xlim=c(min(locut),max(hicut)),ylim=c(0,max(f)))
+  xv <- c(x[(x < post$xlo)],post$xlo)
+  fv <- c(f[(x < post$xlo)],post$flo)
   polygon(c(xv,rev(xv)),c(rep(0,length(fv)),rev(fv)),col='grey',border=NA)
-  xv <- c(post$xhi,post$x[(post$x > post$xhi)])
-  fv <- c(post$fhi,post$density[(post$x > post$xhi)])
+  xv <- c(post$xhi,x[(x > post$xhi)])
+  fv <- c(post$fhi,f[(x > post$xhi)])
   polygon(c(xv,rev(xv)),c(rep(0,length(fv)),rev(fv)),col='grey',border=NA)
   lines(c(1,1)*post$xmean,c(0,post$fmean),lty=2,lwd=3,col='grey')
-  lines(c(1,1)*post$xmed,c(0,post$fmed),lwd=3,col='grey')
   if(!is.null(post$xknown)) {
     lines(c(1,1)*post$xknown,c(0,post$fknown),lwd=3,col='black')
   }
-  lines(post$x,post$density,type='l',lwd=3)
+  lines(x,f,type='l',lwd=3)
   if(!is.null(post$xknown)) {
-    legend('topright',legend=c('Actual','Median','Mean','+/- 2.5%'),lty=c(1,1,2,NA),col=c('black','grey','grey','grey'),pch=c(NA,NA,NA,22),pt.bg=c(NA,NA,NA,'grey'),lwd=c(2,2,2,NA),pt.cex=c(1,1,1,2))
+    legend('topright',legend=c('Actual','Mean','+/- 2.5%'),lty=c(1,1,2,NA),col=c('black','grey','grey'),pch=c(NA,NA,22),pt.bg=c(NA,NA,'grey'),lwd=c(2,2,NA),pt.cex=c(1,1,2))
   } else {
-    legend('topright',legend=c('Median','Mean','+/- 2.5%'),lty=c(1,2,NA),col='grey',pch=c(NA,NA,22),pt.bg=c(NA,NA,'grey'),lwd=c(2,2,NA),pt.cex=c(1,1,2))
+    legend('topright',legend=c('Mean','+/- 2.5%'),lty=c(2,NA),col='grey',pch=c(NA,22),pt.bg=c(NA,'grey'),lwd=c(2,NA),pt.cex=c(1,2))
   }
 }

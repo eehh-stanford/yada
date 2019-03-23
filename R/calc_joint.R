@@ -17,10 +17,17 @@
 
 #' @export
 calc_joint <- function(xcalc,y,theta_x,theta_y,hp) {
-  logJoint <- log(calc_x_density(xcalc,theta_x))
-  for(n in 1:length(xcalc)) {
-    logJoint[n] <- logJoint[n] + calcLogLik_theta_y(theta_y,xcalc[n],y,hp)
+  logPrior <- log(calc_x_density(xcalc,theta_x))
+
+  # Since y is a single observation, use a parallel for loop
+  '%dopar%' <- foreach::'%dopar%'
+  logLik <- foreach::foreach(n=1:length(xcalc), .combine=cbind) %dopar% {
+    ll <- calcLogLik_theta_y(theta_y,xcalc[n],y,hp)
   }
+  logJoint <- logLik + logPrior 
+  #for(n in 1:length(xcalc)) {
+  #  logJoint[n] <- logJoint[n] + calcLogLik_theta_y(theta_y,xcalc[n],y,hp)
+  #}
 
   fv <- exp(logJoint)
   fv[!is.finite(fv)] <- 0

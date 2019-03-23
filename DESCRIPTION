@@ -14,7 +14,6 @@ Imports:
     MCMCpack,
     numDeriv,
     parallel,
-    rstan,
     shape,
     survival,
     rlang (>= 0.1.2),

@@ -8,7 +8,15 @@ processKidStatsInput <- function(kidStatsInput,cumProbitModel) {
   y <- rep(NA,length(cumProbitModel$varNames))
   for(v in 1:length(cumProbitModel$varNames)) {
     if(cumProbitModel$varNames[v] %in% names(kidStatsInput$varVal)) {
-      y[v] <- as.numeric(kidStatsInput$varVal[cumProbitModel$varNames[v]])
+      if(v <= cumProbitModel$hp$J) {
+        # Ordinal
+        originalCat = as.numeric(kidStatsInput$varVal[cumProbitModel$varNames[v]])
+        yadaCat <- which(cumProbitModel$hp$originalCat[[v]] == originalCat) - 1
+        y[v] <- yadaCat
+      } else {
+        # Continuous
+        y[v] <- as.numeric(kidStatsInput$varVal[cumProbitModel$varNames[v]])
+      }
     }
   }
 

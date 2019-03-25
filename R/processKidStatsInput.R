@@ -3,7 +3,7 @@
 #' @author Michael Holton Price <MichaelHoltonPrice@gmail.com>
 
 #' @export
-processKidStatsInput <- function(kidStatsInput,cumProbitModel) {
+processKidStatsInput <- function(kidStatsInput,cumProbitModel,xknown=NA) {
   # Extract the input data
   y <- rep(NA,length(cumProbitModel$varNames))
   for(v in 1:length(cumProbitModel$varNames)) {
@@ -21,6 +21,10 @@ processKidStatsInput <- function(kidStatsInput,cumProbitModel) {
   }
 
   fv <- calc_x_posterior(kidStatsInput$xcalc,y,cumProbitModel$theta_x,cumProbitModel$theta_y_list,cumProbitModel$hp)
-  post <- analyze_x_posterior(kidStatsInput$xcalc,fv)
+  if(is.na(xknown)) {
+    post <- analyze_x_posterior(kidStatsInput$xcalc,fv)
+  } else {
+    post <- analyze_x_posterior(kidStatsInput$xcalc,fv,xknown)
+  }
   return(post)
 }

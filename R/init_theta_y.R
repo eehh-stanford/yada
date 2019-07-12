@@ -51,14 +51,14 @@ init_theta_y <- function(x,Y,J) {
 
   if(J > 0 && K > 0) {
     Sigma <- diag(c(sig_ord,sig_cont)^2)
-    return(list(paramModel='GenCRRA',rho=rho,a=a,r=r,b=b,tau=tau,Sigma=Sigma))
+    return(list(paramModel='GenCRRA',rho=rho,a=a,r=r,b=b,tau=tau,Sigma=Sigma,gamma=0.5))
   } else if(J > 0 && K == 0) {
     Sigma <- diag(sig_ord^2)
-    return(list(paramModel='GenCRRA',rho=rho,tau=tau,Sigma=Sigma))
+    return(list(paramModel='GenCRRA',rho=rho,tau=tau,Sigma=Sigma,gamma=0.5))
   } else {
     # J == 0 && K > 0
     Sigma <- diag(sig_cont^2)
-    return(list(paramModel='GenCRRA',a=a,r=r,b=b,Sigma=Sigma))
+    return(list(paramModel='GenCRRA',a=a,r=r,b=b,Sigma=Sigma,gamma=0.5))
   }
   
 }

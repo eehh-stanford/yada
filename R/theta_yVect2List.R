@@ -53,5 +53,9 @@ theta_yVect2List <- function(theta_y,hp) {
   number <- choose(hp$K+hp$J,2) + hp$K + hp$J
   theta_y_list$Sigma <- s2Sigma(theta_y[(last+1):(last+number)])
 
+  # Add covariance matrix scale parameter (gamma)
+  last <- last + number
+  theta_y_list$gamma <- theta_y[last+1]
+
   return(theta_y_list)
 }

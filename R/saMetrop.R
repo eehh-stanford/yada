@@ -1,21 +1,23 @@
 #' @title Metropolis sampling for adaptive simulated annealing algorithm
 #'
-#' @description This function samples using the Metropolis algorithm using a fixed input covariance matrix for the proposal distribution. The distribution being sampled from is set by the input cost function and temperature.
+#' @description This function samples using the Metropolis algorithm using the adaptive Metropolis algorithm described by Harrio, Saksman, and Tamminen (2001), An adaptive Metropolis algorithm, in Bernoulli, Volume 7, Number 2, pages 223 through 242. The distribution being sampled from is determined by the input cost function and temperature.
 #'
 # @details
 #'
-#' The first input to the target distribution function, targetDist, must be the variable to be sampled. Additional inputs to targetDist can be input as named variables.
+#' The first input to the cost functionn, costFunc, must be the variable to be sampled. Additional inputs to costFunc can be given as named variable inputs.
 #'
 #' The `control` argument is a list that can supply any of the following (otherwise defaults, in brackets, are be used):
 #' \itemize{
 #'   \item{`numSamp`}{Number of samples after initialization [1000]}
+#'   \item{`t0`}{Number of samples using initial proporsal ditribution [100]}
 #'   \item{`verbose`}{Whether to print out information as the run proceeds [F]}
 #'   \item{`fileName`}{Filename for saving}
 #'   \item{`savePeriod`}{Period (of samples) for saving [1000]}
 #' }
 #'
 #' @param costFunc The cost function (often a negative log-likelihood)
-#' @param X_0 The starting point for sampling
+#' @param init The starting point for sampling, X_0, or the output from a previous call to saMetrop
+#' @param temp The temperature for sampling
 #' @param ... Further arguments to be passed to costFunc
 #' @param control A list of control parameters. See Details.
 #'

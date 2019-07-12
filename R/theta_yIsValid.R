@@ -18,6 +18,11 @@
 #' @author Michael Holton Price <MichaelHoltonPrice@gmail.com>
 
 theta_yIsValid <- function(theta_y_list,hp,forceFinite=F,x=x,Y=Y) {
+  # Check if gamma (covariance scaling) is between 0 and 1
+  if(theta_y_list$gamma <= 0 || theta_y_list$gamma > 1) {
+    return(F)
+  }
+
   if(hp$J > 0) {
     # Check if tau is ordered
     for(j in 1:hp$J) {

@@ -13,8 +13,11 @@
 #' @author Michael Holton Price <MichaelHoltonPrice@gmail.com>
 
 theta_yVect2List <- function(theta_y,hp) {
-  theta_y_list <- list(paramModel=hp$paramModel)
   
+  theta_y_list <- list(paramModel=hp$paramModel)
+  corr   <- !grepl('uncorr',theta_y_list$paramModel) # Use correlations?
+  hetero <-  grepl('hetero',theta_y_list$paramModel) # Use heteroskedasticity?
+
   last <- 0 # The last index added
 
   if(hp$J > 0) {
@@ -50,12 +53,19 @@ theta_yVect2List <- function(theta_y,hp) {
 
   # Add covariance matrix
   last <- last + number
-  number <- choose(hp$K+hp$J,2) + hp$K + hp$J
-  theta_y_list$Sigma <- s2Sigma(theta_y[(last+1):(last+number)])
+  if(corr) {
+    number <- choose(hp$K+hp$J,2) + hp$K + hp$J
+    theta_y_list$Sigma <- s2Sigma(theta_y[(last+1):(last+number)])
+  } else {
+    number <- hp$K + hp$J
+    theta_y_list$Sigma <- diag(theta_y[(last+1):(last+number)])
+  }
 
   # Add covariance matrix scale parameter (gamma)
-  last <- last + number
-  theta_y_list$gamma <- theta_y[last+1]
+  if(hetero) {
+    last <- last + number
+    theta_y_list$gamma <- theta_y[last+1]
+  }
 
   return(theta_y_list)
 }

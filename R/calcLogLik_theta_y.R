@@ -29,7 +29,13 @@ calcLogLik_theta_y <- function(theta_y_list,x,Y,hp) {
     return(sum(logLikVect))
   } else {
     # The calculation for one observation
-    covMat <- (1+x)^(1-theta_y_list$gamma) * theta_y_list$Sigma
+    if('gamma' %in% names(theta_y_list)) {
+      # using correlations
+      covMat <- (1+x)^(1-theta_y_list$gamma) * theta_y_list$Sigma
+    } else {
+      # not using correlations
+      covMat <- theta_y_list$Sigma
+    }
     intAll <- all(integInfo$doIntegral)
     # If all variables are integrated, the conditional calculations are not needed
     if(intAll) {
@@ -58,7 +64,9 @@ calcLogLik_theta_y <- function(theta_y_list,x,Y,hp) {
 calc_theta_y_means <- function(xScalar,theta_y_list,giv=NA) {
   haveOrd <- 'rho' %in% names(theta_y_list)
   haveCont <- 'r' %in% names(theta_y_list)
-  if(tolower(theta_y_list$paramModel) == 'gencrra') {
+  validModels <- tolower(c('GenCRRA_corr_heterosk','GenCRRA_corr_homosk','GenCRRA_uncorr_heterosk','GenCRRA_uncorr_homosk'))
+
+  if(tolower(theta_y_list$paramModel) %in% validModels) {
     if(haveOrd) {
       rho <- theta_y_list$rho
     }

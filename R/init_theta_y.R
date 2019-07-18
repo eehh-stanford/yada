@@ -7,9 +7,8 @@
 #' @param x Vector of indepenent variable observations
 #' @param Y Matrix of dependent variable observations
 #' @param J Number of latent variables
-#'
-# @keywords
-#' @export
+#' @param corr Whether to include correlations across latent variables [default True]
+#' @param heter0 Whether to allow heteroskedasticity [default True]
 #'
 # @examples
 #'
@@ -17,10 +16,9 @@
 #'
 #' @author Michael Holton Price <MichaelHoltonPrice@gmail.com>
 #' @seealso simConstHaz, fitConstHaz, fitLinHaz
-# @references
+#' @export
 
-
-init_theta_y <- function(x,Y,J) {
+init_theta_y <- function(x,Y,J,corr=T,hetero=T) {
   K <- nrow(Y) - J # Remaining variables are continuous
   
   if(J > 0) {
@@ -49,16 +47,32 @@ init_theta_y <- function(x,Y,J) {
     }
   }
 
+  if(corr) {
+    if(hetero) {
+      paramModel <- 'GenCRRA_corr_heterosk' # correlations and heteroskedasticity
+    } else {
+      paramModel <- 'GenCRRA_corr_homosk' # correlations and homoskedasticity
+    }
+  } else {
+    if(hetero) {
+      paramModel <- 'GenCRRA_uncorr_heterosk' # no correlations and heteroskedasticity
+    } else {
+      paramModel <- 'GenCRRA_uncorr_homosk' # no correlations and homoskedasticity
+    }
+  }
+
+  theta_y_list <- list(paramModel=paramModel,rho=rho,a=a,r=r,b=b,tau=tau)
   if(J > 0 && K > 0) {
-    Sigma <- diag(c(sig_ord,sig_cont)^2)
-    return(list(paramModel='GenCRRA',rho=rho,a=a,r=r,b=b,tau=tau,Sigma=Sigma,gamma=0.5))
+    theta_y_list$Sigma <- diag(c(sig_ord,sig_cont)^2)
   } else if(J > 0 && K == 0) {
-    Sigma <- diag(sig_ord^2)
-    return(list(paramModel='GenCRRA',rho=rho,tau=tau,Sigma=Sigma,gamma=0.5))
+    theta_y_list$Sigma <- diag(sig_ord^2)
   } else {
     # J == 0 && K > 0
-    Sigma <- diag(sig_cont^2)
-    return(list(paramModel='GenCRRA',a=a,r=r,b=b,Sigma=Sigma,gamma=0.5))
+    theta_y_list$Sigma <- diag(sig_cont^2)
   }
-  
+
+  if(hetero) {
+    theta_y_list$gamma <- 0.5
+  }
+  return(theta_y_list)
 }

@@ -34,11 +34,11 @@ init_theta_y <- function(x,Y,J,corr=T,hetero=T) {
   }
 
   if(K > 0) {
-    a <- rep(NA,hp$K)
-    r <- rep(NA,hp$K)
-    b <- rep(NA,hp$K)
-    sig_cont <- rep(NA,hp$K)
-    for(k in 1:hp$K) {
+    a <- rep(NA,K)
+    r <- rep(NA,K)
+    b <- rep(NA,K)
+    sig_cont <- rep(NA,K)
+    for(k in 1:K) {
       param <- fitGenCrra(x,Y[J+k,],fitSig=T)
       a[k] <- param[1]
       r[k] <- param[2]

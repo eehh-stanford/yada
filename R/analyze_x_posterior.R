@@ -58,6 +58,7 @@ analyze_x_posterior <- function(xv,fv,xknown=NA) {
     expectedSqrErr <- sum(dx*fv * (xv-xknown)^2)
     if(xknown == 0) {
       fknown <- fv[1]
+      Fknown <- 0
     } else {
       n <- max(which(xv < xknown))
       fknown <- fv[n] + (fv[n+1] - fv[n]) * (xknown-xv[n]) / dx

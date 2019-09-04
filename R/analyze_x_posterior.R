@@ -54,14 +54,19 @@ analyze_x_posterior <- function(xv,fv,xknown=NA) {
 
   returnList <- list(x=xv,density=fv,dx=dx,xlolo=xlolo,xlo=xlo,xmed=xmed,xhi=xhi,xhihi=xhihi,xmean=xmean,flo=flo,fmed=fmed,fhi=fhi,fmean=fmean)
   if(!is.na(xknown)) {
+    # Calculate the expectation (over the density) of (x-xknown)^2
+    expectedSqrErr <- sum(dx*fv * (xv-xknown)^2)
     if(xknown == 0) {
       fknown <- fv[1]
     } else {
       n <- max(which(xv < xknown))
       fknown <- fv[n] + (fv[n+1] - fv[n]) * (xknown-xv[n]) / dx
+      Fknown <- Fv[n] + (Fv[n+1] - Fv[n]) * (xknown-xv[n]) / dx
     }
+    returnList$expectedSqrErr <- expectedSqrErr
     returnList$xknown <- xknown
     returnList$fknown <- fknown
+    returnList$Fknown <- Fknown
   }
   return(returnList)
 }

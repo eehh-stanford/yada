@@ -47,15 +47,23 @@ calcLogLik_theta_y <- function(theta_y_list,x,Y,hp) {
       giv <- which(!integInfo$doIntegral) # giv for given (variables conditioned on)
       lo <- integInfo$limArray[dep,1]
       hi <- integInfo$limArray[dep,2]
-      condNorm <- condMVNorm::condMVN(mean=calc_theta_y_means(x,theta_y_list),sigma=covMat, dependent=dep, given=giv,X.given=Y[giv])
-      p <- mvtnorm::pmvnorm(lower=lo, upper=hi,mean=condNorm$condMean,sigma=condNorm$condVar) # The integral
-      logLik <- log(as.numeric(p))
-      if(length(giv) == 1) { # The contribution if no integral
+      if(length(dep) > 0) {
+        # Integral needed
+        condNorm <- condMVNorm::condMVN(mean=calc_theta_y_means(x,theta_y_list),sigma=covMat, dependent=dep, given=giv,X.given=Y[giv])
+        p <- mvtnorm::pmvnorm(lower=lo, upper=hi,mean=condNorm$condMean,sigma=condNorm$condVar) # The integral
+        logLik <- log(as.numeric(p))
+      } else {
+        # No integral needed
+        logLik <- 0
+      }
+
+      if(length(giv) == 1) { # The contribution of the point calculation integral
         logLik <- logLik + log(dnorm(Y[giv],mean=calc_theta_y_means(x,theta_y_list,giv),sd=sqrt(covMat[giv,giv])))
       } else {
         logLik <- logLik + mvtnorm::dmvnorm(Y[giv],mean=calc_theta_y_means(x,theta_y_list,giv),sigma=covMat[giv,giv],log=T)
       }
     }
+    return(logLik)
   }
 }
 
@@ -91,9 +99,9 @@ calc_theta_y_means <- function(xScalar,theta_y_list,giv=NA) {
       } else {
         # !haveOrd && haveCont
         givCont  <- giv
-        a <- a[givCont-J]
-        r <- r[givCont-J]
-        b <- b[givCont-J]
+        a <- a[givCont]
+        r <- r[givCont]
+        b <- b[givCont]
       }
     }
     if(haveOrd && haveCont) {

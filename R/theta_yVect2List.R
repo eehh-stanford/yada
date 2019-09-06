@@ -25,6 +25,8 @@ theta_yVect2List <- function(theta_y,hp) {
 
     # Add ordinal variables
     theta_y_list$rho <- theta_y[(last+1):(last+number)]
+  } else {
+    number <- 0
   }
 
   if(hp$K > 0) {

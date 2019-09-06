@@ -61,13 +61,15 @@ init_theta_y <- function(x,Y,J,corr=T,hetero=T) {
     }
   }
 
-  theta_y_list <- list(paramModel=paramModel,rho=rho,a=a,r=r,b=b,tau=tau)
   if(J > 0 && K > 0) {
+    theta_y_list <- list(paramModel=paramModel,rho=rho,a=a,r=r,b=b,tau=tau)
     theta_y_list$Sigma <- diag(c(sig_ord,sig_cont)^2)
   } else if(J > 0 && K == 0) {
+    theta_y_list <- list(paramModel=paramModel,rho=rho,tau=tau)
     theta_y_list$Sigma <- diag(sig_ord^2)
   } else {
     # J == 0 && K > 0
+    theta_y_list <- list(paramModel=paramModel,a=a,r=r,b=b)
     theta_y_list$Sigma <- diag(sig_cont^2)
   }
 

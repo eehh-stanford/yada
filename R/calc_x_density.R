@@ -17,8 +17,8 @@
 calc_x_density <- function(x,theta_x) {
   if(tolower(theta_x$fitType) == 'exponential') { 
     return(dexp(x,theta_x))
-  } else if (tolower(theta_x$fitType) == 'weibmix') { 
-    return(calcPdfWeibMix(x,theta_x$fit$z,theta_x$fit$theta))
+  } else if (tolower(theta_x$fitType) == 'offsetweibmix') { 
+    return(calcPdfWeibMix(x+theta_x$weibOffset,theta_x$fit$lambda,c(rbind(theta_x$fit$shape,theta_x$fit$scale))))
   } else if (tolower(theta_x$fitType) == 'uniform') { 
     x <- rep(1,length(x))
     ind0 <- x < theta_x$xmin | theta_x$xmax < x

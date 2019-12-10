@@ -1,7 +1,6 @@
 #' @title Power law with a constant offset
 #'
-#' @description \code{powLaw} calculates the mean (h). \code{powLawSigma} calculates the noise (sigma, or sig for short). \code{powLawDensity} calculates the density. \code{powLawNegLogLik} calculates the negative log-likelihood. \code{powLawGradNegLogLik} calculates the gradient of the negative log-likelihood. \code{fitPowLaw} returns the maximum likelihood fit. \code{simGenCrra} creates simulated data. 
-#'
+#' @description \code{powLaw} calculates the mean (h). \code{powLawSigma} calculates the noise (sigma, or sig for short). \code{powLawDensity} calculates the density. \code{powLawNegLogLik} calculates the negative log-likelihood. \code{powLawGradNegLogLik} calculates the gradient of the negative log-likelihood. \code{fitPowLaw} returns the maximum likelihood fit. \code{simPowLaw} creates simulated data. 
 #'
 #' @details We assume that the response variable w is distributed as
 #'
@@ -25,11 +24,11 @@
 #' 
 #' The components of the gradient of eta_w are
 #'
-#' \deqn{eta_w_a = -wbar * sig^(-2) * x^r}
-#' \deqn{eta_w_r = -wbar * sig^(-2) * x^r * log(x) * a}
-#' \deqn{eta_w_b = -wbar * sig^(-2)}
-#' \deqn{eta_w_s = (1/sig - wbar^2/sig^3) * (1 + kap * x)}
-#' \deqn{eta_w_kap = (1/sig - wbar^2/sig^3) * s * x)}
+#' \deqn{eta_w_a   = -wbar / sig^2 * x^r                    }
+#' \deqn{eta_w_r   = -wbar / sig^2 * x^r * log(x) * a       }
+#' \deqn{eta_w_b   = -wbar / sig^2                          }
+#' \deqn{eta_w_s   =  (1/sig - wbar^2/sig^3) * (1 + kap * x)}
+#' \deqn{eta_w_kap =  (1/sig - wbar^2/sig^3) * s * x)       }
 #'
 #' where wbar = w - h.
 #'
@@ -54,6 +53,7 @@ powLaw <- function(x,th_w) {
 #' @export
 powLawSigma <- function(x,th_w,hetero=F) {
   # th_w has ordering [a,r,b,s,kap]
+  # returns a scalar for hetero=F even if x is not length 1
   sig <- th_w[4]
   if(hetero) {
     sig <- sig * (1+th_w[5]*x)

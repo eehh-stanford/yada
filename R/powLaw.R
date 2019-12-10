@@ -114,7 +114,11 @@ powLawGradNegLogLik <- function(th_w,x,w,hetero=F) {
   eta_w_a <- sum(-wbar/sig_sq*x_to_r)
   eta_w_r <- sum(-wbar/sig_sq*x_to_r*log(x))*a
   eta_w_b <- sum(-wbar/sig_sq)
-  eta_w_s <- sum((sig_inv-wbar_sq/sig_cb)*(1+kap*x))
+  if(hetero) {
+    eta_w_s <- sum((sig_inv-wbar_sq/sig_cb)*(1+kap*x))
+  } else {
+    eta_w_s <- sum((sig_inv-wbar_sq/sig_cb))
+  }
   grad_eta_w <- c(eta_w_a,eta_w_r,eta_w_b,eta_w_s)
   if(hetero) {
     eta_w_kap <- sum((sig_inv-wbar_sq/sig_cb)*s*x)

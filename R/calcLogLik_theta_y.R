@@ -28,9 +28,9 @@ calcLogLik_theta_y <- function(theta_y_list,x,Y,hp) {
     return(sum(logLikVect))
   } else {
     # The calculation for one observation
-    if('gamma' %in% names(theta_y_list)) {
+    if('kappa' %in% names(theta_y_list)) {
       # using correlations
-      covMat <- (1+x)^(1-theta_y_list$gamma) * theta_y_list$Sigma
+      covMat <- (1+theta_y_list$kappa*x)^2 * theta_y_list$Sigma
     } else {
       # not using correlations
       covMat <- theta_y_list$Sigma
@@ -49,7 +49,8 @@ calcLogLik_theta_y <- function(theta_y_list,x,Y,hp) {
       hi <- integInfo$limArray[dep,2]
       if(length(dep) > 0) {
         # Integral needed
-        condNorm <- condMVNorm::condMVN(mean=calc_theta_y_means(x,theta_y_list),sigma=covMat, dependent=dep, given=giv,X.given=Y[giv])
+        #condNorm <- condMVNorm::condMVN(mean=calc_theta_y_means(x,theta_y_list),sigma=covMat, dependent=dep, given=giv,X.given=Y[giv])
+        condNorm <- condMVNorm::condMVN(mean=calc_theta_y_means(x,theta_y_list),sigma=covMat, dependent=dep, given=giv,X.given=Y[giv],check.sigma=F)
         p <- mvtnorm::pmvnorm(lower=lo, upper=hi,mean=condNorm$condMean,sigma=condNorm$condVar) # The integral
         logLik <- log(as.numeric(p))
       } else {
@@ -105,15 +106,15 @@ calc_theta_y_means <- function(xScalar,theta_y_list,giv=NA) {
       }
     }
     if(haveOrd && haveCont) {
-      meanVectOrd  <- xScalar^(1-rho)
-      meanVectCont <- a*xScalar^(1-r) + b
+      meanVectOrd  <- xScalar^rho
+      meanVectCont <- a*xScalar^r + b
       return(c(meanVectOrd,meanVectCont))
     } else if(haveOrd && !haveCont) {
-      meanVectOrd  <- xScalar^(1-rho)
+      meanVectOrd  <- xScalar^rho
       return(meanVectOrd)
     } else {
       # !haveOrd && haveCont
-      meanVectCont <- a*xScalar^(1-r) + b
+      meanVectCont <- a*xScalar^r + b
       return(meanVectCont)
     }
 

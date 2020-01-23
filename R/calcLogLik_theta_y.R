@@ -119,6 +119,6 @@ calc_theta_y_means <- function(xScalar,theta_y_list,giv=NA) {
     }
 
   } else {
-    stop(paste('Unsupported parametric model specification:',hp$paramModel))
+    stop(paste('Unsupported parametric model specification:',theta_y_list$paramModel))
   }
 }

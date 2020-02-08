@@ -5,9 +5,8 @@
 #' @export
 processKidStatsInput <- function(kidStatsInput,cumProbitModel,catList,xknown=NA) {
   # Extract the input data
-  y <- rep(NA,length(cumProbitModel$varNames))
+  y <- y_from_ks(kidStatsInput,cumProbitModel,catList)
 
-  y <- y_from_ks(kidStatsInput,model,catList)
   fv <- calc_x_posterior(kidStatsInput$xcalc,y,cumProbitModel$theta_x,cumProbitModel$theta_y_list,cumProbitModel$hp)
   if(is.na(xknown)) {
     post <- analyze_x_posterior(kidStatsInput$xcalc,fv)

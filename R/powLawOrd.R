@@ -1,6 +1,6 @@
 #' @title Power law with ordinal observations
 #'
-#' @description \code{powLawOrd} calculates the mean (h). \code{powLawOrdSigma} calculates the noise (sigma, or sig for short). \code{powLawOrdNegLogLik} calculates the negative log-likelihood. \code{powLawOrdGradNegLogLik} calculates the gradient of the negative log-likelihood. \code{fitPowLawOrd} returns the maximum likelihood fit. \code{simPowLawOrd} creates simulated data. 
+#' @description \code{powLawOrd} calculates the mean (h). \code{powLawOrdSigma} calculates the noise (sigma, or sig for short). \code{powLawOrdNegLogLik} calculates the negative log-likelihood. \code{fitPowLawOrd} returns the maximum likelihood fit. \code{simPowLawOrd} creates simulated data. \code{powLawOrdCalc_x_list} transforms from a vector to list representation for the input data.
 #'
 #' @details We assume that the latent response variable vstar (for v^*) is distributed as
 #'
@@ -30,19 +30,7 @@
 #'
 #' \deqn{sig = s*(1 + kap*x)}
 #'
-#' The choise of x^rho comes from using an offset power law, alpha*x^rho + beta, and requiring alpha=1 and beta=0 for identifiability. The components of the gradient of eta_v are
-#'
-#' \deqn{eta_v_rho    =  delta_phi / delta_Phi * x^rho * log(x)          }
-#' \deqn{eta_v_tau_lo =  phi_lo / delta_Phi / sig                        }
-#' \deqn{eta_v_tau_hi = -phi_hi / delta_Phi / sig                        }
-#' \deqn{eta_v_s      =  1/delta_Phi *                                   }
-#' \deqn{                   (phi_hi*(tau_hi - x^rho)                     }
-#' \deqn{                  - phi_lo*(tau_lo - x^rho)) / sig^2 * (1+kap*x)}
-#' \deqn{eta_v_kap    =  1/delta_Phi *                                   }
-#' \deqn{                   (phi_hi*(tau_hi - x^rho)                     }
-#' \deqn{                  - phi_lo*(tau_lo - x^rho)) / sig^2 * s * x    }
-#'
-#' where phi is the density function of the standard univariate normal, delta_Phi = Phi_hi - Phi_lo, and delta_phi = phi_hi - phi_lo.
+#' The choice of x^rho comes from using an offset power law, alpha*x^rho + beta, and requiring alpha=1 and beta=0 for identifiability. For optimization, it is often preferable to work with an unconstrained variable. This is supported via the optional input transformVar. rho, s, kap, and the differences between successive values of tau must be positive. This is accomplished by using, for example, rho_bar = log(rho) and rho = exp(rho_bar).
 #'
 #' @param x Vector of independent variable observations
 #' @param vstar Vector of latent dependent variable observations (for v^*)
@@ -52,6 +40,7 @@
 #' @param kap Slope of noise (short for kappa) [Optional]
 #' @param th_v Vector of parameters with ordering [rho,tau_1,...,tau_M,s,kap]
 #' @param hetero Whether the model is heteroskedastic [Default FALSE]
+#' @param transformVar Whether a transformation of the parameterization is needed [Default FALSE]
 #'
 #' @author Michael Holton Price <MichaelHoltonPrice@gmail.com>
 
@@ -94,38 +83,23 @@ powLawOrdSigma <- function(x,th_v,hetero=F,transformVar=F) {
 }
 
 #' @export
-powLawOrdCalc_x_list <- function(x,v) {
-  # For the input vectors x / v, create a list of length M + 1 in which the
-  # entries of the list are the x-values for each ordinal category.
-  M <- length(unique(v)) - 1 # Number of ordinal categories is M + 1
-  x_list <- list()
-  for(m in 0:M) {
-    x_list[[m+1]] <- x[v == m]
-  }
-
-  return(x_list)
-}
-
-#' @export
-powLawOrdNegLogLik <- function(th_v,x_list,hetero=F,transformVar=F) {
+powLawOrdNegLogLik <- function(th_v,x_list,hetero=F,transformVar=F,hp=NA) {
   # th_v has ordering [rho,tau_1,...tau_2,s,kap]
   # eta_v is the negative log-likelihood
-  # For optimization, th_v is the first input
+  # For optimization, make th_v the first input
+
+  if(transformVar) {
+    # hp is only needed if transformVar is T, and this dependency could be avoided
+    th_v <- theta_y_unconstr2constr(th_v,hp)
+  }
 
   M <- length(x_list) - 1 # number of ordinal categories is M+1
   rho <- th_v[1]         # rho
   tau <- th_v[2:(M+1)]   # tau_1 ... tau_M
   s   <- th_v[M+2]       # s
-  if(transformVar) {
-    rho <- exp(rho)
-    s   <- exp(s)
-  }
 
   if(hetero) {
     kap <- th_v[M+3]     # kappa
-    if(transformVar) {
-      kap <- exp(kap)
-    }
   }
 
   eta_v <- 0
@@ -154,210 +128,6 @@ powLawOrdNegLogLik <- function(th_v,x_list,hetero=F,transformVar=F) {
   }
 
   return(eta_v)
-}
-
-#' @export
-powLawOrdGradNegLogLik_numeric <- function(th_v,x_list,hetero=F,transformVar=F) {
-  M <- length(x_list) - 1 # number of ordinal categories is M+1
-  rho <- th_v[1]         # rho
-  tau <- th_v[2:(M+1)]   # tau_1 ... tau_M
-  s   <- th_v[M+2]       # s
-
-  if(hetero) {
-    kap   <- th_v[M+3]
-  }
-
-  eps <- 1e-12
-  gradVect <- rep(NA,length(th_v))
-  for(l in 1:length(th_v)) {
-    th_v_hi <- th_v
-    th_v_hi[l] <- th_v_hi[l] + eps
-    th_v_lo <- th_v
-    th_v_lo[l] <- th_v_lo[l] - eps
-    gradVect[l] <- (powLawOrdNegLogLik(th_v_hi,x_list,hetero,transformVar) - powLawOrdNegLogLik(th_v_lo,x_list,hetero,transformVar)) / (2*eps)
-  }
-  return(gradVect)
-}
-
-#' @export
-powLawOrdGradNegLogLik <- function(th_v,x_list,hetero=F,transformVar=F) {
-  # th_v has ordering [rho,tau_1,...tau_2,s,kap]
-  # eta_v is the negative log-likelihood
-  # For optimization, th_v is the first input
-
-  M <- length(x_list) - 1 # number of ordinal categories is M+1
-  rho <- th_v[1]         # rho
-  tau <- th_v[2:(M+1)]   # tau_1 ... tau_M
-  s   <- th_v[M+2]       # s
-  if(transformVar) {
-    rho <- exp(rho)
-    s   <- exp(s)
-  }
-
-  if(hetero) {
-    kap <- th_v[M+3]     # kappa
-    if(transformVar) {
-      kap <- exp(kap)
-    }
-  }
-
- 
-  if(hetero) {
-    gradVect <- rep(0,3+M)
-  } else {
-    gradVect <- rep(0,2+M)
-  }
-  
-  for(m in 0:M) { 
-    x <- x_list[[m+1]]
-    x_to_rho <- x^rho
-
-    # Handle the special case x = 0 by setting log_x to zero for these cases
-    log_x <- log(x)
-    log_x[x==0] <- 0
-
-    if(hetero) {
-      sig <- s*(1+kap*x)
-    } else {
-      sig <- s
-    }
-
-    sig_sq <- sig^2
-   
-    if(m == 0) {
-      tau_lo <- 0 # only used when phi_lo=0 is used
-      phi_lo  <- 0
-      Phi_lo  <- 0
-    } else {
-      tau_lo <- tau[m]
-      evalVect <- (tau_lo-x_to_rho)/sig
-      phi_lo <- dnorm(evalVect)
-      Phi_lo <- pnorm(evalVect)
-    }
-
-    if(m == M) {
-      tau_hi <- 0 # only used when phi_hi=0 is used
-      phi_hi <- 0
-      Phi_hi <- 1
-    } else {
-      tau_hi <- tau[m+1]
-      evalVect <- (tau_hi - x_to_rho)/sig
-      phi_hi <- dnorm(evalVect)
-      Phi_hi <- pnorm(evalVect)
-    }
-
-    delta_Phi <- Phi_hi - Phi_lo
-    delta_phi <- phi_hi - phi_lo
-
-    # rho
-    if(!transformVar) {
-      gradVect[1] <- gradVect[1] + sum(delta_phi/delta_Phi*x_to_rho*log_x/sig)
-    } else {
-      gradVect[1] <- gradVect[1] + sum(delta_phi/delta_Phi*x_to_rho*log_x/sig)*rho
-    }
-
-    # tau_m     [lo]
-    if(m > 0) {
-      gradVect[m+1] <- gradVect[m+1] + sum(phi_lo/delta_Phi/sig)
-    }
-
-    # tau_{m+1} [hi]
-    if(m < M) {
-      gradVect[m+2] <- gradVect[m+2] - sum(phi_hi/delta_Phi/sig)
-    }
-
-    # s
-    leadingTerm <- (phi_hi*(tau_hi-x_to_rho)-phi_lo*(tau_lo-x_to_rho))/delta_Phi/sig_sq
-    if(hetero) {
-      if(!transformVar) {
-        gradVect[M+2] <- gradVect[M+2] + sum(leadingTerm * (1+kap*x))
-      } else {
-        gradVect[M+2] <- gradVect[M+2] + sum(leadingTerm * (1+kap*x))*s
-      }
-    } else {
-      if(!transformVar) {
-        gradVect[M+2] <- gradVect[M+2] + sum(leadingTerm)
-      } else {
-        gradVect[M+2] <- gradVect[M+2] + sum(leadingTerm)*s
-      }
-    }
-
-    if(hetero) {
-      # kappa
-      if(!transformVar) {
-        gradVect[M+3] <- gradVect[M+3] + sum(leadingTerm * s * x)
-      } else {
-        gradVect[M+3] <- gradVect[M+3] + sum(leadingTerm * s * x)*kap
-      }
-
-    }
-  }
-  return(gradVect)
-}
-
-#' @export
-powLawOrdGradNegLogLik2 <- function(th_v,x,v,hetero=F,transformVar=F) {
-  # th_v has ordering [rho,tau_1,...tau_2,s,kap]
-  # eta_v is the negative log-likelihood
-  # For optimization, th_v is the first input
-
-  M <- length(unique(v)) - 1 # number of ordinal categories is M+1
-  rho <- th_v[1]         # rho
-  tau <- th_v[2:(M+1)]   # tau_1 ... tau_M
-  s   <- th_v[M+2]       # s
-  if(transformVar) {
-    rho <- exp(rho)
-    s   <- exp(s)
-  }
-
-  if(hetero) {
-    kap <- th_v[M+3]     # kappa
-    if(transformVar) {
-      kap <- exp(kap)
-    }
-  }
-
- 
-  if(hetero) {
-    gradVect <- rep(0,3+M)
-  } else {
-    gradVect <- rep(0,2+M)
-  }
-  
-  N <- length(x)
-  for(n in 1:N) {
-    if(!is.na(x[n]) && !is.na(v[n])) {
-      if(!x[n] == 0) {
-        if(hetero) {
-          sig <- s * (1 + kap*x[n])
-        } else {
-          sig <- s
-        }
-        if(v[n] == 0) {
-          phi_lo <- 0
-          Phi_lo <- 0
-        } else {
-          phi_lo <- dnorm( (tau[v[n]] - x[n]^rho)/sig )
-          Phi_lo <- pnorm( (tau[v[n]] - x[n]^rho)/sig )
-        }
-
-        if(v[n] == M) {
-          phi_hi <- 0
-          Phi_hi <- 1
-        } else {
-          phi_hi <- dnorm( (tau[v[n]+1] - x[n]^rho)/sig )
-          Phi_hi <- pnorm( (tau[v[n]+1] - x[n]^rho)/sig )
-        }
-
-        delta_phi <- phi_hi - phi_lo
-        delta_Phi <- Phi_hi - Phi_lo
-        # Handle rho
-        gradVect[1] <- gradVect[1] + delta_phi/delta_Phi*x[n]^rho*log(x[n])/sig
-      }
-    }
-  }
-
-  return(gradVect)
 }
 
 #' @export
@@ -410,7 +180,6 @@ fitPowLawOrd <- function(x,v,hetero=F,returnJustParam=T,transformVar=F) {
   }
 }
 
-
 #' @export
 simPowLawOrd <- function(N,th_x,th_v,hetero=F) {
   # N is the number of simulated observations
@@ -436,4 +205,201 @@ simPowLawOrd <- function(N,th_x,th_v,hetero=F) {
   }
 
   return(list(x=x,v=v,vstar=vstar))
+}
+
+#' @export
+powLawOrdCalc_x_list <- function(x,v) {
+  # For the input vectors x / v, create a list of length M + 1 in which the
+  # entries of the list are the x-values for each ordinal category.
+  M <- length(unique(v)) - 1 # Number of ordinal categories is M + 1
+  x_list <- list()
+  for(m in 0:M) {
+    x_list[[m+1]] <- x[v == m]
+  }
+
+  return(x_list)
+}
+
+#' @export
+theta_y_constr2unconstr <- function(th_y_vect,hp) {
+  check_model(hp$paramModel)
+
+  # For code clarity, convert to a list representation
+  th_y_list <- theta_y_vect2list(th_y_vect,hp)
+
+  # rho should be positive 
+  if('rho' %in% names(th_y_list)) {
+    th_y_list$rho <- log(th_y_list$rho)
+  }
+
+  # tau_1 is unconstrained. Successive differences should be positive
+  if('tau' %in% names(th_y_list)) {
+    for(j in 1:length(th_y_list$tau)) {
+      tau_j <- th_y_list$tau[[j]]
+      M_j   <- length(tau_j)
+      th_y_list$tau[[j]] <- tau_j[1]
+      if(M_j > 1) {
+        th_y_list$tau[[j]] <- c(th_y_list$tau[[j]],log(tau_j[2:M_j] - tau_j[1:(M_j-1)]))
+      }
+    }
+  }
+
+  # a should be positive 
+  if('a' %in% names(th_y_list)) {
+    th_y_list$a <- log(th_y_list$a)
+  }
+
+  # r should be positive 
+  if('r' %in% names(th_y_list)) {
+    th_y_list$r <- log(th_y_list$r)
+  }
+
+  # s should be positive 
+  if('s' %in% names(th_y_list)) {
+    th_y_list$s <- log(th_y_list$s)
+  }
+
+  # handle Sigma a little differently
+  # Only the diagonal elements of U need to be positive
+  if('Sigma' %in% names(th_y_list)) {
+    #th_y_list$s <- log(th_y_list$s)
+    indz <- get_var_index('z',hp)
+    z    <- th_y_vect[indz]
+    zbar <- z
+    U <- matrix(0,nrow=hp$J+hp$K,ncol=hp$J+hp$K)
+    U[upper.tri(U,diag=T)] <- z
+    #th_y_list$Sigma <- t(U) %*% U # This is effectively ignored
+    N <- hp$J+hp$K
+    #ind <- (1:N-1)*N - (1:N-1)*(1:N-2)/2 + 1
+    ind <- (1:N)*(2:(N+1))/2
+    zbar[ind] <- log(zbar[ind])
+    th_y_vect[indz] <- zbar
+  }
+
+  # b is unconstrained. No transformation needed
+
+  # kap should be positive 
+  if('kap' %in% names(th_y_list)) {
+    th_y_list$kap <- log(th_y_list$kap)
+  }
+
+  th_y_vect <- theta_y_list2vect(th_y_list)
+
+  if('Sigma' %in% names(th_y_list)) {
+    th_y_vect[indz] <- zbar
+  }
+  
+  return(th_y_vect)
+}
+
+#' @export
+theta_y_unconstr2constr <- function(th_y_vect,hp) {
+  check_model(hp$paramModel)
+
+  # For code clarity, convert to a list representation
+  th_y_list <- theta_y_vect2list(th_y_vect,hp)
+
+  # rho should be positive 
+  if('rho' %in% names(th_y_list)) {
+    th_y_list$rho <- exp(th_y_list$rho)
+  }
+
+  # tau_1 is unconstrained. Successive differences should be positive
+  if('tau' %in% names(th_y_list)) {
+    for(j in 1:length(th_y_list$tau)) {
+      tau_j <- th_y_list$tau[[j]]
+      M_j   <- length(tau_j)
+      if(M_j == 1) {
+        th_y_list$tau[[j]] <- tau_j
+      } else {
+        th_y_list$tau[[j]] <- tau_j[1] + c(0,cumsum(exp(tau_j[2:M_j])))
+      }
+    }
+  }
+
+  # a should be positive 
+  if('a' %in% names(th_y_list)) {
+    th_y_list$a <- exp(th_y_list$a)
+  }
+
+  # r should be positive 
+  if('r' %in% names(th_y_list)) {
+    th_y_list$r <- exp(th_y_list$r)
+  }
+
+  # s should be positive 
+  if('s' %in% names(th_y_list)) {
+    th_y_list$s <- exp(th_y_list$s)
+  }
+
+  if('Sigma' %in% names(th_y_list)) {
+    stop('Implement for corr')
+    #Sigma <- th_y_list$Sigma
+    #Sigma[1 + (nrow(Sigma)+1)*(0:(nrow(Sigma)-1))] <- exp(diag(Sigma))
+    #th_y_list$Sigma <- Sigma
+  }
+
+  # b is unconstrained. No transformation needed
+
+  # kap should be positive 
+  if('kap' %in% names(th_y_list)) {
+    th_y_list$kap <- exp(th_y_list$kap)
+  }
+
+  return(theta_y_list2vect(th_y_list))
+}
+
+#' @export
+theta_y_list2vect <- function(th_y_list) {
+  check_model(th_y_list$paramModel)
+  hetero <- is_hetero(th_y_list$paramModel)
+  corr   <- is_corr  (th_y_list$paramModel)
+
+  if('rho' %in% names(th_y_list)) {
+    J <- length(th_y_list$rho)
+  } else {
+    J <- 0
+  }
+
+  if('r' %in% names(th_y_list)) {
+    K <- length(th_y_list$r)
+  } else {
+    K <- 0
+  }
+
+  th_y_vect <- c()
+  if(J > 0) {
+    th_y_vect <- c(th_y_vect,th_y_list$rho)
+    th_y_vect <- c(th_y_vect,unlist(th_y_list$tau))
+  }
+
+  if(K > 0) {
+    th_y_vect <- c(th_y_vect,th_y_list$a)
+    th_y_vect <- c(th_y_vect,th_y_list$r)
+    th_y_vect <- c(th_y_vect,th_y_list$b)
+  }
+
+  if(!corr) {
+    th_y_vect <- c(th_y_vect,th_y_list$s)
+  } else {
+    # Cholesky decomposition (upper triangular)
+    U <- chol(th_y_list$Sigma)
+
+    # Get upper diagonal elements of U
+    # Unwraps by column: c(col1,reduced_col2,reduced_col3,...)
+    th_y_vect <- c(th_y_vect,th_y_list$s,U[upper.tri(U,diag=T)])
+  }
+
+  if(hetero) {
+    th_y_vect <- c(th_y_vect,th_y_list$kap)
+  }
+
+  return(th_y_vect)
+}
+
+#' @export
+check_model <- function(paramModel) {
+  if( !(paramModel %in% known_models()) ) {
+    stop(paste('Unrecognized model',paramModel))
+  }
 }

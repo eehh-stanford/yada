@@ -1,7 +1,7 @@
 Type: Package
 Package: yada
 Title: Yet Another Demographic Analysis package
-Version: 0.1.0
+Version: 0.1.1
 Author: Michael Holton Price
 Maintainer: Michael Holton Price <michaelholtonprice@sgmail.com>
 Description: yada—Yet Another Demographic

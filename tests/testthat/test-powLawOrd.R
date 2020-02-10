@@ -175,6 +175,6 @@ expect_error(
 
 # Check fit for heteroskedastic case
 expect_error(
-  fit_hetero <- fitPowLawOrd(sim_homo$x,sim_homo$v,hetero=T),
+  fit_hetero <- fitPowLawOrd(sim_hetero$x,sim_hetero$v,hetero=T),
   NA
 )

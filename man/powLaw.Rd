@@ -26,7 +26,7 @@ powLaw(x, th_w)
 \item{hetero}{Whether the model is heteroskedastic [Default FALSE]}
 }
 \description{
-\code{powLaw} calculates the mean (h). \code{powLawSigma} calculates the noise (sigma, or sig for short). \code{powLawDensity} calculates the density. \code{powLawNegLogLik} calculates the negative log-likelihood. \code{powLawGradNegLogLik} calculates the gradient of the negative log-likelihood. \code{fitPowLaw} returns the maximum likelihood fit. \code{simPowLaw} creates simulated data.
+\code{powLaw} calculates the mean (h). \code{powLawSigma} calculates the noise (sigma, or sig for short). \code{powLawDensity} calculates the density. \code{powLawNegLogLik} calculates the negative log-likelihood. \code{fitPowLaw} returns the maximum likelihood fit. \code{simPowLaw} creates simulated data.
 }
 \details{
 We assume that the response variable w is distributed as
@@ -48,16 +48,6 @@ For the mean and noise, we adopt the parametric forms
 and
 
 \deqn{sig = s*(1 + kap*x)}
-
-The components of the gradient of eta_w are
-
-\deqn{eta_w_a   = -wbar / sig^2 * x^r                    }
-\deqn{eta_w_r   = -wbar / sig^2 * x^r * log(x) * a       }
-\deqn{eta_w_b   = -wbar / sig^2                          }
-\deqn{eta_w_s   =  (1/sig - wbar^2/sig^3) * (1 + kap * x)}
-\deqn{eta_w_kap =  (1/sig - wbar^2/sig^3) * s * x)       }
-
-where wbar = w - h.
 }
 \author{
 Michael Holton Price <MichaelHoltonPrice@gmail.com>

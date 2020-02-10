@@ -1,6 +1,6 @@
 #' @title Power law with a constant offset
 #'
-#' @description \code{powLaw} calculates the mean (h). \code{powLawSigma} calculates the noise (sigma, or sig for short). \code{powLawDensity} calculates the density. \code{powLawNegLogLik} calculates the negative log-likelihood. \code{powLawGradNegLogLik} calculates the gradient of the negative log-likelihood. \code{fitPowLaw} returns the maximum likelihood fit. \code{simPowLaw} creates simulated data. 
+#' @description \code{powLaw} calculates the mean (h). \code{powLawSigma} calculates the noise (sigma, or sig for short). \code{powLawDensity} calculates the density. \code{powLawNegLogLik} calculates the negative log-likelihood. \code{fitPowLaw} returns the maximum likelihood fit. \code{simPowLaw} creates simulated data. 
 #'
 #' @details We assume that the response variable w is distributed as
 #'
@@ -22,16 +22,6 @@
 #'
 #' \deqn{sig = s*(1 + kap*x)}
 #' 
-#' The components of the gradient of eta_w are
-#'
-#' \deqn{eta_w_a   = -wbar / sig^2 * x^r                    }
-#' \deqn{eta_w_r   = -wbar / sig^2 * x^r * log(x) * a       }
-#' \deqn{eta_w_b   = -wbar / sig^2                          }
-#' \deqn{eta_w_s   =  (1/sig - wbar^2/sig^3) * (1 + kap * x)}
-#' \deqn{eta_w_kap =  (1/sig - wbar^2/sig^3) * s * x)       }
-#'
-#' where wbar = w - h.
-#'
 #' @param x Vector of independent variable observations
 #' @param w Vector of dependent variable observations
 #' @param a Multiplicative coefficient
@@ -82,53 +72,9 @@ powLawNegLogLik <- function(th_w,x,w,hetero=F) {
   return(eta_w)
 }
 
-#' @export
-powLawGradNegLogLik <- function(th_w,x,w,hetero=F) {
-  # th_w has ordering [a,r,b,s,kap]
-  # eta_w is the negative log-likelihood
-  # eta_w_a is the partial derivative with respect to a (etc.)
-  # For optimization, th_w is the first input
-
-  # Extract variables for code readability
-  N <- length(x) # No error checking is done on input lengths
-  a <- th_w[1]
-  r <- th_w[2]
-  b <- th_w[3]
-  s <- th_w[4]
-  if(hetero) {
-    kap <- th_w[5]
-  }
-
-  # Do some pre-computations
-  h   <- powLaw(x,th_w)
-  wbar <- (w-h)
-  wbar_sq <- wbar^2
-  sig <- powLawSigma(x,th_w,hetero)
-  sig_sq <- sig^2
-  sig_cb <- sig^3
-  x_to_r <- x^r
-  log_x <- log(x)
-  log_x[x==0] = 0 # eta_w_r equals zero for the special case x = 0
-  sig_inv <- 1/sig
-
-  eta_w_a <- sum(-wbar/sig_sq*x_to_r)
-  eta_w_r <- sum(-wbar/sig_sq*x_to_r*log(x))*a
-  eta_w_b <- sum(-wbar/sig_sq)
-  if(hetero) {
-    eta_w_s <- sum((sig_inv-wbar_sq/sig_cb)*(1+kap*x))
-  } else {
-    eta_w_s <- sum((sig_inv-wbar_sq/sig_cb))
-  }
-  grad_eta_w <- c(eta_w_a,eta_w_r,eta_w_b,eta_w_s)
-  if(hetero) {
-    eta_w_kap <- sum((sig_inv-wbar_sq/sig_cb)*s*x)
-    grad_eta_w <- c(grad_eta_w,eta_w_kap)
-  }
-  return(grad_eta_w)
-}
 
 #' @export
-fitPowLaw <- function(x,w,hetero=F,returnJustParam=T) {
+fitPowLaw <- function(x,w,hetero=F) {
   # th_w has ordering [a,r,b,s,kap]
 
   # Initialize parameters
@@ -144,14 +90,9 @@ fitPowLaw <- function(x,w,hetero=F,returnJustParam=T) {
   }
 
   optimControl <- list(reltol=1e-12,maxit=100000)
-  fit <- optim(th_w0,powLawNegLogLik,gr=powLawGradNegLogLik,method='BFGS',control=optimControl,x=x,w=w,hetero=hetero,hessian=T)
+  fit <- optim(th_w0,powLawNegLogLik,method='BFGS',control=optimControl,x=x,w=w,hetero=hetero,hessian=T)
 
-  # By default (returnJustParam=T), return just the optimized parameter vector
-  if(returnJustParam) {
-    return(fit$par)
-  } else {
-    return(list(fit=fit,th_w0=th_w0))
-  }
+  return(fit$par)
 }
 
 #' @export

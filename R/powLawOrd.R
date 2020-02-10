@@ -66,15 +66,15 @@ powLawOrdSigma <- function(x,th_v,hetero=F,transformVar=F) {
       s   <- exp(th_v[numParam-1])
       kap <- exp(th_v[numParam])
     } else {
-      s   <- exp(th_v[numParam-1])
-      kap <- exp(th_v[numParam])
+      s   <- th_v[numParam-1]
+      kap <- th_v[numParam]
     }
     sig <- s*(1 + kap*x)
   } else {
     if(transformVar) { 
-      s   <- exp(th_v[numParam-1])
+      s   <- exp(th_v[numParam])
     } else {
-      s   <- th_v[numParam-1]
+      s   <- th_v[numParam]
     }
     sig <- s
   }
@@ -131,53 +131,62 @@ powLawOrdNegLogLik <- function(th_v,x_list,hetero=F,transformVar=F,hp=NA) {
 }
 
 #' @export
-fitPowLawOrd <- function(x,v,hetero=F,returnJustParam=T,transformVar=F) {
+fitPowLawOrd <- function(x,v,hetero=F) {
   # th_v has ordering [rho,tau_1,...tau_2,s,kap]
   M <- length(unique(v)) - 1
   x_list <- powLawOrdCalc_x_list(x,v)
 
-  rho0   <- 1
-  s0     <- mean(x)
-  tau0_1 <- s0*qnorm(1/(M+1)) + min(x)
-  if(M == 1) {
-    tau0 <- tau0_1
+  if(hetero) {
+    hp <- list(paramModel = 'powLawOrdHetero')
   } else {
-    tau0_M <- s0*qnorm(M/(M+1)) + max(x)
-    dtau0  <- (tau0_M-tau0_1)/(M-1)
-    tau0   <- tau0_1 + dtau0*(0:(M-1))
+    hp <- list(paramModel = 'powLawOrdHomo')
   }
 
-  if(transformVar) {
-    rho0 <- log(rho0)
-    s0   <- log(s0)
+  hp$J <- 1
+  hp$M <- M
+  # To initialize, fit a set of binary probits at the different levels in order
+  # to get tau0 and s0
+
+  # initial transition points (tau)
+  tau0 <- rep(NA,M)
+  s0Vect <- rep(NA,M)
+
+  # Suppress the following warning (it's OK that it happens):
+  # glm.fit: fitted probabilities numerically 0 or 1 occurred
+  oldw <- getOption("warn")
+  options(warn = -1)
+  for(m in 0:(M-1)) {
+    vbinary <- rep(0,length(v))
+    vbinary[v > m] <- 1
+    linProbit <- glm(vbinary~x,family=binomial(link='probit'))
+    b <- as.numeric(linProbit$coefficients[1]) # intercept
+    a <- as.numeric(linProbit$coefficients[2]) # slope
+    tau0[m+1] <- -b/a
+    s0Vect <-  1/a
   }
+  options(warn = oldw)
+  s0 <- mean(s0Vect)
+
+  if(is.unsorted(tau0)) {
+    warning('tau0 is not sorted. Attempting to resolve by sorting')
+    tau0 <- sort(tau0)
+  }
+
+  rho0   <- 1
+
   th_v0 <- c(rho0,tau0,s0)
   if(hetero) {
-    kap0   <- 1
-    if(transformVar) {
-      kap0 <- log(kap0)
-    }
+    kap0   <- 0.001
     th_v0 <- c(th_v0,kap0)
   }
 
-  optimControl <- list(reltol=1e-12,maxit=100000)
-  #optimControl <- list(maxit=100000,trace=6)
-  #fit <- optim(th_v0,powLawOrdNegLogLik,control=optimControl,x_list=x_list,hetero=hetero,hessian=T,transformVar=transformVar)
-  fit <- optim(th_v0,powLawOrdNegLogLik,gr=powLawOrdGradNegLogLik,method='BFGS',control=optimControl,x_list=x_list,hetero=hetero,hessian=T,transformVar=transformVar)
-  #lowerBounds <- c(-Inf,rep(-Inf,M),0)
-  #upperBounds <- c( Inf,rep( Inf,M),Inf)
-  #if(hetero) {
-  #  lowerBounds <- c(lowerBounds,0)
-  #  upperBounds <- c(lowerBounds,Inf)
-  #}
-  #fit <- optim(th_v0,powLawOrdNegLogLik,gr=powLawOrdGradNegLogLik,method='L-BFGS-B',control=optimControl,x_list=x_list,hetero=hetero,hessian=T,lower=lowerBounds,upper=upperBounds)
+  th_v_bar0 <- theta_y_constr2unconstr(th_v0,hp)
 
-  # By default (returnJustParam=T), return just the optimized parameter vector
-  if(returnJustParam) {
-    return(fit$par)
-  } else {
-    return(list(fit=fit,th_v0=th_v0))
-  }
+  optimControl <- list(reltol=1e-12,maxit=100000)
+  fit <- optim(th_v_bar0,powLawOrdNegLogLik,control=optimControl,x_list=x_list,hetero=hetero,hessian=T,transformVar=T,hp=hp,method='BFGS')
+  th_v <- theta_y_unconstr2constr(fit$par,hp)
+  
+  return(list(fit=fit,th_v=th_v,th_v0=th_v0))
 }
 
 #' @export
@@ -218,188 +227,4 @@ powLawOrdCalc_x_list <- function(x,v) {
   }
 
   return(x_list)
-}
-
-#' @export
-theta_y_constr2unconstr <- function(th_y_vect,hp) {
-  check_model(hp$paramModel)
-
-  # For code clarity, convert to a list representation
-  th_y_list <- theta_y_vect2list(th_y_vect,hp)
-
-  # rho should be positive 
-  if('rho' %in% names(th_y_list)) {
-    th_y_list$rho <- log(th_y_list$rho)
-  }
-
-  # tau_1 is unconstrained. Successive differences should be positive
-  if('tau' %in% names(th_y_list)) {
-    for(j in 1:length(th_y_list$tau)) {
-      tau_j <- th_y_list$tau[[j]]
-      M_j   <- length(tau_j)
-      th_y_list$tau[[j]] <- tau_j[1]
-      if(M_j > 1) {
-        th_y_list$tau[[j]] <- c(th_y_list$tau[[j]],log(tau_j[2:M_j] - tau_j[1:(M_j-1)]))
-      }
-    }
-  }
-
-  # a should be positive 
-  if('a' %in% names(th_y_list)) {
-    th_y_list$a <- log(th_y_list$a)
-  }
-
-  # r should be positive 
-  if('r' %in% names(th_y_list)) {
-    th_y_list$r <- log(th_y_list$r)
-  }
-
-  # s should be positive 
-  if('s' %in% names(th_y_list)) {
-    th_y_list$s <- log(th_y_list$s)
-  }
-
-  # handle Sigma a little differently
-  # Only the diagonal elements of U need to be positive
-  if('Sigma' %in% names(th_y_list)) {
-    #th_y_list$s <- log(th_y_list$s)
-    indz <- get_var_index('z',hp)
-    z    <- th_y_vect[indz]
-    zbar <- z
-    U <- matrix(0,nrow=hp$J+hp$K,ncol=hp$J+hp$K)
-    U[upper.tri(U,diag=T)] <- z
-    #th_y_list$Sigma <- t(U) %*% U # This is effectively ignored
-    N <- hp$J+hp$K
-    #ind <- (1:N-1)*N - (1:N-1)*(1:N-2)/2 + 1
-    ind <- (1:N)*(2:(N+1))/2
-    zbar[ind] <- log(zbar[ind])
-    th_y_vect[indz] <- zbar
-  }
-
-  # b is unconstrained. No transformation needed
-
-  # kap should be positive 
-  if('kap' %in% names(th_y_list)) {
-    th_y_list$kap <- log(th_y_list$kap)
-  }
-
-  th_y_vect <- theta_y_list2vect(th_y_list)
-
-  if('Sigma' %in% names(th_y_list)) {
-    th_y_vect[indz] <- zbar
-  }
-  
-  return(th_y_vect)
-}
-
-#' @export
-theta_y_unconstr2constr <- function(th_y_vect,hp) {
-  check_model(hp$paramModel)
-
-  # For code clarity, convert to a list representation
-  th_y_list <- theta_y_vect2list(th_y_vect,hp)
-
-  # rho should be positive 
-  if('rho' %in% names(th_y_list)) {
-    th_y_list$rho <- exp(th_y_list$rho)
-  }
-
-  # tau_1 is unconstrained. Successive differences should be positive
-  if('tau' %in% names(th_y_list)) {
-    for(j in 1:length(th_y_list$tau)) {
-      tau_j <- th_y_list$tau[[j]]
-      M_j   <- length(tau_j)
-      if(M_j == 1) {
-        th_y_list$tau[[j]] <- tau_j
-      } else {
-        th_y_list$tau[[j]] <- tau_j[1] + c(0,cumsum(exp(tau_j[2:M_j])))
-      }
-    }
-  }
-
-  # a should be positive 
-  if('a' %in% names(th_y_list)) {
-    th_y_list$a <- exp(th_y_list$a)
-  }
-
-  # r should be positive 
-  if('r' %in% names(th_y_list)) {
-    th_y_list$r <- exp(th_y_list$r)
-  }
-
-  # s should be positive 
-  if('s' %in% names(th_y_list)) {
-    th_y_list$s <- exp(th_y_list$s)
-  }
-
-  if('Sigma' %in% names(th_y_list)) {
-    stop('Implement for corr')
-    #Sigma <- th_y_list$Sigma
-    #Sigma[1 + (nrow(Sigma)+1)*(0:(nrow(Sigma)-1))] <- exp(diag(Sigma))
-    #th_y_list$Sigma <- Sigma
-  }
-
-  # b is unconstrained. No transformation needed
-
-  # kap should be positive 
-  if('kap' %in% names(th_y_list)) {
-    th_y_list$kap <- exp(th_y_list$kap)
-  }
-
-  return(theta_y_list2vect(th_y_list))
-}
-
-#' @export
-theta_y_list2vect <- function(th_y_list) {
-  check_model(th_y_list$paramModel)
-  hetero <- is_hetero(th_y_list$paramModel)
-  corr   <- is_corr  (th_y_list$paramModel)
-
-  if('rho' %in% names(th_y_list)) {
-    J <- length(th_y_list$rho)
-  } else {
-    J <- 0
-  }
-
-  if('r' %in% names(th_y_list)) {
-    K <- length(th_y_list$r)
-  } else {
-    K <- 0
-  }
-
-  th_y_vect <- c()
-  if(J > 0) {
-    th_y_vect <- c(th_y_vect,th_y_list$rho)
-    th_y_vect <- c(th_y_vect,unlist(th_y_list$tau))
-  }
-
-  if(K > 0) {
-    th_y_vect <- c(th_y_vect,th_y_list$a)
-    th_y_vect <- c(th_y_vect,th_y_list$r)
-    th_y_vect <- c(th_y_vect,th_y_list$b)
-  }
-
-  if(!corr) {
-    th_y_vect <- c(th_y_vect,th_y_list$s)
-  } else {
-    # Cholesky decomposition (upper triangular)
-    U <- chol(th_y_list$Sigma)
-
-    # Get upper diagonal elements of U
-    # Unwraps by column: c(col1,reduced_col2,reduced_col3,...)
-    th_y_vect <- c(th_y_vect,th_y_list$s,U[upper.tri(U,diag=T)])
-  }
-
-  if(hetero) {
-    th_y_vect <- c(th_y_vect,th_y_list$kap)
-  }
-
-  return(th_y_vect)
-}
-
-#' @export
-check_model <- function(paramModel) {
-  if( !(paramModel %in% known_models()) ) {
-    stop(paste('Unrecognized model',paramModel))
-  }
 }

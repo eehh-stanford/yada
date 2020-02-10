@@ -232,80 +232,6 @@ powLawMixGradNegLogLik <- function(th_y,x,Y,hp,transformVar=F) {
 }
 
 #' @export
-get_var_index <- function(varName,hp,j=NA,k=NA) {
-  # This is a helper function to return a variable's index given the variable
-  # index j and variable name. This task is centralized here in large part to
-  # improve code readability. For tau, a vector is returned
-  #
-  # th_y has ordering th_y = [rho,tau,a,r,b,s,kap]
-
-  J <- hp$J
-  K <- hp$K
-  if(varName == 'kap') {
-    # No error is thrown if the model is homoskedastic
-    offset <- 2*J + sum(hp$M) + 4*K
-    return(offset+1)
-  }
-
-  if(!is.na(j) && !(is.na(k))) {
-    stop('Both j and k are specified')
-  }
-
-  if(is.na(j) && (is.na(k))) {
-    stop('Neither j nor is specified')
-  }
-
-
-  if(!is.na(j)) {
-    if(!(varName %in% c('rho','tau','s')) ) {
-      stop('Unsupported variable for j being specified')
-    }
-    if(j < 1 || J < j) {
-      stop('j is not between 1 and J')
-    }
-  }
-
-  if(!is.na(k)) {
-    if(!(varName %in% c('a','r','b','s')) ) {
-      stop('Unsupported variable for k being specified')
-    }
-    if(k < 1 || K < k) {
-      stop('k is not between 1 and K')
-    }
-  }
-
-  if(varName == 'rho') {
-    return(j)
-  } else if(varName == 'tau') {
-    if(j == 1) {
-      offset <- J
-    } else {
-      offset <- J + sum(hp$M[1:(j-1)])
-    }
-    return((offset + 1):(offset+hp$M[j]))
-  } else if(varName == 'a') {
-    offset <- J + sum(hp$M)
-    return(offset + k)
-  } else if(varName == 'r') {
-    offset <- J + sum(hp$M) + K
-    return(offset + k)
-  } else if(varName == 'b') {
-    offset <- J + sum(hp$M) + 2*K
-    return(offset + k)
-  } else if(varName == 's') {
-    if(!is.na(j)) {
-      offset <- J + sum(hp$M) + 3*K
-      return(offset + j)
-    } else {
-      offset <- 2*J + sum(hp$M) + 3*K
-      return(offset + k)
-    }
-  } else {
-    stop(paste('Unrecognized variable',varName))
-  }
-}
-
-#' @export
 extract_th_v <- function(th_y,hp,j) {
   # th_y has ordering th_y = [rho,tau,a,r,b,s,kap]
   J <- hp$J
@@ -319,8 +245,7 @@ extract_th_v <- function(th_y,hp,j) {
     lastIndex <- J + sum(hp$M[1:(j-1)])
   }
   th_v <- c(th_v,th_y[(lastIndex+1):(lastIndex+hp$M[j])]) # add tau
-
-  lastIndex <- J + sum(hp$M) + 3*K
+lastIndex <- J + sum(hp$M) + 3*K
 
   th_v <- c(th_v,th_y[lastIndex+j]) # add s
 

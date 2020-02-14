@@ -60,10 +60,22 @@ powLawDensity <- function(x,w,th_w,hetero=F) {
 }
 
 #' @export
-powLawNegLogLik <- function(th_w,x,w,hetero=F) {
+powLawNegLogLik <- function(th_w,x,w,hetero=F,transformVar=F) {
   # th_w has ordering [a,r,b,s,kap]
   # eta_w is the negative log-likelihood
   # For optimization, th_w is the first input
+
+  if(transformVar) {
+   # Build hp
+    if(!hetero) {
+      hp <- list(paramModel='powLawHomo')
+    } else {
+      hp <- list(paramModel='powLawHetero')
+    }
+    hp$K <- 1
+    th_w <- theta_y_unconstr2constr(th_w,hp)
+  }
+
 
   N <- length(x) # No error checking is done on input lengths
   h   <- powLaw(x,th_w)
@@ -85,14 +97,24 @@ fitPowLaw <- function(x,w,hetero=F) {
 
   th_w0 <- c(a0,r0,b0,s0)
   if(hetero) {
-    gam0 <- 0
+    gam0 <- 0.0001
     th_w0 <- c(th_w0,gam0)
   }
 
-  optimControl <- list(reltol=1e-12,maxit=100000)
-  fit <- optim(th_w0,powLawNegLogLik,method='BFGS',control=optimControl,x=x,w=w,hetero=hetero,hessian=T)
+  if(hetero) {
+    hp <- list(paramModel = 'powLawHetero')
+  } else {
+    hp <- list(paramModel = 'powLawHomo')
+  }
 
-  return(fit$par)
+  hp$K <- 1
+  th_w_bar0 <- theta_y_constr2unconstr(th_w0,hp)
+  optimControl <- list(reltol=1e-12,maxit=100000)
+  fit <- optim(th_w_bar0,powLawNegLogLik,method='BFGS',control=optimControl,x=x,w=w,hetero=hetero,hessian=T,transformVar=T)
+
+  th_w <- theta_y_unconstr2constr(fit$par,hp)
+
+  return(th_w)
 }
 
 #' @export

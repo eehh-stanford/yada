@@ -284,14 +284,23 @@ theta_y_list2vect <- function(th_y_list) {
   }
 
   if(!corr) {
-    th_y_vect <- c(th_y_vect,th_y_list$s)
+    # Either s or Sigma is a field
+    if('s' %in% names(th_y_list)) {
+      s <- th_y_list$s
+    } else {
+      s <- sqrt(diag(th_y_list$Sigma))
+    }
+    th_y_vect <- c(th_y_vect,s)
+
   } else {
     # Cholesky decomposition (upper triangular)
     U <- chol(th_y_list$Sigma)
 
     # Get upper diagonal elements of U
-    # Unwraps by column: c(col1,reduced_col2,reduced_col3,...)
-    th_y_vect <- c(th_y_vect,th_y_list$s,U[upper.tri(U,diag=T)])
+    # Unwraps by column: c(reduced_col1,reduced_col2,reduced_col3,...)
+    #th_y_vect <- c(th_y_vect,th_y_list$s,U[upper.tri(U,diag=T)])
+    stop('check this')
+    th_y_vect <- c(th_y_vect,U[upper.tri(U,diag=T)])
   }
 
   if(hetero) {

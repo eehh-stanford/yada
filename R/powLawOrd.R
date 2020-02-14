@@ -83,13 +83,22 @@ powLawOrdSigma <- function(x,th_v,hetero=F,transformVar=F) {
 }
 
 #' @export
-powLawOrdNegLogLik <- function(th_v,x_list,hetero=F,transformVar=F,hp=NA) {
+powLawOrdNegLogLik <- function(th_v,x_list,hetero=F,transformVar=F) {
   # th_v has ordering [rho,tau_1,...tau_2,s,kap]
   # eta_v is the negative log-likelihood
   # For optimization, make th_v the first input
 
   if(transformVar) {
-    # hp is only needed if transformVar is T, and this dependency could be avoided
+    # Build hp
+    if(!hetero) {
+      hp <- list(paramModel='powLawOrdHomo')
+      hp$J <- 1
+      hp$M <- length(th_v) - 2
+    } else {
+      hp <- list(paramModel='powLawOrdHetero')
+      hp$J <- 1
+      hp$M <- length(th_v) - 3
+    }
     th_v <- theta_y_unconstr2constr(th_v,hp)
   }
 
@@ -183,7 +192,7 @@ fitPowLawOrd <- function(x,v,hetero=F) {
   th_v_bar0 <- theta_y_constr2unconstr(th_v0,hp)
 
   optimControl <- list(reltol=1e-12,maxit=100000)
-  fit <- optim(th_v_bar0,powLawOrdNegLogLik,control=optimControl,x_list=x_list,hetero=hetero,hessian=T,transformVar=T,hp=hp,method='BFGS')
+  fit <- optim(th_v_bar0,powLawOrdNegLogLik,control=optimControl,x_list=x_list,hetero=hetero,hessian=T,transformVar=T,method='BFGS')
   th_v <- theta_y_unconstr2constr(fit$par,hp)
   
   return(list(fit=fit,th_v=th_v,th_v0=th_v0))

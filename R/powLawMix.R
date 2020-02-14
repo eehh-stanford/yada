@@ -69,7 +69,7 @@ powLawMixNegLogLik <- function(th_y,x,Y,hp,transformVar=F) {
     xk <-  x[indk]
     wk <- wk[indk]
     th_w <- extract_th_w(th_y,hp,k)
-    negLogLik <- negLogLik + powLawNegLogLik(th_w,xk,wk,hetero)
+    negLogLik <- negLogLik + powLawNegLogLik(th_w,xk,wk,hetero,transformVar)
     
   }
 

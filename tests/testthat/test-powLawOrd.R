@@ -88,7 +88,7 @@ expect_equal(
 )
 
 expect_equal(
-  powLawOrdNegLogLik(th_v_bar_homo2,x_list,hetero=F,transformVar=T,hp=hp_homo),
+  powLawOrdNegLogLik(th_v_bar_homo2,x_list,hetero=F,transformVar=T),
   eta_v_homo
 )
 
@@ -103,7 +103,7 @@ expect_equal(
 )
 
 expect_equal(
-  powLawOrdNegLogLik(th_v_bar_hetero2,x_list,hetero=T,transformVar=T,hp=hp_hetero),
+  powLawOrdNegLogLik(th_v_bar_hetero2,x_list,hetero=T,transformVar=T),
   eta_v_hetero
 )
 

@@ -171,10 +171,22 @@ theta_y_unconstr2constr <- function(th_y_vect,hp) {
   }
 
   if('Sigma' %in% names(th_y_list)) {
-    stop('Implement for corr')
-    #Sigma <- th_y_list$Sigma
-    #Sigma[1 + (nrow(Sigma)+1)*(0:(nrow(Sigma)-1))] <- exp(diag(Sigma))
-    #th_y_list$Sigma <- Sigma
+    indz <- get_var_index('z',hp)
+    zbar <- th_y_vect[indz]
+
+    z <- zbar
+    N <- (-1 + sqrt(1 + 8*length(z)))/2 # dimension of Sigma
+    ind <- (1:N)*(2:(N+1))/2
+    z[ind] <- exp(z[ind])
+    # build Sigma column by column
+    offset <- 0
+    U <- matrix(0,N,N)
+    for(cc in 1:N) {
+      ind_cc <- offset + 1:cc
+      U[1:cc,cc] <- z[ind_cc]
+      offset <- offset + cc
+    }
+    th_y_list$Sigma <- t(U) %*% U
   }
 
   # b is unconstrained. No transformation needed
@@ -298,8 +310,6 @@ theta_y_list2vect <- function(th_y_list) {
 
     # Get upper diagonal elements of U
     # Unwraps by column: c(reduced_col1,reduced_col2,reduced_col3,...)
-    #th_y_vect <- c(th_y_vect,th_y_list$s,U[upper.tri(U,diag=T)])
-    stop('check this')
     th_y_vect <- c(th_y_vect,U[upper.tri(U,diag=T)])
   }
 

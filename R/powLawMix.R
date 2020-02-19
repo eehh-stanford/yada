@@ -49,6 +49,7 @@ powLawMixNegLogLik <- function(th_y,x,Y,hp,transformVar=F) {
   negLogLik <- 0
 
   # Add contribution of ordinal variables
+ if(J > 0) {
   for(j in 1:J) {
     # Extracting xList prior and making it an input to powLawMixNegLogLik
     # would speed up computation. However, extracting it here likely makes the
@@ -61,8 +62,10 @@ powLawMixNegLogLik <- function(th_y,x,Y,hp,transformVar=F) {
     th_v <- extract_th_v(th_y,hp,j)
     negLogLik <- negLogLik + powLawOrdNegLogLik(th_v,x_list,hetero,transformVar)
   }
+ }
 
   # Add contribution of continuous variables
+ if(K > 0) {
   for(k in 1:K) {
     wk <- Y[J+k,]
     indk <- !is.na(x) & !is.na(wk)
@@ -72,7 +75,7 @@ powLawMixNegLogLik <- function(th_y,x,Y,hp,transformVar=F) {
     negLogLik <- negLogLik + powLawNegLogLik(th_w,xk,wk,hetero,transformVar)
     
   }
-
+ }
   return(negLogLik)
 }
 

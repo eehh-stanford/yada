@@ -17,7 +17,6 @@
 
 solvey_uncorr_hetero <- function(x,Y,hp,verbose=F,th_y0=NA) {
 
-  hp <- problem$hp
   hp$paramModel <- 'powLawMixUncorrHetero'
   if(all(is.na(th_y0))) {
     # Initialize with the homoskedastic case

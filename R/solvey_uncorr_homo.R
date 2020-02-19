@@ -23,12 +23,20 @@ solvey_uncorr_homo <- function(x,Y,hp,verbose=F) {
   K <- hp$K
 
   # Initialize the fit
-  rho <- rep(NA,J)
-  a   <- rep(NA,K)
-  r   <- rep(NA,K)
-  b   <- rep(NA,K)
-  tau <- list()
-  s   <- rep(NA,J+K)
+
+  if(J > 0) {
+    rho <- rep(NA,J)
+    tau <- list()
+  }
+
+  if(K > 0) {
+    a <- rep(NA,K)
+    r <- rep(NA,K)
+    b <- rep(NA,K)
+  }
+  s  <- rep(NA,J+K)
+
+ if(J > 0) {
 
   ordFitList <- list()
   for(j in 1:J) {
@@ -52,7 +60,9 @@ solvey_uncorr_homo <- function(x,Y,hp,verbose=F) {
     tau[[j]] <- th_v_list$tau[[1]]
     s[j] <- th_v_list$s
   }
+ }
 
+ if(K > 0) {
   contFitList <- list()
   for(k in 1:K) {
     if(verbose) {
@@ -71,13 +81,23 @@ solvey_uncorr_homo <- function(x,Y,hp,verbose=F) {
     b[k] <- th_w[3]
     s[J+k] <- th_w[4]
   }
+ }
 
   theta_y_list <- list(paramModel='GenCRRA_uncorr_homosk') # TODO: Standardize names
-  theta_y_list$rho <- rho
-  theta_y_list$a   <- a
-  theta_y_list$r   <- r
-  theta_y_list$b   <- b
-  theta_y_list$tau <- tau
+  if(J > 0) {
+    theta_y_list$rho <- rho
+  }
+
+  if(K > 0) {
+    theta_y_list$a   <- a
+    theta_y_list$r   <- r
+    theta_y_list$b   <- b
+  }
+
+  if(J > 0) {
+    theta_y_list$tau <- tau
+  }
+
   theta_y_list$Sigma <- diag(s^2)
 
   return(theta_y_list)

@@ -73,7 +73,7 @@ solvey_uncorr_homo <- function(x,Y,hp,verbose=F) {
     xk <- xk[!is.na(wk)]
     wk <- wk[!is.na(wk)]
     contFit <- fitPowLaw(xk,wk,hetero=F)
-    contFitList[[j]] <- contFit
+    contFitList[[k]] <- contFit
     # th_w has ordering [a,r,b,s]
     th_w <- contFit
     a[k] <- th_w[1]

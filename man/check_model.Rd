@@ -7,7 +7,7 @@
 check_model(paramModel)
 }
 \arguments{
-\item{th_v}{Vector of parameters with ordering [rho,tau_1,...,tau_M,s,kap]}
+\item{th_v}{Vector of parameters with ordering [rho,tau_1,...,tau_M,s,kappa]}
 }
 \description{
 \code{powLawOrd}

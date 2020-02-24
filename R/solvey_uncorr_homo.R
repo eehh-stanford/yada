@@ -83,7 +83,7 @@ solvey_uncorr_homo <- function(x,Y,hp,verbose=F) {
   }
  }
 
-  theta_y_list <- list(paramModel='GenCRRA_uncorr_homosk') # TODO: Standardize names
+  theta_y_list <- list(paramModel='powLawMixUncorrHomo')
   if(J > 0) {
     theta_y_list$rho <- rho
   }

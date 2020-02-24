@@ -9,7 +9,7 @@ powLawOrd(x, th_v, transformVar = F)
 \arguments{
 \item{x}{Vector of independent variable observations}
 
-\item{th_v}{Vector of parameters with ordering [rho,tau_1,...,tau_M,s,kap]}
+\item{th_v}{Vector of parameters with ordering [rho,tau_1,...,tau_M,s,kappa]}
 
 \item{transformVar}{Whether a transformation of the parameterization is needed [Default FALSE]}
 
@@ -21,7 +21,7 @@ powLawOrd(x, th_v, transformVar = F)
 
 \item{s}{Baseline noise}
 
-\item{kap}{Slope of noise (short for kappa) [Optional]}
+\item{kappa}{Slope of noise [Optional]}
 
 \item{hetero}{Whether the model is heteroskedastic [Default FALSE]}
 }
@@ -55,9 +55,9 @@ For the mean and noise, we adopt the parametric forms
 
 and
 
-\deqn{sig = s*(1 + kap*x)}
+\deqn{sig = s*(1 + kappa*x)}
 
-The choice of x^rho comes from using an offset power law, alpha*x^rho + beta, and requiring alpha=1 and beta=0 for identifiability. For optimization, it is often preferable to work with an unconstrained variable. This is supported via the optional input transformVar. rho, s, kap, and the differences between successive values of tau must be positive. This is accomplished by using, for example, rho_bar = log(rho) and rho = exp(rho_bar).
+The choice of x^rho comes from using an offset power law, alpha*x^rho + beta, and requiring alpha=1 and beta=0 for identifiability. For optimization, it is often preferable to work with an unconstrained variable. This is supported via the optional input transformVar. rho, s, kappa, and the differences between successive values of tau must be positive. This is accomplished by using, for example, rho_bar = log(rho) and rho = exp(rho_bar).
 }
 \author{
 Michael Holton Price <MichaelHoltonPrice@gmail.com>

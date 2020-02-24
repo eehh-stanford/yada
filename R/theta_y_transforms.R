@@ -3,7 +3,7 @@
 #' @description \code{powLawOrd}
 #'
 #' @details Stuff
-#' @param th_v Vector of parameters with ordering [rho,tau_1,...,tau_M,s,kap]
+#' @param th_v Vector of parameters with ordering [rho,tau_1,...,tau_M,s,kappa]
 #'
 #' @author Michael Holton Price <MichaelHoltonPrice@gmail.com>
 
@@ -116,9 +116,9 @@ theta_y_constr2unconstr <- function(th_y_vect,hp) {
 
   # b is unconstrained. No transformation needed
 
-  # kap should be positive 
-  if('kap' %in% names(th_y_list)) {
-    th_y_list$kap <- log(th_y_list$kap)
+  # kappa should be positive 
+  if('kappa' %in% names(th_y_list)) {
+    th_y_list$kappa <- log(th_y_list$kappa)
   }
 
   th_y_vect <- theta_y_list2vect(th_y_list)
@@ -191,9 +191,9 @@ theta_y_unconstr2constr <- function(th_y_vect,hp) {
 
   # b is unconstrained. No transformation needed
 
-  # kap should be positive 
-  if('kap' %in% names(th_y_list)) {
-    th_y_list$kap <- exp(th_y_list$kap)
+  # kappa should be positive 
+  if('kappa' %in% names(th_y_list)) {
+    th_y_list$kappa <- exp(th_y_list$kappa)
   }
 
   return(theta_y_list2vect(th_y_list))
@@ -259,7 +259,7 @@ theta_y_vect2list <- function(th_y_vect,hp) {
   }
 
   if(hetero) {
-    th_y_list$kap <- th_y_vect[get_var_index('kappa',hp)]
+    th_y_list$kappa <- th_y_vect[get_var_index('kappa',hp)]
   }
 
   return(th_y_list)
@@ -314,7 +314,7 @@ theta_y_list2vect <- function(th_y_list) {
   }
 
   if(hetero) {
-    th_y_vect <- c(th_y_vect,th_y_list$kap)
+    th_y_vect <- c(th_y_vect,th_y_list$kappa)
   }
 
   return(th_y_vect)
@@ -326,7 +326,7 @@ get_var_index <- function(varName,hp,j=NA,k=NA) {
   # index j and variable name. This task is centralized here in large part to
   # improve code readability. For tau, a vector is returned
   #
-  # th_y has ordering th_y = [rho,tau,a,r,b,s,kap]
+  # th_y has ordering th_y = [rho,tau,a,r,b,s,kappa]
   check_model(hp$paramModel)
   hetero <- is_hetero(hp$paramModel)
   corr   <- is_corr  (hp$paramModel)

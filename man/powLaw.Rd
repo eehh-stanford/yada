@@ -9,7 +9,7 @@ powLaw(x, th_w)
 \arguments{
 \item{x}{Vector of independent variable observations}
 
-\item{th_w}{Vector of parameters with ordering [a,r,b,s,kap]}
+\item{th_w}{Vector of parameters with ordering [a,r,b,s,kappa]}
 
 \item{w}{Vector of dependent variable observations}
 
@@ -21,9 +21,11 @@ powLaw(x, th_w)
 
 \item{s}{Baseline noise}
 
-\item{kap}{Slope of noise (short for kappa) [Optional]}
+\item{kappa}{Slope of noise [Optional]}
 
 \item{hetero}{Whether the model is heteroskedastic [Default FALSE]}
+
+\item{transformVar}{Whether a transformation of the parameterization is needed [Default FALSE]}
 }
 \description{
 \code{powLaw} calculates the mean (h). \code{powLawSigma} calculates the noise (sigma, or sig for short). \code{powLawDensity} calculates the density. \code{powLawNegLogLik} calculates the negative log-likelihood. \code{fitPowLaw} returns the maximum likelihood fit. \code{simPowLaw} creates simulated data.
@@ -47,7 +49,7 @@ For the mean and noise, we adopt the parametric forms
 
 and
 
-\deqn{sig = s*(1 + kap*x)}
+\deqn{sig = s*(1 + kappa*x)}
 }
 \author{
 Michael Holton Price <MichaelHoltonPrice@gmail.com>

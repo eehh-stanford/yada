@@ -77,7 +77,7 @@ x_list[[1]] <- x0
 x_list[[2]] <- x1
 x_list[[3]] <- x2
 
-# Directly calculate the log likelihood homoskedastic case
+# Directly calculate the log likelihood, homoskedastic case
 eta_v_homo <- -log(pnorm( (tau1 - x0^rho)/s ))
 eta_v_homo <- eta_v_homo - log( pnorm( (tau2 - x1^rho)/s ) - pnorm( (tau1 - x1^rho)/s ))
 eta_v_homo <- eta_v_homo - log( 1 - pnorm( (tau2 - x2^rho)/s ))
@@ -92,7 +92,7 @@ expect_equal(
   eta_v_homo
 )
 
-# Directly calculate the log likelihood heteroskedastic case
+# Directly calculate the log likelihood, heteroskedastic case
 eta_v_hetero <- -log(pnorm( (tau1 - x0^rho)/(s*(1+kap*x0)) ))
 eta_v_hetero <- eta_v_hetero - log( pnorm( (tau2 - x1^rho)/(s*(1+kap*x1)) ) - pnorm( (tau1 - x1^rho)/(s*(1+kap*x1)) ))
 eta_v_hetero <- eta_v_hetero - log( 1 - pnorm( (tau2 - x2^rho)/(s*(1+kap*x2)) ))
@@ -107,6 +107,48 @@ expect_equal(
   eta_v_hetero
 )
 
+# Numerically check the gradient calculation
+numGrad <- function(th_v,x_list,hetero,transformVar) {
+  eps <- 1e-8 # The step size for the finite difference
+  eta0 <- powLawOrdNegLogLik(th_v,x_list,hetero,transformVar)
+  N <- length(th_v) # number of variables
+  gradVect <- rep(NA,N) # The gradient vector
+  # iterate over variables to calculate the numerical gradient
+  for(n in 1:N) {
+    th_v_eps <- th_v
+    th_v_eps[n] <- th_v_eps[n] + eps
+    gradVect[n] <- (powLawOrdNegLogLik(th_v_eps,x_list,hetero,transformVar)-eta0)/eps
+  }
+  return(gradVect)
+}
+
+# homoskedastic / constrained variables
+expect_equal(
+  powLawOrdGradNegLogLik(th_v_homo2,x_list,hetero=F,transformVar=F),
+  numGrad(th_v_homo2,x_list,hetero=F,transformVar=F),
+  tolerance=1e-4
+)
+
+# heteroskedastic / constrained variables
+expect_equal(
+  powLawOrdGradNegLogLik(th_v_hetero2,x_list,hetero=T,transformVar=F),
+  numGrad(th_v_hetero2,x_list,hetero=T,transformVar=F),
+  tolerance=1e-4
+)
+
+# homoskedastic / unconstrained variables
+expect_equal(
+  powLawOrdGradNegLogLik(th_v_bar_homo2,x_list,hetero=F,transformVar=T),
+  numGrad(th_v_bar_homo2,x_list,hetero=F,transformVar=T),
+  tolerance=1e-4
+)
+
+# heteroskedastic / unconstrained variables
+expect_equal(
+  powLawOrdGradNegLogLik(th_v_bar_hetero2,x_list,hetero=T,transformVar=T),
+  numGrad(th_v_bar_hetero2,x_list,hetero=T,transformVar=T),
+  tolerance=1e-4
+)
 
 # test simPowLawOrd
 N <- 100 # Number of points for simulation

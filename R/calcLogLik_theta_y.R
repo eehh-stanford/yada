@@ -72,53 +72,49 @@ calcLogLik_theta_y <- function(theta_y_list,x,Y,hp) {
 calc_theta_y_means <- function(xScalar,theta_y_list,giv=NA) {
   haveOrd <- 'rho' %in% names(theta_y_list)
   haveCont <- 'r' %in% names(theta_y_list)
-  validModels <- tolower(c('GenCRRA_corr_heterosk','GenCRRA_corr_homosk','GenCRRA_uncorr_heterosk','GenCRRA_uncorr_homosk'))
+  check_model(theta_y_list$paramModel)
 
-  if(tolower(theta_y_list$paramModel) %in% validModels) {
-    if(haveOrd) {
-      rho <- theta_y_list$rho
-    }
+  if(haveOrd) {
+    rho <- theta_y_list$rho
+  }
 
-    if(haveCont) {
-      a <- theta_y_list$a
-      r <- theta_y_list$r
-      b <- theta_y_list$b
-    }
+  if(haveCont) {
+    a <- theta_y_list$a
+    r <- theta_y_list$r
+    b <- theta_y_list$b
+  }
 
-    if(!any(is.na(giv))) {
-      if(haveOrd && haveCont) {
-        J <- length(rho)
-        givOrd  <- giv[giv <= J]
-        givCont <- giv[giv > J]
-        rho <- rho[givOrd]
-        a <- a[givCont-J]
-        r <- r[givCont-J]
-        b <- b[givCont-J]
-      } else if(haveOrd && !haveCont) {
-        givOrd  <- giv
-        rho <- rho[givOrd]
-      } else {
-        # !haveOrd && haveCont
-        givCont  <- giv
-        a <- a[givCont]
-        r <- r[givCont]
-        b <- b[givCont]
-      }
-    }
+  if(!any(is.na(giv))) {
     if(haveOrd && haveCont) {
-      meanVectOrd  <- xScalar^rho
-      meanVectCont <- a*xScalar^r + b
-      return(c(meanVectOrd,meanVectCont))
+      J <- length(rho)
+      givOrd  <- giv[giv <= J]
+      givCont <- giv[giv > J]
+      rho <- rho[givOrd]
+      a <- a[givCont-J]
+      r <- r[givCont-J]
+      b <- b[givCont-J]
     } else if(haveOrd && !haveCont) {
-      meanVectOrd  <- xScalar^rho
-      return(meanVectOrd)
+      givOrd  <- giv
+      rho <- rho[givOrd]
     } else {
       # !haveOrd && haveCont
-      meanVectCont <- a*xScalar^r + b
-      return(meanVectCont)
+      givCont  <- giv
+      a <- a[givCont]
+      r <- r[givCont]
+      b <- b[givCont]
     }
-
-  } else {
-    stop(paste('Unsupported parametric model specification:',theta_y_list$paramModel))
   }
+  if(haveOrd && haveCont) {
+    meanVectOrd  <- xScalar^rho
+    meanVectCont <- a*xScalar^r + b
+    return(c(meanVectOrd,meanVectCont))
+  } else if(haveOrd && !haveCont) {
+    meanVectOrd  <- xScalar^rho
+    return(meanVectOrd)
+  } else {
+    # !haveOrd && haveCont
+    meanVectCont <- a*xScalar^r + b
+    return(meanVectCont)
+  }
+
 }

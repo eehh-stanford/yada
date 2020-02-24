@@ -1,10 +1,10 @@
-#' @title Power law with ordinal observations
+#' @title Power law with mixed ordinal and continuous observations
 #'
-#' @description \code{powLawMix} calculates the mean (h). \code{powLawMixSigma} calculates the noise (sigma, or sig for short). \code{powLawMixNegLogLik} calculates the negative log-likelihood. \code{powLawMixGradNegLogLik} calculates the gradient of the negative log-likelihood. \code{fitPowLawMix} returns the maximum likelihood fit.
+#' @description \code{powLawMixNegLogLik} calculates the negative log-likelihood. \code{powLawMixGradNegLogLik} calculates the gradient of the negative log-likelihood. \code{extract_th_v} extracts the parameterization for a single ordinal variable from the parameter vector th_y. \code{extract_th_w} extracts the parameterization for a single continuous variable from the parameter vector th_y.
 #'
-#' @details We assume a mixture of J ordinal variables as described in yada::powLawOrd and K continuous variables as described in yada::powLaw. The calculation of the mean and scale term on the noise, s, is unchanged for the mixed case. However, the scaling term, kappa (kap for short, is common across variables. The ordering of the complete parameter vector th_y is
+#' @details We assume a mixture of J ordinal variables as described in yada::powLawOrd and K continuous variables as described in yada::powLaw. The calculation of the mean and scale term on the noise, s, is unchanged for the mixed case. However, the scaling term, kappa, is common across variables. The ordering of the complete parameter vector th_y is
 #'
-#' \deqn{th_y = [rho,tau,a,r,b,s,kap]}
+#' \deqn{th_y = [rho,tau,a,r,b,s,kappa]}
 #'
 #' The length of each vector in th_y is
 #'
@@ -16,7 +16,7 @@
 #' r         K
 #' b         K
 #' s         J + K
-#' kap       1
+#' kappa     1
 #'
 #' The extension of the negative log-likelihod calculation from the single variables case ordinal/continuous case to the multi-variable mixed case is straightforward: each variable contributes independently to the sum. Extension of the gradient calculation is similarly straightforward: aside from kappa, which is shared across variables, the calculation is unchanged. For kappa, a sum across variables is needed.
 #' 
@@ -29,20 +29,96 @@
 #' @param r Scaling exponent (continuous)
 #' @param b Offset (continuous)
 #' @param s Baseline noise
-#' @param kap Slope of noise (short for kappa) [Optional]
+#' @param kappa Slope of noise [Optional]
 #' @param hp Hyperparameters that, among other things, specify how to unpack th_y
-#' @param th_y Parameter vector with ordering th_y = [rho,tau,a,r,b,s,kap]
+#' @param th_y Parameter vector with ordering th_y = [rho,tau,a,r,b,s,kappa]
 #' @param hetero Whether the model is heteroskedastic [Default FALSE]
 #'
 #' @author Michael Holton Price <MichaelHoltonPrice@gmail.com>
 
 #' @export
-# hetero is unneeded since hp is given
-powLawMixNegLogLik <- function(th_y,x,Y,hp,transformVar=F) {
-  # th_y has ordering th_y = [rho,tau,a,r,b,s,kap]
+powLawMixNegLogLik2 <- function(th_y,x,Y,hp,transformVar=F) {
+  # th_y has ordering th_y = [rho,tau,a,r,b,s,kappa]
   # eta_y is the negative log-likelihood
   # For optimization, th_y is the first input
-  hetero <- !grepl('homosk',hp$paramModel)
+  hetero <- is_hetero(hp$paramModel)
+  J <- hp$J # number of ordinal variables
+  K <- hp$K # number of continuous variables
+
+  negLogLik <- 0
+
+  N <- length(x)
+  for(j in 1:J) {
+    th_v <- extract_th_v(th_y,hp,j)
+    Mj <- hp$M[j]
+    rho <- th_v[1]
+    tau <- th_v[2:(1+Mj)]
+    s   <- th_v[2+Mj]
+    if(hetero) {
+      kappa <- th_v[3+Mj]
+    }
+    for(n in 1:N) {
+      vnj <- Y[j,n]
+      if(!is.na(vnj)) {
+        xn   <- x[n]
+        gn   <- xn^rho
+        sig_n <- s
+        if(hetero) {
+          sig_n <- sig_n * (1 + kappa*xn)
+        }
+
+        if(vnj == 0) {
+          Phi_lo <- 0
+        } else {
+          tau_lo <- tau[vnj]
+          Phi_lo <- pnorm( (tau_lo - gn)/sig_n )
+        }
+
+        if(vnj == Mj) {
+          Phi_hi <- 1
+        } else {
+          tau_hi <- tau[vnj+1]
+          Phi_hi <- pnorm( (tau_hi - gn)/sig_n )
+        }
+      negLogLik <- negLogLik - log(Phi_hi - Phi_lo)
+      }
+    }
+  }
+
+  for(k in 1:K) {
+    th_w <- extract_th_w(th_y,hp,k)
+    a <- th_w[1]
+    r <- th_w[2]
+    b <- th_w[3]
+    s <- th_w[4]
+
+    if(hetero) {
+      kappa <- th_w[5]
+    }
+    for(n in 1:N) {
+      wnj <- Y[J+k,n]
+      if(!is.na(wnj)) {
+        xn   <- x[n]
+        hn   <- a*xn^r + b
+        sig_n <- s
+        if(hetero) {
+          sig_n <- sig_n * (1 + kappa*xn)
+        }
+
+      negLogLik <- negLogLik - dnorm(wnj,hn,sig_n,log=T)
+      }
+    }   
+  }
+  return(negLogLik)
+}
+
+#' @export
+# hetero is unneeded since hp is given
+powLawMixNegLogLik <- function(th_y,x,Y,hp,transformVar=F) {
+  # th_y has ordering th_y = [rho,tau,a,r,b,s,kappa]
+  # eta_y is the negative log-likelihood
+  # For optimization, th_y is the first input
+  hetero <- is_hetero(hp$paramModel)
   J <- hp$J # number of ordinal variables
   K <- hp$K # number of continuous variables
 
@@ -72,7 +148,7 @@ powLawMixNegLogLik <- function(th_y,x,Y,hp,transformVar=F) {
     xk <-  x[indk]
     wk <- wk[indk]
     th_w <- extract_th_w(th_y,hp,k)
-    negLogLik <- negLogLik + powLawNegLogLik(th_w,xk,wk,hetero,transformVar)
+    negLogLik <- negLogLik + powLawNegLogLik(th_w,xk,wk,transformVar)
     
   }
  }
@@ -80,88 +156,12 @@ powLawMixNegLogLik <- function(th_y,x,Y,hp,transformVar=F) {
 }
 
 #' @export
-powLawMixNegLogLik2 <- function(th_y,x,Y,hp,transformVar=F) {
-  # th_y has ordering th_y = [rho,tau,a,r,b,s,kap]
-  # eta_y is the negative log-likelihood
-  # For optimization, th_y is the first input
-  hetero <- !grepl('homosk',hp$paramModel)
-  J <- hp$J # number of ordinal variables
-  K <- hp$K # number of continuous variables
-
-  negLogLik <- 0
-
-  N <- length(x)
-  for(j in 1:J) {
-    th_v <- extract_th_v(th_y,hp,j)
-    Mj <- hp$M[j]
-    rho <- th_v[1]
-    tau <- th_v[2:(1+Mj)]
-    s   <- th_v[2+Mj]
-    if(hetero) {
-      kap <- th_v[3+Mj]
-    }
-    for(n in 1:N) {
-      vnj <- Y[j,n]
-      if(!is.na(vnj)) {
-        xn   <- x[n]
-        gn   <- xn^rho
-        sig_n <- s
-        if(hetero) {
-          sig_n <- sig_n * (1 + kap*xn)
-        }
-
-        if(vnj == 0) {
-          Phi_lo <- 0
-        } else {
-          tau_lo <- tau[vnj]
-          Phi_lo <- pnorm( (tau_lo - gn)/sig_n )
-        }
-
-        if(vnj == Mj) {
-          Phi_hi <- 1
-        } else {
-          tau_hi <- tau[vnj+1]
-          Phi_hi <- pnorm( (tau_hi - gn)/sig_n )
-        }
-      negLogLik <- negLogLik - log(Phi_hi - Phi_lo)
-      }
-    }
-  }
-
-  for(k in 1:K) {
-    th_w <- extract_th_w(th_y,hp,k)
-    a <- th_w[1]
-    r <- th_w[2]
-    b <- th_w[3]
-    s <- th_w[4]
-
-    if(hetero) {
-      kap <- th_w[5]
-    }
-    for(n in 1:N) {
-      wnj <- Y[J+k,n]
-      if(!is.na(wnj)) {
-        xn   <- x[n]
-        hn   <- a*xn^r + b
-        sig_n <- s
-        if(hetero) {
-          sig_n <- sig_n * (1 + kap*xn)
-        }
-
-      negLogLik <- negLogLik - dnorm(wnj,hn,sig_n,log=T)
-      }
-    }   
-  }
-  return(negLogLik)
-}
-
-#' @export
 # hetero is unneeded since hp is given
 powLawMixGradNegLogLik <- function(th_y,x,Y,hp,transformVar=F) {
-  # th_y has ordering th_y = [rho,tau,a,r,b,s,kap]
+  # th_y has ordering th_y = [rho,tau,a,r,b,s,kappa]
   # eta_y is the negative log-likelihood
   # For optimization, th_y is the first input
-  hetero <- !grepl('homosk',hp$paramModel)
+  hetero <- is_hetero(hp$paramModel)
   J <- hp$J # number of ordinal variables
   K <- hp$K # number of continuous variables
 
@@ -188,7 +188,7 @@ powLawMixGradNegLogLik <- function(th_y,x,Y,hp,transformVar=F) {
     l <- get_var_index('s',hp,j=j)
     gradNegLogLik[l] <- gradNegLogLik[l] + eta_v[2+Mj]
     if(hetero) {
-      l <- get_var_index('kap',hp)
+      l <- get_var_index('kappa',hp)
       gradNegLogLik[l] <- gradNegLogLik[l] + eta_v[3+Mj]
     }
   }
@@ -200,9 +200,9 @@ powLawMixGradNegLogLik <- function(th_y,x,Y,hp,transformVar=F) {
     xk <-  x[indk]
     wk <- wk[indk]
     th_w <- extract_th_w(th_y,hp,k)
-    eta_w <- powLawGradNegLogLik(th_w,xk,wk,hetero)
+    eta_w <- powLawGradNegLogLik(th_w,xk,wk,transformVar)
     
-  # th_y has ordering th_y = [rho,tau,a,r,b,s,kap]
+  # th_y has ordering th_y = [rho,tau,a,r,b,s,kappa]
     l <- get_var_index('a',hp,k=k)
     if(l == 1) {
       print(k)
@@ -224,7 +224,7 @@ powLawMixGradNegLogLik <- function(th_y,x,Y,hp,transformVar=F) {
     }
     gradNegLogLik[l] <- gradNegLogLik[l] + eta_w[4]
     if(hetero) {
-      l <- get_var_index('kap',hp)
+      l <- get_var_index('kappa',hp)
     if(l == 1) {
       print(k)
     }
@@ -236,10 +236,10 @@ powLawMixGradNegLogLik <- function(th_y,x,Y,hp,transformVar=F) {
 
 #' @export
 extract_th_v <- function(th_y,hp,j) {
-  # th_y has ordering th_y = [rho,tau,a,r,b,s,kap]
+  # th_y has ordering th_y = [rho,tau,a,r,b,s,kappa]
   J <- hp$J
   K <- hp$K
-  hetero <- !grepl('homosk',hp$paramModel)
+  hetero <- is_hetero(hp$paramModel)
   th_v <- th_y[j] # add rho
 
   if(j == 1) {
@@ -260,10 +260,10 @@ lastIndex <- J + sum(hp$M) + 3*K
 
 #' @export
 extract_th_w <- function(th_y,hp,k) {
-  # th_y has ordering th_y = [rho,tau,a,r,b,s,kap]
+  # th_y has ordering th_y = [rho,tau,a,r,b,s,kappa]
   J <- hp$J
   K <- hp$K
-  hetero <- !grepl('homosk',hp$paramModel)
+  hetero <- is_hetero(hp$paramModel)
   lastIndex <- J + sum(hp$M)
   th_w <- th_y[lastIndex+k] # add a
   lastIndex <- J + sum(hp$M) + K
@@ -280,166 +280,35 @@ extract_th_w <- function(th_y,hp,k) {
 }
 
 #' @export
-powLawOrdGradNegLogLik <- function(th_v,x_list,hetero=F,transformVar=T) {
-  # th_v has ordering [rho,tau_1,...tau_2,s,kap]
-  # eta_v is the negative log-likelihood
-  # For optimization, th_v is the first input
-
-  M <- length(x_list) - 1 # number of ordinal categories is M+1
-  rho <- th_v[1]         # rho
-  tau <- th_v[2:(M+1)]   # tau_1 ... tau_M
-  s   <- th_v[M+2]       # s
-  if(transformVar) {
-    rho <- exp(rho)
-    s   <- exp(s)
-  }
-
-  if(hetero) {
-    kap <- th_v[M+3]     # kappa
-    if(transformVar) {
-      kap <- exp(kap)
-    }
-  }
-
- 
-  if(hetero) {
-    gradVect <- rep(0,3+M)
+simPowLawMix <- function(th_y_list,th_x_list,N,hp) {
+  if(th_x_list$fitType == 'uniform') {
+    x <- runif(N,th_x_list$xmin,th_x_list$xmax)
   } else {
-    gradVect <- rep(0,2+M)
-  }
-  
-  for(m in 0:M) { 
-    x <- x_list[[m+1]]
-    x_to_rho <- x^rho
-
-    # Handle the special case x = 0 by setting log_x to zero for these cases
-    log_x <- log(x)
-    log_x[x==0] <- 0
-
-    if(hetero) {
-      sig <- s*(1+kap*x)
-    } else {
-      sig <- s
-    }
-
-    sig_sq <- sig^2
-   
-    if(m == 0) {
-      tau_lo <- 0 # only used when phi_lo=0 is used
-      phi_lo  <- 0
-      Phi_lo  <- 0
-    } else {
-      tau_lo <- tau[m]
-      evalVect <- (tau_lo-x_to_rho)/sig
-      phi_lo <- dnorm(evalVect)
-      Phi_lo <- pnorm(evalVect)
-    }
-
-    if(m == M) {
-      tau_hi <- 0 # only used when phi_hi=0 is used
-      phi_hi <- 0
-      Phi_hi <- 1
-    } else {
-      tau_hi <- tau[m+1]
-      evalVect <- (tau_hi - x_to_rho)/sig
-      phi_hi <- dnorm(evalVect)
-      Phi_hi <- pnorm(evalVect)
-    }
-
-    delta_Phi <- Phi_hi - Phi_lo
-    delta_phi <- phi_hi - phi_lo
-
-    # rho
-    if(!transformVar) {
-      gradVect[1] <- gradVect[1] + sum(delta_phi/delta_Phi*x_to_rho*log_x/sig)
-    } else {
-      gradVect[1] <- gradVect[1] + sum(delta_phi/delta_Phi*x_to_rho*log_x/sig)*rho
-    }
-
-    # tau_m     [lo]
-    if(m > 0) {
-      gradVect[m+1] <- gradVect[m+1] + sum(phi_lo/delta_Phi/sig)
-    }
-
-    # tau_{m+1} [hi]
-    if(m < M) {
-      gradVect[m+2] <- gradVect[m+2] - sum(phi_hi/delta_Phi/sig)
-    }
-
-    # s
-    leadingTerm <- (phi_hi*(tau_hi-x_to_rho)-phi_lo*(tau_lo-x_to_rho))/delta_Phi/sig_sq
-    if(hetero) {
-      if(!transformVar) {
-        gradVect[M+2] <- gradVect[M+2] + sum(leadingTerm * (1+kap*x))
-      } else {
-        gradVect[M+2] <- gradVect[M+2] + sum(leadingTerm * (1+kap*x))*s
-      }
-    } else {
-      if(!transformVar) {
-        gradVect[M+2] <- gradVect[M+2] + sum(leadingTerm)
-      } else {
-        gradVect[M+2] <- gradVect[M+2] + sum(leadingTerm)*s
-      }
-    }
-
-    if(hetero) {
-      # kappa
-      if(!transformVar) {
-        gradVect[M+3] <- gradVect[M+3] + sum(leadingTerm * s * x)
-      } else {
-        gradVect[M+3] <- gradVect[M+3] + sum(leadingTerm * s * x)*kap
-      }
-
-    }
-  }
-  return(gradVect)
-}
-
-#' @export
-fitPowLawOrd <- function(x,v,hetero=F,returnJustParam=T,transformVar=F) {
-  # th_v has ordering [rho,tau_1,...tau_2,s,kap]
-  M <- length(unique(v)) - 1
-  x_list <- powLawOrdCalc_x_list(x,v)
-
-  rho0   <- 1
-  s0     <- mean(x)
-  tau0_1 <- s0*qnorm(1/(M+1)) + min(x)
-  if(M == 1) {
-    tau0 <- tau0_1
-  } else {
-    tau0_M <- s0*qnorm(M/(M+1)) + max(x)
-    dtau0  <- (tau0_M-tau0_1)/(M-1)
-    tau0   <- tau0_1 + dtau0*(0:(M-1))
+    stop('Only uniform currently supported')
   }
 
-  if(transformVar) {
-    rho0 <- log(rho0)
-    s0   <- log(s0)
-  }
-  th_v0 <- c(rho0,tau0,s0)
-  if(hetero) {
-    kap0   <- 1
-    if(transformVar) {
-      kap0 <- log(kap0)
+  th_y_vect <- theta_y_list2vect(th_y_list)
+  hetero <- is_hetero(hp$paramModel) 
+  J <- hp$J
+  K <- hp$K
+  Ystar <- matrix(NA,J+K,N)
+  for(n in 1:N) {
+    for(j in 1:J) {
+      th_v <- extract_th_v(th_y_vect,hp,j)
+      Ystar[j,n] <- rnorm(1,powLawOrd(x[n],th_v),powLawOrdSigma(x[n],th_v,hetero))
     }
-    th_v0 <- c(th_v0,kap0)
+    for(k in 1:K) {
+      th_w <- extract_th_w(th_y_vect,hp,k)
+      Ystar[J+k,n] <- rnorm(1,powLaw(x[n],th_w),powLawSigma(x[n],th_w))
+    }
   }
 
-  optimControl <- list(reltol=1e-12,maxit=100000)
-  #optimControl <- list(maxit=100000,trace=6)
-  fit <- optim(th_v0,powLawOrdNegLogLik,gr=powLawOrdGradNegLogLik,method='BFGS',control=optimControl,x_list=x_list,hetero=hetero,hessian=T,transformVar=transformVar)
-  #lowerBounds <- c(-Inf,rep(-Inf,M),0)
-  #upperBounds <- c( Inf,rep( Inf,M),Inf)
-  #if(hetero) {
-  #  lowerBounds <- c(lowerBounds,0)
-  #  upperBounds <- c(lowerBounds,Inf)
-  #}
-  #fit <- optim(th_v0,powLawOrdNegLogLik,gr=powLawOrdGradNegLogLik,method='L-BFGS-B',control=optimControl,x_list=x_list,hetero=hetero,hessian=T,lower=lowerBounds,upper=upperBounds)
 
-  # By default (returnJustParam=T), return just the optimized parameter vector
-  if(returnJustParam) {
-    return(fit$par)
-  } else {
-    return(list(fit=fit,th_v0=th_v0))
+  Y <- Ystar
+  for(j in 1:hp$J) {
+    for(n in 1:N) {
+      Y[j,n] <- as.numeric(cut(Ystar[j,n],c(-Inf,th_y_list$tau[[j]],Inf))) - 1 # The ordinal observation
+    }
   }
+  return(list(x=x,Ystar=Ystar,Y=Y))
 }

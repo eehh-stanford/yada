@@ -180,7 +180,7 @@ fitPowLaw <- function(x,w,hetero=F) {
 
   hp$K <- 1
   th_w_bar0 <- theta_y_constr2unconstr(th_w0,hp)
-  optimControl <- list(reltol=1e-12,maxit=100000)
+  optimControl <- list(reltol=1e-12,maxit=100000,ndeps=rep(1e-8,length(th_w_bar0)))
   fit <- optim(th_w_bar0,powLawNegLogLik,method='BFGS',control=optimControl,x=x,w=w,hessian=T,transformVar=T)
 
   th_w <- theta_y_unconstr2constr(fit$par,hp)

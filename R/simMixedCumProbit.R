@@ -20,18 +20,35 @@
 simMixedCumProbit <- function(theta_y_list,N,theta_x,hp,missDataProp=0) {
   # Draw for the independent variable
   # scalar x variable
-  x <- rexp(N,theta_x)
+  if(theta_x$fitType == 'uniform') {
+    x <- runif(N,theta_x$xmin,theta_x$xmax)
+  } else {
+    stop('Only uniform currently supported')
+  }
+
+  hetero <- is_hetero(hp$paramModel)
 
   # Create latent observations
-  Ystar <- t(MASS::mvrnorm(N,mu=rep(0,hp$J+hp$K),Sigma=theta_y_list$Sigma))
+  Ystar <- matrix(NA,hp$J+hp$K,N)
+  for(n in 1:N) {
+    covMat <- theta_y_list$Sigma
+    if(hetero) {
+      covMat <- covMat * (1 + theta_y_list$kappa*x[n])
+    }
+    Ystar[,n] <- t(MASS::mvrnorm(1,mu=rep(0,hp$J+hp$K),Sigma=covMat))
+  }
   # add offset
-  for(rr in 1:dim(Ystar)[1]) {
+  for(rr in 1:nrow(Ystar)) {
     if(rr <= hp$J) {
-      param <- c(theta_y_list$alpha[rr],theta_y_list$rho[rr])
-      Ystar[rr,] <- Ystar[rr,] + genCrraOrd(x,param)
+      j <- rr
+      rho <- theta_y_list$rho[j]
+      Ystar[rr,] <- Ystar[rr,] + x[n]^rho
     } else {
-      param <- c(theta_y_list$a[rr-hp$J],theta_y_list$r[rr-hp$J],theta_y_list$b[rr-hp$J])
-      Ystar[rr,] <- Ystar[rr,] + genCrra(x,param)
+      k <- rr - hp$J
+      a <- theta_y_list$a[k]
+      r <- theta_y_list$r[k]
+      b <- theta_y_list$b[k]
+      Ystar[rr,] <- Ystar[rr,] + a*x[n]^r + b
     }
   }
 

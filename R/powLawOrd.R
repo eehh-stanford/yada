@@ -168,21 +168,35 @@ powLawOrdGradNegLogLik <- function(th_v,x_list,hetero=F,transformVar=F) {
     # rho
     eta_v[1] <- eta_v[1]*th_v[1]
 
-    # extract the gradient for tau
+    # extract tau and the gradient for tau
+    tau       <- th_v [2:(1+hp$M)]
     eta_v_tau <- eta_v[2:(1+hp$M)]
 
-    # tau1
-    eta_v[2] <- sum(eta_v_tau)
-
-    # remaining tau (if necessary)
-    if(hp$M > 1) {
-      for(m in 2:hp$M) {
-        eta_v[1+m] <- 0
-        for(mp in m:hp$M) {
-          eta_v[1+m] <- eta_v[1+m] + eta_v_tau[mp] * (th_v[1+mp] - th_v[mp])
+    # Make the Jacobian
+    J <- matrix(0,hp$M,hp$M)
+    for(cc in 1:hp$M) {
+      for(rr in cc:hp$M) {
+        if(cc == 1) {
+          J[rr,cc] <- 1
+        } else {
+          J[rr,cc] <- tau[rr] - tau[rr-1]
         }
       }
     }
+#    eta_v_tau2 <- rep(0,hp$M)
+#    # tau1
+#    eta_v_tau2[1] <- sum(eta_v_tau)
+#
+#    # remaining tau (if necessary)
+#    if(hp$M > 1) {
+#      for(m in 2:hp$M) {
+#        eta_v_tau2[m] <- 0
+#        for(mp in m:hp$M) {
+#          eta_v_tau2[m] <- eta_v_tau2[m] + eta_v_tau[mp] * (th_v[1+mp] - th_v[mp])
+#        }
+#      }
+#    }
+    eta_v[2:(1+hp$M)] <- t(J) %*% eta_v_tau
 
     # s
     eta_v[hp$M+2] <- eta_v[hp$M+2] * th_v[hp$M+2]
@@ -338,8 +352,9 @@ fitPowLawOrd <- function(x,v,hetero=F) {
 
   th_v_bar0 <- theta_y_constr2unconstr(th_v0,hp)
 
-  optimControl <- list(reltol=1e-12,maxit=100000)
+  optimControl <- list(reltol=1e-12,maxit=100000,ndeps=rep(1e-8,length(th_v_bar0)))
   fit <- optim(th_v_bar0,powLawOrdNegLogLik,control=optimControl,x_list=x_list,hetero=hetero,hessian=T,transformVar=T,method='BFGS')
+
   th_v <- theta_y_unconstr2constr(fit$par,hp)
   
   return(list(fit=fit,th_v=th_v,th_v0=th_v0))

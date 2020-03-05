@@ -16,7 +16,6 @@
 #' @export
 
 solvey_uncorr_hetero <- function(x,Y,hp,verbose=F,th_y0=NA) {
-
   hp$paramModel <- 'powLawMixUncorrHetero'
   if(all(is.na(th_y0))) {
     # Initialize with the homoskedastic case
@@ -29,9 +28,11 @@ solvey_uncorr_hetero <- function(x,Y,hp,verbose=F,th_y0=NA) {
 
   th_y_bar0 <- theta_y_constr2unconstr(th_y0,hp)
 
-  grad0 <- powLawMixGradNegLogLik(th_y_bar0,x,Y,hp,T)
-  optimControl <- list(reltol=1e-12,maxit=10000000,trace=100,parscale=1/abs(grad0))
-  fit <- optim(th_y_bar0,powLawMixNegLogLik,gr=powLawMixGradNegLogLik,control=optimControl,x=x,Y=Y,hp=hp,transformVar=T,method='BFGS')
+  optimControl <- list(reltol=1e-12,maxit=10000000,ndeps=rep(1e-8,length(th_y_bar0)))
+  if(verbose) {
+    optimControl$trace <- 100
+  }
+  fit <- optim(th_y_bar0,powLawMixNegLogLik,control=optimControl,x=x,Y=Y,hp=hp,transformVar=T,method='BFGS')
 
   th_y <- theta_y_unconstr2constr(fit$par,hp)
   th_y_list <- theta_y_vect2list(th_y,hp)

@@ -123,6 +123,7 @@ numGrad <- function(th_v,x_list,hetero,transformVar) {
 }
 
 # homoskedastic / constrained variables
+
 expect_equal(
   powLawOrdGradNegLogLik(th_v_homo2,x_list,hetero=F,transformVar=F),
   numGrad(th_v_homo2,x_list,hetero=F,transformVar=F),
@@ -148,6 +149,35 @@ expect_equal(
   powLawOrdGradNegLogLik(th_v_bar_hetero2,x_list,hetero=T,transformVar=T),
   numGrad(th_v_bar_hetero2,x_list,hetero=T,transformVar=T),
   tolerance=1e-4
+)
+
+# Check the gradient directly for when hetero=F and transformVar=T
+delta_Phi0 <- pnorm((tau1-x0^rho)/s)
+delta_Phi1 <- pnorm((tau2-x1^rho)/s) - pnorm((tau1-x1^rho)/s)
+delta_Phi2 <- 1 - pnorm((tau2-x2^rho)/s)
+delta_phi0 <- dnorm((tau1-x0^rho)/s)
+delta_phi1 <- dnorm((tau2-x1^rho)/s) - dnorm((tau1-x1^rho)/s)
+delta_phi2 <- -dnorm((tau2-x2^rho)/s)
+
+# These are actually the barred variables
+grad_rho <- delta_phi0 / delta_Phi0 * x0^rho * log(x0) / s * rho
+grad_rho <- grad_rho + delta_phi1 / delta_Phi1 * x1^rho * log(x1) / s * rho
+grad_rho <- grad_rho + delta_phi2 / delta_Phi2 * x2^rho * log(x2) / s * rho
+
+grad_tau1 <- - delta_phi0 / delta_Phi0 / s
+grad_tau1 <- grad_tau1 - delta_phi1 / delta_Phi1 / s
+grad_tau1 <- grad_tau1 - delta_phi2 / delta_Phi2 / s
+
+grad_tau2 <- -dnorm((tau2-x1^rho)/s) / delta_Phi1 / s * (tau2-tau1)
+grad_tau2 <- grad_tau2 + dnorm( (tau2-x2^rho)/s) / delta_Phi2 / s * (tau2-tau1)
+
+grad_s <- dnorm((tau1-x0^rho)/s)*(tau1-x0^rho)/delta_Phi0/s
+grad_s <- grad_s + ( dnorm((tau2-x1^rho)/s)*(tau2-x1^rho) - dnorm((tau1-x1^rho)/s)*(tau1-x1^rho) ) / delta_Phi1 / s
+grad_s <- grad_s - dnorm((tau2-x2^rho)/s)*(tau2-x2^rho) / delta_Phi2 / s
+
+expect_equal(
+  powLawOrdGradNegLogLik(th_v_bar_homo2,x_list,hetero=F,transformVar=T),
+  c(grad_rho,grad_tau1,grad_tau2,grad_s)
 )
 
 # test simPowLawOrd

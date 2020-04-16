@@ -37,82 +37,6 @@
 #' @author Michael Holton Price <MichaelHoltonPrice@gmail.com>
 
 #' @export
-powLawMixNegLogLik2 <- function(th_y,x,Y,hp,transformVar=F) {
-  # th_y has ordering th_y = [rho,tau,a,r,b,s,kappa]
-  # eta_y is the negative log-likelihood
-  # For optimization, th_y is the first input
-  hetero <- is_hetero(hp$paramModel)
-  J <- hp$J # number of ordinal variables
-  K <- hp$K # number of continuous variables
-
-  negLogLik <- 0
-
-  N <- length(x)
-  for(j in 1:J) {
-    th_v <- extract_th_v(th_y,hp,j)
-    Mj <- hp$M[j]
-    rho <- th_v[1]
-    tau <- th_v[2:(1+Mj)]
-    s   <- th_v[2+Mj]
-    if(hetero) {
-      kappa <- th_v[3+Mj]
-    }
-    for(n in 1:N) {
-      vnj <- Y[j,n]
-      if(!is.na(vnj)) {
-        xn   <- x[n]
-        gn   <- xn^rho
-        sig_n <- s
-        if(hetero) {
-          sig_n <- sig_n * (1 + kappa*xn)
-        }
-
-        if(vnj == 0) {
-          Phi_lo <- 0
-        } else {
-          tau_lo <- tau[vnj]
-          Phi_lo <- pnorm( (tau_lo - gn)/sig_n )
-        }
-
-        if(vnj == Mj) {
-          Phi_hi <- 1
-        } else {
-          tau_hi <- tau[vnj+1]
-          Phi_hi <- pnorm( (tau_hi - gn)/sig_n )
-        }
-      negLogLik <- negLogLik - log(Phi_hi - Phi_lo)
-      }
-    }
-  }
-
-  for(k in 1:K) {
-    th_w <- extract_th_w(th_y,hp,k)
-    a <- th_w[1]
-    r <- th_w[2]
-    b <- th_w[3]
-    s <- th_w[4]
-
-    if(hetero) {
-      kappa <- th_w[5]
-    }
-    for(n in 1:N) {
-      wnj <- Y[J+k,n]
-      if(!is.na(wnj)) {
-        xn   <- x[n]
-        hn   <- a*xn^r + b
-        sig_n <- s
-        if(hetero) {
-          sig_n <- sig_n * (1 + kappa*xn)
-        }
-
-      negLogLik <- negLogLik - dnorm(wnj,hn,sig_n,log=T)
-      }
-    }   
-  }
-  return(negLogLik)
-}
-
-#' @export
 # hetero is unneeded since hp is given
 powLawMixNegLogLik <- function(th_y,x,Y,hp,transformVar=F) {
   # th_y has ordering th_y = [rho,tau,a,r,b,s,kappa]
@@ -134,9 +58,8 @@ powLawMixNegLogLik <- function(th_y,x,Y,hp,transformVar=F) {
     indj <- !is.na(x) & !is.na(vj)
     xj <-  x[indj]
     vj <- vj[indj]
-    x_list <- powLawOrdCalc_x_list(xj,vj)
     th_v <- extract_th_v(th_y,hp,j)
-    negLogLik <- negLogLik + powLawOrdNegLogLik(th_v,x_list,hetero,transformVar)
+    negLogLik <- negLogLik + powLawOrdNegLogLik(th_v,xj,vj,hetero,transformVar)
   }
  }
 
@@ -180,9 +103,8 @@ powLawMixNegLogLik_jk <- function(th_y_l,x,Y,hp,transformVar=F) {
     indj <- !is.na(x) & !is.na(vj)
     xj <-  x[indj]
     vj <- vj[indj]
-    x_list <- powLawOrdCalc_x_list(xj,vj)
     th_v <- c(th_y_l$rho[j],th_y_l$tau[[j]],s[j],th_y_l$kappa[j])
-    negLogLik <- negLogLik + powLawOrdNegLogLik(th_v,x_list,hetero,transformVar)
+    negLogLik <- negLogLik + powLawOrdNegLogLik(th_v,xj,vj,hetero,transformVar)
   }
  }
 
@@ -221,9 +143,8 @@ powLawMixGradNegLogLik <- function(th_y,x,Y,hp,transformVar=F) {
     indj <- !is.na(x) & !is.na(vj)
     xj <-  x[indj]
     vj <- vj[indj]
-    x_list <- powLawOrdCalc_x_list(xj,vj)
     th_v <- extract_th_v(th_y,hp,j)
-    eta_v <- powLawOrdGradNegLogLik(th_v,x_list,hetero,transformVar)
+    eta_v <- powLawOrdGradNegLogLik(th_v,xj,vj,hetero,transformVar)
     
     l <- get_var_index('rho',hp,j=j)
     gradNegLogLik[l] <- gradNegLogLik[l] + eta_v[1]

@@ -28,7 +28,7 @@ powLaw(x, th_w)
 \item{transformVar}{Whether a transformation of the parameterization is needed [Default FALSE]}
 }
 \description{
-\code{powLaw} calculates the mean (h). \code{powLawSigma} calculates the noise (sigma, or sig for short). \code{powLawDensity} calculates the density. \code{powLawNegLogLik} calculates the negative log-likelihood. \code{fitPowLaw} returns the maximum likelihood fit. \code{simPowLaw} creates simulated data.
+\code{powLaw} calculates the mean (h). \code{powLawSigma} calculates the noise (sigma, or sig for short). \code{powLawDensity} calculates the density. \code{powLawNegLogLikVect} calculates a vector of negative log-likelihood. \code{powLawNegLogLik} calculates the negative log-likelihood (sum of \code{powLawNegLogLikVect}). \code{fitPowLaw} returns the maximum likelihood fit. \code{simPowLaw} creates simulated data.
 }
 \details{
 We assume that the response variable w is distributed as

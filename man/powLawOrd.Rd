@@ -26,7 +26,7 @@ powLawOrd(x, th_v, transformVar = F)
 \item{hetero}{Whether the model is heteroskedastic [Default FALSE]}
 }
 \description{
-\code{powLawOrd} calculates the mean (h). \code{powLawOrdSigma} calculates the noise (sigma, or sig for short). \code{powLawOrdNegLogLik} calculates the negative log-likelihood. \code{fitPowLawOrd} returns the maximum likelihood fit. \code{simPowLawOrd} creates simulated data. \code{powLawOrdCalc_x_list} transforms from a vector to list representation for the input data.
+\code{powLawOrd} calculates the mean (h). \code{powLawOrdSigma} calculates the noise (sigma, or sig for short). \code{powLawOrdNegLogLikVect} calculates a vector of the negative log-likelihoods. \code{powLawOrdNegLogLik} calculates the negative log-likelihood (sum of \code{powLawOrdNegLogLikVect}). \code{fitPowLawOrd} returns the maximum likelihood fit. \code{simPowLawOrd} creates simulated data. \code{powLawOrdCalc_x_list} transforms from a vector to list representation for the input data.
 }
 \details{
 We assume that the latent response variable vstar (for v^*) is distributed as

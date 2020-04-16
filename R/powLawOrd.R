@@ -1,6 +1,6 @@
 #' @title Power law with ordinal observations
 #'
-#' @description \code{powLawOrd} calculates the mean (h). \code{powLawOrdSigma} calculates the noise (sigma, or sig for short). \code{powLawOrdNegLogLik} calculates the negative log-likelihood. \code{fitPowLawOrd} returns the maximum likelihood fit. \code{simPowLawOrd} creates simulated data. \code{powLawOrdCalc_x_list} transforms from a vector to list representation for the input data.
+#' @description \code{powLawOrd} calculates the mean (h). \code{powLawOrdSigma} calculates the noise (sigma, or sig for short). \code{powLawOrdNegLogLikVect} calculates a vector of the negative log-likelihoods. \code{powLawOrdNegLogLik} calculates the negative log-likelihood (sum of \code{powLawOrdNegLogLikVect}). \code{fitPowLawOrd} returns the maximum likelihood fit. \code{simPowLawOrd} creates simulated data. \code{powLawOrdCalc_x_list} transforms from a vector to list representation for the input data.
 #'
 #' @details We assume that the latent response variable vstar (for v^*) is distributed as
 #'
@@ -83,26 +83,30 @@ powLawOrdSigma <- function(x,th_v,hetero=F,transformVar=F) {
 }
 
 #' @export
-powLawOrdNegLogLik <- function(th_v,x_list,hetero=F,transformVar=F) {
+powLawOrdNegLogLikVect <- function(th_v,x,v,hetero=F,transformVar=F) {
   # th_v has ordering [rho,tau_1,...tau_2,s,kappa]
   # eta_v is the negative log-likelihood
   # For optimization, make th_v the first input
+
+  if(!hetero) {
+    M <- length(th_v) - 2
+  } else {
+    M <- length(th_v) - 3
+  }
 
   if(transformVar) {
     # Build hp
     if(!hetero) {
       hp <- list(paramModel='powLawOrdHomo')
       hp$J <- 1
-      hp$M <- length(th_v) - 2
     } else {
       hp <- list(paramModel='powLawOrdHetero')
       hp$J <- 1
-      hp$M <- length(th_v) - 3
     }
+    hp$M <- M
     th_v <- theta_y_unconstr2constr(th_v,hp)
   }
 
-  M <- length(x_list) - 1 # number of ordinal categories is M+1
   rho <- th_v[1]         # rho
   tau <- th_v[2:(M+1)]   # tau_1 ... tau_M
   s   <- th_v[M+2]       # s
@@ -111,36 +115,52 @@ powLawOrdNegLogLik <- function(th_v,x_list,hetero=F,transformVar=F) {
     kappa <- th_v[M+3]     # kappa
   }
 
-  eta_v <- 0
+  # Initialize vector of negative log-likelihoods (eta_v)
+  N <- length(x)
+  if(N != length(v)) {
+    stop('Input vectors x and v do not match in length')
+  }
+  eta_v <- rep(NA,N)
  
   for(m in 0:M) { 
-    x <- x_list[[m+1]]
-    if(hetero) {
-      sig <- s*(1+kappa*x)
-    } else {
-      sig <- s 
-    }
+    ind <- v == m
+    if(sum(ind) > 0 ) {
+      xm <- x[ind]
+      if(hetero) {
+        sig <- s*(1+kappa*xm)
+      } else {
+        sig <- s 
+      }
 
-    if(m==0) {
-      Phi_lo <- 0
-    } else {
-      Phi_lo <- pnorm( (tau[m]- x^rho)/sig )
-    }
+      if(m==0) {
+        Phi_lo <- 0
+      } else {
+        Phi_lo <- pnorm( (tau[m]- xm^rho)/sig )
+      }
 
-    if(m==M) {
-      Phi_hi <- 1
-    } else {
-      Phi_hi <- pnorm( (tau[m+1]- x^rho)/sig )
-    }
+      if(m==M) {
+        Phi_hi <- 1
+      } else {
+        Phi_hi <- pnorm( (tau[m+1]- xm^rho)/sig )
+      }
 
-    eta_v <- eta_v - sum(log(Phi_hi - Phi_lo))
+      eta_v[ind] <- - log(Phi_hi - Phi_lo)
+    }
   }
 
   return(eta_v)
 }
 
 #' @export
-powLawOrdGradNegLogLik <- function(th_v,x_list,hetero=F,transformVar=F) {
+powLawOrdNegLogLik <- function(th_v,x,v,hetero=F,transformVar=F) {
+  # th_v has ordering [rho,tau_1,...tau_2,s,kappa]
+  # eta_v is the negative log-likelihood
+  # For optimization, make th_v the first input
+  return(sum(powLawOrdNegLogLikVect(th_v,x,v,hetero,transformVar)))
+}
+
+#' @export
+powLawOrdGradNegLogLik <- function(th_v,x,v,hetero=F,transformVar=F) {
   # th_v has ordering [rho,tau_1,...tau_2,s,kappa]
   # eta_v is the negative log-likelihood
   # For optimization, th_v is the first input
@@ -156,7 +176,7 @@ powLawOrdGradNegLogLik <- function(th_v,x_list,hetero=F,transformVar=F) {
     }
 
     th_v <- theta_y_unconstr2constr(th_v,hp)
-    eta_v <- powLawOrdGradNegLogLik(th_v,x_list,hetero,transformVar=F)
+    eta_v <- powLawOrdGradNegLogLik(th_v,x,v,hetero,transformVar=F)
     # rho   = exp(rho_bar)
     # tau1  = tau1_bar
     # tau2  = tau1_bar + exp(tau2_bar)
@@ -183,19 +203,7 @@ powLawOrdGradNegLogLik <- function(th_v,x_list,hetero=F,transformVar=F) {
         }
       }
     }
-#    eta_v_tau2 <- rep(0,hp$M)
-#    # tau1
-#    eta_v_tau2[1] <- sum(eta_v_tau)
-#
-#    # remaining tau (if necessary)
-#    if(hp$M > 1) {
-#      for(m in 2:hp$M) {
-#        eta_v_tau2[m] <- 0
-#        for(mp in m:hp$M) {
-#          eta_v_tau2[m] <- eta_v_tau2[m] + eta_v_tau[mp] * (th_v[1+mp] - th_v[mp])
-#        }
-#      }
-#    }
+
     eta_v[2:(1+hp$M)] <- t(J) %*% eta_v_tau
 
     # s
@@ -213,7 +221,12 @@ powLawOrdGradNegLogLik <- function(th_v,x_list,hetero=F,transformVar=F) {
     stop('Should not reach this point if transformVar is TRUE')
   }
 
-  M <- length(x_list) - 1 # number of ordinal categories is M+1
+  if(!hetero) {
+    M <- length(th_v) - 2
+  } else {
+    M <- length(th_v) - 3
+  }
+
   rho <- th_v[1]         # rho
   tau <- th_v[2:(M+1)]   # tau_1 ... tau_M
   s   <- th_v[M+2]       # s
@@ -230,73 +243,75 @@ powLawOrdGradNegLogLik <- function(th_v,x_list,hetero=F,transformVar=F) {
   }
   
   for(m in 0:M) { 
-    x <- x_list[[m+1]]
-    x_to_rho <- x^rho
+    ind <- v == m
+    if(sum(ind) > 0) {
+      xm <- x[ind]
+      x_to_rho <- xm^rho
 
-    # Handle the special case x = 0 by setting log_x to zero for these cases
-    log_x <- log(x)
-    log_x[x==0] <- 0
+      # Handle the special case x = 0 by setting log_x to zero for these cases
+      log_x <- log(xm)
+      log_x[xm==0] <- 0
 
-    if(hetero) {
-      sig <- s*(1+kappa*x)
-    } else {
-      sig <- s
-    }
+      if(hetero) {
+        sig <- s*(1+kappa*xm)
+      } else {
+        sig <- s
+      }
 
-    sig_sq <- sig^2
+      sig_sq <- sig^2
    
-    if(m == 0) {
-      tau_lo <- 0 # only used when phi_lo=0 is used
-      phi_lo  <- 0
-      Phi_lo  <- 0
-    } else {
-      tau_lo <- tau[m]
-      evalVect <- (tau_lo-x_to_rho)/sig
-      phi_lo <- dnorm(evalVect)
-      Phi_lo <- pnorm(evalVect)
-    }
+      if(m == 0) {
+        tau_lo <- 0 # only used when phi_lo=0 is used
+        phi_lo  <- 0
+        Phi_lo  <- 0
+      } else {
+        tau_lo <- tau[m]
+        evalVect <- (tau_lo-x_to_rho)/sig
+        phi_lo <- dnorm(evalVect)
+        Phi_lo <- pnorm(evalVect)
+      }
 
-    if(m == M) {
-      tau_hi <- 0 # only used when phi_hi=0 is used
-      phi_hi <- 0
-      Phi_hi <- 1
-    } else {
-      tau_hi <- tau[m+1]
-      evalVect <- (tau_hi - x_to_rho)/sig
-      phi_hi <- dnorm(evalVect)
-      Phi_hi <- pnorm(evalVect)
-    }
+      if(m == M) {
+        tau_hi <- 0 # only used when phi_hi=0 is used
+        phi_hi <- 0
+        Phi_hi <- 1
+      } else {
+        tau_hi <- tau[m+1]
+        evalVect <- (tau_hi - x_to_rho)/sig
+        phi_hi <- dnorm(evalVect)
+        Phi_hi <- pnorm(evalVect)
+      }
 
-    delta_Phi <- Phi_hi - Phi_lo
-    delta_phi <- phi_hi - phi_lo
+      delta_Phi <- Phi_hi - Phi_lo
+      delta_phi <- phi_hi - phi_lo
 
-    # rho
-    gradVect[1] <- gradVect[1] + sum(delta_phi/delta_Phi*x_to_rho*log_x/sig)
+      # rho
+      gradVect[1] <- gradVect[1] + sum(delta_phi/delta_Phi*x_to_rho*log_x/sig)
 
-    # tau_m     [lo]
-    if(m > 0) {
-      gradVect[m+1] <- gradVect[m+1] + sum(phi_lo/delta_Phi/sig)
-    }
+      # tau_m     [lo]
+      if(m > 0) {
+        gradVect[m+1] <- gradVect[m+1] + sum(phi_lo/delta_Phi/sig)
+      }
 
-    # tau_{m+1} [hi]
-    if(m < M) {
-      gradVect[m+2] <- gradVect[m+2] - sum(phi_hi/delta_Phi/sig)
-    }
+      # tau_{m+1} [hi]
+      if(m < M) {
+        gradVect[m+2] <- gradVect[m+2] - sum(phi_hi/delta_Phi/sig)
+      }
 
-    # s
-    leadingTerm <- (phi_hi*(tau_hi-x_to_rho)-phi_lo*(tau_lo-x_to_rho))/delta_Phi/sig_sq
-    if(hetero) {
-      gradVect[M+2] <- gradVect[M+2] + sum(leadingTerm * (1+kappa*x))
-    } else {
-      gradVect[M+2] <- gradVect[M+2] + sum(leadingTerm)
-    }
+      # s
+      leadingTerm <- (phi_hi*(tau_hi-x_to_rho)-phi_lo*(tau_lo-x_to_rho))/delta_Phi/sig_sq
+      if(hetero) {
+        gradVect[M+2] <- gradVect[M+2] + sum(leadingTerm * (1+kappa*xm))
+      } else {
+        gradVect[M+2] <- gradVect[M+2] + sum(leadingTerm)
+      }
 
-    if(hetero) {
-      # kappa
-      gradVect[M+3] <- gradVect[M+3] + sum(leadingTerm * s * x)
-
-    }
-  }
+      if(hetero) {
+        # kappa
+        gradVect[M+3] <- gradVect[M+3] + sum(leadingTerm * s * xm)
+      }
+    } # end  if(sum(ind) > 0)
+  } # end for(m in 0:M)
   return(gradVect)
 }
 
@@ -304,7 +319,6 @@ powLawOrdGradNegLogLik <- function(th_v,x_list,hetero=F,transformVar=F) {
 fitPowLawOrd <- function(x,v,hetero=F) {
   # th_v has ordering [rho,tau_1,...tau_2,s,kap]
   M <- length(unique(v)) - 1
-  x_list <- powLawOrdCalc_x_list(x,v)
 
   if(hetero) {
     hp <- list(paramModel = 'powLawOrdHetero')
@@ -353,7 +367,7 @@ fitPowLawOrd <- function(x,v,hetero=F) {
   th_v_bar0 <- theta_y_constr2unconstr(th_v0,hp)
 
   optimControl <- list(reltol=1e-12,maxit=100000,ndeps=rep(1e-8,length(th_v_bar0)))
-  fit <- optim(th_v_bar0,powLawOrdNegLogLik,control=optimControl,x_list=x_list,hetero=hetero,hessian=T,transformVar=T,method='BFGS')
+  fit <- optim(th_v_bar0,powLawOrdNegLogLik,control=optimControl,x=x,v=v,hetero=hetero,hessian=T,transformVar=T,method='BFGS')
 
   th_v <- theta_y_unconstr2constr(fit$par,hp)
   
@@ -385,17 +399,4 @@ simPowLawOrd <- function(N,th_x,th_v,hetero=F) {
   }
 
   return(list(x=x,v=v,vstar=vstar))
-}
-
-#' @export
-powLawOrdCalc_x_list <- function(x,v) {
-  # For the input vectors x / v, create a list of length M + 1 in which the
-  # entries of the list are the x-values for each ordinal category.
-  M <- length(unique(v)) - 1 # Number of ordinal categories is M + 1
-  x_list <- list()
-  for(m in 0:M) {
-    x_list[[m+1]] <- x[v == m]
-  }
-
-  return(x_list)
 }

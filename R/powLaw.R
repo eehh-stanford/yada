@@ -1,6 +1,6 @@
 #' @title Power law with a constant offset
 #'
-#' @description \code{powLaw} calculates the mean (h). \code{powLawSigma} calculates the noise (sigma, or sig for short). \code{powLawDensity} calculates the density. \code{powLawNegLogLik} calculates the negative log-likelihood. \code{fitPowLaw} returns the maximum likelihood fit. \code{simPowLaw} creates simulated data. 
+#' @description \code{powLaw} calculates the mean (h). \code{powLawSigma} calculates the noise (sigma, or sig for short). \code{powLawDensity} calculates the density. \code{powLawNegLogLikVect} calculates a vector of negative log-likelihood. \code{powLawNegLogLik} calculates the negative log-likelihood (sum of \code{powLawNegLogLikVect}). \code{fitPowLaw} returns the maximum likelihood fit. \code{simPowLaw} creates simulated data. 
 #'
 #' @details We assume that the response variable w is distributed as
 #'
@@ -64,7 +64,7 @@ powLawDensity <- function(x,w,th_w) {
 }
 
 #' @export
-powLawNegLogLik <- function(th_w,x,w,transformVar=F) {
+powLawNegLogLikVect <- function(th_w,x,w,transformVar=F) {
   # th_w has ordering [a,r,b,s,kappa]
   # eta_w is the negative log-likelihood
   # For optimization, th_w is the first input
@@ -85,8 +85,16 @@ powLawNegLogLik <- function(th_w,x,w,transformVar=F) {
   N <- length(x) # No error checking is done on input lengths
   h   <- powLaw(x,th_w)
   sig <- powLawSigma(x,th_w)
-  eta_w <- 0.5*log(2*pi)*N + sum(log(sig) + 0.5*(w-h)^2/sig^2)
+  eta_w <- 0.5*log(2*pi) + log(sig) + 0.5*(w-h)^2/sig^2
   return(eta_w)
+}
+
+#' @export
+powLawNegLogLik <- function(th_w,x,w,transformVar=F) {
+  # th_w has ordering [a,r,b,s,kappa]
+  # eta_w is the negative log-likelihood
+  # For optimization, th_w is the first input
+  return(sum(powLawNegLogLikVect(th_w,x,w,transformVar)))
 }
 
 #' @export

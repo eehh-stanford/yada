@@ -72,52 +72,52 @@ hp_hetero$M <- length(tau)
 x0 <- 10
 x1 <- 20
 x2 <- 30
-x_list <- list()
-x_list[[1]] <- x0
-x_list[[2]] <- x1
-x_list[[3]] <- x2
+x <- c(x0,x1,x2)
+v <- c(0,1,2)
 
 # Directly calculate the log likelihood, homoskedastic case
-eta_v_homo <- -log(pnorm( (tau1 - x0^rho)/s ))
-eta_v_homo <- eta_v_homo - log( pnorm( (tau2 - x1^rho)/s ) - pnorm( (tau1 - x1^rho)/s ))
-eta_v_homo <- eta_v_homo - log( 1 - pnorm( (tau2 - x2^rho)/s ))
+eta_v_homo0 <- -log(pnorm( (tau1 - x0^rho)/s ))
+eta_v_homo1 <- -log( pnorm( (tau2 - x1^rho)/s ) - pnorm( (tau1 - x1^rho)/s ))
+eta_v_homo2 <- -log( 1 - pnorm( (tau2 - x2^rho)/s ))
 
+eta_v_vect_homo <- powLawOrdNegLogLikVect(th_v_homo2,x,v,hetero=F,transformVar=F)
 expect_equal(
-  powLawOrdNegLogLik(th_v_homo2,x_list,hetero=F,transformVar=F),
-  eta_v_homo
+  eta_v_vect_homo,
+ c(eta_v_homo0,eta_v_homo1,eta_v_homo2) 
 )
 
 expect_equal(
-  powLawOrdNegLogLik(th_v_bar_homo2,x_list,hetero=F,transformVar=T),
-  eta_v_homo
+  powLawOrdNegLogLik(th_v_homo2,x,v,hetero=F,transformVar=F),
+  sum(eta_v_vect_homo)
 )
 
 # Directly calculate the log likelihood, heteroskedastic case
-eta_v_hetero <- -log(pnorm( (tau1 - x0^rho)/(s*(1+kap*x0)) ))
-eta_v_hetero <- eta_v_hetero - log( pnorm( (tau2 - x1^rho)/(s*(1+kap*x1)) ) - pnorm( (tau1 - x1^rho)/(s*(1+kap*x1)) ))
-eta_v_hetero <- eta_v_hetero - log( 1 - pnorm( (tau2 - x2^rho)/(s*(1+kap*x2)) ))
+eta_v_hetero0 <- -log(pnorm( (tau1 - x0^rho)/(s*(1+kap*x0)) ))
+eta_v_hetero1 <- -log( pnorm( (tau2 - x1^rho)/(s*(1+kap*x1)) ) - pnorm( (tau1 - x1^rho)/(s*(1+kap*x1)) ))
+eta_v_hetero2 <- -log( 1 - pnorm( (tau2 - x2^rho)/(s*(1+kap*x2)) ))
 
+eta_v_vect_hetero <- powLawOrdNegLogLikVect(th_v_hetero2,x,v,hetero=T,transformVar=F)
 expect_equal(
-  powLawOrdNegLogLik(th_v_hetero2,x_list,hetero=T,transformVar=F),
-  eta_v_hetero
+  eta_v_vect_hetero,
+ c(eta_v_hetero0,eta_v_hetero1,eta_v_hetero2) 
 )
 
 expect_equal(
-  powLawOrdNegLogLik(th_v_bar_hetero2,x_list,hetero=T,transformVar=T),
-  eta_v_hetero
+  powLawOrdNegLogLik(th_v_hetero2,x,v,hetero=T,transformVar=F),
+  sum(eta_v_vect_hetero)
 )
 
 # Numerically check the gradient calculation
-numGrad <- function(th_v,x_list,hetero,transformVar) {
+numGrad <- function(th_v,x,v,hetero,transformVar) {
   eps <- 1e-8 # The step size for the finite difference
-  eta0 <- powLawOrdNegLogLik(th_v,x_list,hetero,transformVar)
+  eta0 <- powLawOrdNegLogLik(th_v,x,v,hetero,transformVar)
   N <- length(th_v) # number of variables
   gradVect <- rep(NA,N) # The gradient vector
   # iterate over variables to calculate the numerical gradient
   for(n in 1:N) {
     th_v_eps <- th_v
     th_v_eps[n] <- th_v_eps[n] + eps
-    gradVect[n] <- (powLawOrdNegLogLik(th_v_eps,x_list,hetero,transformVar)-eta0)/eps
+    gradVect[n] <- (powLawOrdNegLogLik(th_v_eps,x,v,hetero,transformVar)-eta0)/eps
   }
   return(gradVect)
 }
@@ -125,29 +125,29 @@ numGrad <- function(th_v,x_list,hetero,transformVar) {
 # homoskedastic / constrained variables
 
 expect_equal(
-  powLawOrdGradNegLogLik(th_v_homo2,x_list,hetero=F,transformVar=F),
-  numGrad(th_v_homo2,x_list,hetero=F,transformVar=F),
+  powLawOrdGradNegLogLik(th_v_homo2,x,v,hetero=F,transformVar=F),
+  numGrad(th_v_homo2,x,v,hetero=F,transformVar=F),
   tolerance=1e-4
 )
 
 # heteroskedastic / constrained variables
 expect_equal(
-  powLawOrdGradNegLogLik(th_v_hetero2,x_list,hetero=T,transformVar=F),
-  numGrad(th_v_hetero2,x_list,hetero=T,transformVar=F),
+  powLawOrdGradNegLogLik(th_v_hetero2,x,v,hetero=T,transformVar=F),
+  numGrad(th_v_hetero2,x,v,hetero=T,transformVar=F),
   tolerance=1e-4
 )
 
 # homoskedastic / unconstrained variables
 expect_equal(
-  powLawOrdGradNegLogLik(th_v_bar_homo2,x_list,hetero=F,transformVar=T),
-  numGrad(th_v_bar_homo2,x_list,hetero=F,transformVar=T),
+  powLawOrdGradNegLogLik(th_v_bar_homo2,x,v,hetero=F,transformVar=T),
+  numGrad(th_v_bar_homo2,x,v,hetero=F,transformVar=T),
   tolerance=1e-4
 )
 
 # heteroskedastic / unconstrained variables
 expect_equal(
-  powLawOrdGradNegLogLik(th_v_bar_hetero2,x_list,hetero=T,transformVar=T),
-  numGrad(th_v_bar_hetero2,x_list,hetero=T,transformVar=T),
+  powLawOrdGradNegLogLik(th_v_bar_hetero2,x,v,hetero=T,transformVar=T),
+  numGrad(th_v_bar_hetero2,x,v,hetero=T,transformVar=T),
   tolerance=1e-4
 )
 
@@ -176,7 +176,7 @@ grad_s <- grad_s + ( dnorm((tau2-x1^rho)/s)*(tau2-x1^rho) - dnorm((tau1-x1^rho)/
 grad_s <- grad_s - dnorm((tau2-x2^rho)/s)*(tau2-x2^rho) / delta_Phi2 / s
 
 expect_equal(
-  powLawOrdGradNegLogLik(th_v_bar_homo2,x_list,hetero=F,transformVar=T),
+  powLawOrdGradNegLogLik(th_v_bar_homo2,x,v,hetero=F,transformVar=T),
   c(grad_rho,grad_tau1,grad_tau2,grad_s)
 )
 

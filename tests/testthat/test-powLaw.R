@@ -61,25 +61,36 @@ expect_equal(
   dnorm(1.22,mean=mean_hetero,sd=sig_hetero)
 )
 
-# test powLawNegLogLik
+# test powLawNegLogLikVect
 x <- c(1.3,2.1)
 w <- c(.7,3.8)
-
 mean_homo <- powLaw(x,th_w_homo)
 sig_homo  <- powLawSigma(x,th_w_homo)
 mean_hetero <- powLaw(x,th_w_hetero)
 sig_hetero  <- powLawSigma(x,th_w_hetero)
 
+eta_vect_homo <- powLawNegLogLikVect(th_w_homo,x,w)
+expect_equal(
+  eta_vect_homo,
+  -log(dnorm(w,mean_homo,sig_homo))
+)
+
+eta_vect_hetero <- powLawNegLogLikVect(th_w_hetero,x,w)
+expect_equal(
+  eta_vect_hetero,
+  -log(dnorm(w,mean_hetero,sig_hetero))
+)
+
+# test powLawNegLogLik
 expect_equal(
   powLawNegLogLik(th_w_homo,x,w),
-  -sum(log(dnorm(w,mean_homo,sig_homo)))
+  sum(eta_vect_homo)
 )
 
 expect_equal(
   powLawNegLogLik(th_w_hetero,x,w),
-  -sum(log(dnorm(w,mean_hetero,sig_hetero)))
+  sum(eta_vect_hetero)
 )
-
 
 # Numerically check the gradient calculation
 numGrad <- function(th_w,x,w,transformVar) {
@@ -174,8 +185,6 @@ expect_equal(
   length(sim_hetero$w),
   N
 )
-
-
 
 # test fitPowLaw
 # Check fit for homoskedastic case

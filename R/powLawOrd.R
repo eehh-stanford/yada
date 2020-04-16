@@ -203,6 +203,20 @@ powLawOrdGradNegLogLik <- function(th_v,x,v,hetero=F,transformVar=F) {
         }
       }
     }
+#    eta_v_tau2 <- rep(0,hp$M)
+#    # tau1
+#    eta_v_tau2[1] <- sum(eta_v_tau)
+#
+#    # remaining tau (if necessary)
+#    if(hp$M > 1) {
+#      for(m in 2:hp$M) {
+#        eta_v_tau2[m] <- 0
+#        for(mp in m:hp$M) {
+#          eta_v_tau2[m] <- eta_v_tau2[m] + eta_v_tau[mp] * (th_v[1+mp] - th_v[mp])
+#        }
+#      }
+#    }
+    eta_v[2:(1+hp$M)] <- t(J) %*% eta_v_tau
 
     eta_v[2:(1+hp$M)] <- t(J) %*% eta_v_tau
 

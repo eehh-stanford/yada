@@ -122,6 +122,51 @@ powLawMixNegLogLik_jk <- function(th_y_l,x,Y,hp,transformVar=F) {
   return(negLogLik)
 }
 
+powLawMixNegLogLik_jk <- function(th_y_l,x,Y,hp,transformVar=F) {
+#  hetero <- is_hetero(hp$paramModel)
+#  if(!hetero) {
+#    stop('Model should be heteroskedastic')
+#  }
+  hetero <- T
+  if(transformVar) {
+    stop('Not yet supported')
+  }
+  J <- hp$J # number of ordinal variables
+  K <- hp$K # number of continuous variables
+
+  negLogLik <- 0
+
+  s <- sqrt(diag(th_y_l$Sigma))
+  # Add contribution of ordinal variables
+ if(J > 0) {
+  for(j in 1:J) {
+    # Extracting xList prior and making it an input to powLawMixNegLogLik
+    # would speed up computation. However, extracting it here likely makes the
+    # code easier to understand.
+    vj <- Y[j,]
+    indj <- !is.na(x) & !is.na(vj)
+    xj <-  x[indj]
+    vj <- vj[indj]
+    x_list <- powLawOrdCalc_x_list(xj,vj)
+    th_v <- c(th_y_l$rho[j],th_y_l$tau[[j]],s[j],th_y_l$kappa[j])
+    negLogLik <- negLogLik + powLawOrdNegLogLik(th_v,x_list,hetero,transformVar)
+  }
+ }
+
+  # Add contribution of continuous variables
+ if(K > 0) {
+  for(k in 1:K) {
+    wk <- Y[J+k,]
+    indk <- !is.na(x) & !is.na(wk)
+    xk <-  x[indk]
+    wk <- wk[indk]
+    th_w <- c(th_y_l$a[k],th_y_l$r[k],th_y_l$b[k],s[J+k],th_y_l$kappa[J+k])
+    negLogLik <- negLogLik + powLawNegLogLik(th_w,xk,wk,transformVar)
+  }
+ }
+  return(negLogLik)
+}
+
 #' @export
 # hetero is unneeded since hp is given
 powLawMixGradNegLogLik <- function(th_y,x,Y,hp,transformVar=F) {

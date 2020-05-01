@@ -222,6 +222,8 @@ powLawOrdGradNegLogLik <- function(th_v,x,v,hetero=F,transformVar=F) {
 
     eta_v[2:(1+M)] <- t(J) %*% eta_v_tau
 
+    eta_v[2:(1+hp$M)] <- t(J) %*% eta_v_tau
+
     # s
     eta_v[M+2] <- eta_v[M+2] * th_v[M+2]
 

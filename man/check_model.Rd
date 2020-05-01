@@ -4,7 +4,7 @@
 \alias{check_model}
 \title{Transformation functions for theta_y}
 \usage{
-check_model(paramModel)
+check_model(modSpec)
 }
 \arguments{
 \item{th_v}{Vector of parameters with ordering [rho,tau_1,...,tau_M,s,kappa]}

@@ -4,14 +4,14 @@
 \alias{powLawMixNegLogLik}
 \title{Power law with mixed ordinal and continuous observations}
 \usage{
-powLawMixNegLogLik(th_y, x, Y, hp, transformVar = F)
+powLawMixNegLogLik(th_y, x, Y, modSpec, transformVar = F)
 }
 \arguments{
 \item{th_y}{Parameter vector with ordering th_y = [rho,tau,a,r,b,s,kappa]}
 
 \item{x}{Vector of independent variable observations}
 
-\item{hp}{Hyperparameters that, among other things, specify how to unpack th_y}
+\item{modSpec}{Model specification that, among other things, specifies how to unpack th_y}
 
 \item{vstar}{Vector of latent dependent variable observations (for v^*)}
 
@@ -34,10 +34,10 @@ powLawMixNegLogLik(th_y, x, Y, hp, transformVar = F)
 \item{hetero}{Whether the model is heteroskedastic [Default FALSE]}
 }
 \description{
-\code{powLawMixNegLogLik} calculates the negative log-likelihood. \code{powLawMixGradNegLogLik} calculates the gradient of the negative log-likelihood. \code{extract_th_v} extracts the parameterization for a single ordinal variable from the parameter vector th_y. \code{extract_th_w} extracts the parameterization for a single continuous variable from the parameter vector th_y.
+\code{powLawMixNegLogLik} calculates the negative log-likelihood. \code{powLawMixGradNegLogLik} calculates the gradient of the negative log-likelihood. \code{extract_th_v} extracts the parameterization for a single ordinal variable from the parameter vector th_y. \code{extract_th_w} extracts the parameterization for a single continuous variable from the parameter vector th_y. \code{simPowLawMix} creats simulated data for a conditionally independent, mixed model
 }
 \details{
-We assume a mixture of J ordinal variables as described in yada::powLawOrd and K continuous variables as described in yada::powLaw. The calculation of the mean and scale term on the noise, s, is unchanged for the mixed case. However, the scaling term, kappa, is common across variables. The ordering of the complete parameter vector th_y is
+We assume a mixture of J ordinal variables as described in yada::powLawOrd and K continuous variables as described in yada::powLaw. The calculation of the mean and scale term on the noise, s, is unchanged for the mixed case. The scaling term, kappa, is can be flexibly specified. The ordering of the complete parameter vector th_y is
 
 \deqn{th_y = [rho,tau,a,r,b,s,kappa]}
 
@@ -51,9 +51,9 @@ a         K
 r         K
 b         K
 s         J + K
-kappa     1
+kappa     length(unique(modSpec$hetGroups))
 
-The extension of the negative log-likelihod calculation from the single variables case ordinal/continuous case to the multi-variable mixed case is straightforward: each variable contributes independently to the sum. Extension of the gradient calculation is similarly straightforward: aside from kappa, which is shared across variables, the calculation is unchanged. For kappa, a sum across variables is needed.
+The extension of the negative log-likelihod calculation from the single variables case ordinal/continuous case to the multi-variable mixed case is straightforward: each variable contributes independently to the sum. Extension of the gradient calculation is similarly straightforward: aside from kappa, which is flexibly specified, the calculation is unchanged. For kappa, a sum across variables is needed.
 }
 \author{
 Michael Holton Price <MichaelHoltonPrice@gmail.com>

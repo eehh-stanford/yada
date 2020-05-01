@@ -71,14 +71,17 @@ powLawNegLogLikVect <- function(th_w,x,w,transformVar=F) {
   hetero <- is_th_w_hetero(th_w)
 
   if(transformVar) {
-   # Build hp
-    if(!hetero) {
-      hp <- list(paramModel='powLawHomo')
+    # Build modSpec
+    modSpec <- list(meanSpec='powLaw')
+    modSpec$K <- 1
+    if(hetero) {
+      modSpec$hetSpec <- 'linearSd'
+      modSpec$hetGroups <- 1
     } else {
-      hp <- list(paramModel='powLawHetero')
+      modSpec$hetSpec <- 'none'
     }
-    hp$K <- 1
-    th_w <- theta_y_unconstr2constr(th_w,hp)
+
+    th_w <- theta_y_unconstr2constr(th_w,modSpec)
   }
 
 
@@ -106,15 +109,16 @@ powLawGradNegLogLik <- function(th_w,x,w,transformVar=F) {
   hetero <- is_th_w_hetero(th_w)
 
   if(transformVar) {
-   # Build hp
-    if(!hetero) {
-      hp <- list(paramModel='powLawHomo')
+    # Build modSpec
+    modSpec <- list(meanSpec='powLaw')
+    modSpec$K <- 1
+    if(hetero) {
+      modSpec$hetSpec <- 'linearSd'
+      modSpec$hetGroups <- 1
     } else {
-      hp <- list(paramModel='powLawHetero')
+      modSpec$hetSpec <- 'none'
     }
-    hp$J <- 0
-    hp$K <- 1
-    th_w <- theta_y_unconstr2constr(th_w,hp)
+    th_w <- theta_y_unconstr2constr(th_w,modSpec)
     eta_w <- powLawGradNegLogLik(th_w,x,w,transformVar=F)
     indToChange <- c(1,2,4)
     if(hetero) {
@@ -180,18 +184,23 @@ fitPowLaw <- function(x,w,hetero=F) {
     th_w0 <- c(th_w0,kappa0)
   }
 
+
+
+ # Build modSpec
+  modSpec <- list(meanSpec='powLaw')
+  modSpec$K <- 1
   if(hetero) {
-    hp <- list(paramModel = 'powLawHetero')
+    modSpec$hetSpec <- 'linearSd'
+    modSpec$hetGroups <- 1
   } else {
-    hp <- list(paramModel = 'powLawHomo')
+    modSpec$hetSpec <- 'none'
   }
 
-  hp$K <- 1
-  th_w_bar0 <- theta_y_constr2unconstr(th_w0,hp)
+  th_w_bar0 <- theta_y_constr2unconstr(th_w0,modSpec)
   optimControl <- list(reltol=1e-12,maxit=100000,ndeps=rep(1e-8,length(th_w_bar0)))
   fit <- optim(th_w_bar0,powLawNegLogLik,method='BFGS',control=optimControl,x=x,w=w,hessian=T,transformVar=T)
 
-  th_w <- theta_y_unconstr2constr(fit$par,hp)
+  th_w <- theta_y_unconstr2constr(fit$par,modSpec)
 
   return(th_w)
 }

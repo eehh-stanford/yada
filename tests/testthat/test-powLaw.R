@@ -1,6 +1,6 @@
-# Test the functions in powLawOrd
+# Test the functions in powLaw
 
-# th_v has ordering [rho,tau_1,...tau_2,s,kap]
+# th_v has ordering [r,a,b,s,kap]
 th_w_homo   <- c(2,.45,1.2,1)
 th_w_hetero <- c(2,.45,1.2,1,0.02)
 th_w_bar_homo   <- c(log(2),log(.45),1.2,log(1))
@@ -123,15 +123,15 @@ expect_equal(
 
 # homoskedastic / unconstrained variables
 expect_equal(
-  powLawGradNegLogLik(th_w_homo,x,w,transformVar=T),
-  numGrad(th_w_homo,x,w,transformVar=T),
+  powLawGradNegLogLik(th_w_bar_homo,x,w,transformVar=T),
+  numGrad(th_w_bar_homo,x,w,transformVar=T),
   tolerance=1e-4
 )
 
 # heteroskedastic / unconstrained variables
 expect_equal(
-  powLawGradNegLogLik(th_w_hetero,x,w,transformVar=T),
-  numGrad(th_w_hetero,x,w,transformVar=T),
+  powLawGradNegLogLik(th_w_bar_hetero,x,w,transformVar=T),
+  numGrad(th_w_bar_hetero,x,w,transformVar=T),
   tolerance=1e-4
 )
 

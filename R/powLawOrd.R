@@ -88,23 +88,25 @@ powLawOrdNegLogLikVect <- function(th_v,x,v,hetero=F,transformVar=F) {
   # eta_v is the negative log-likelihood
   # For optimization, make th_v the first input
 
-  if(!hetero) {
-    M <- length(th_v) - 2
-  } else {
+  if(hetero) {
     M <- length(th_v) - 3
+  } else {
+    M <- length(th_v) - 2
   }
 
   if(transformVar) {
-    # Build hp
-    if(!hetero) {
-      hp <- list(paramModel='powLawOrdHomo')
-      hp$J <- 1
+    # Build modSpec
+    modSpec <- list(meanSpec='powLaw')
+    modSpec$J <- 1
+    modSpec$M <- M
+    if(hetero) {
+      modSpec$hetSpec <- 'linearSd'
+      modSpec$hetGroups <- 1
     } else {
-      hp <- list(paramModel='powLawOrdHetero')
-      hp$J <- 1
+      modSpec$hetSpec <- 'none'
     }
-    hp$M <- M
-    th_v <- theta_y_unconstr2constr(th_v,hp)
+
+    th_v <- theta_y_unconstr2constr(th_v,modSpec)
   }
 
   rho <- th_v[1]         # rho
@@ -160,22 +162,36 @@ powLawOrdNegLogLik <- function(th_v,x,v,hetero=F,transformVar=F) {
 }
 
 #' @export
+calc_M <- function(th_v,hetero) {
+  # A helper function to calculate M from the length of th_v
+  if(hetero) {
+    M <- length(th_v) - 3
+  } else {
+    M <- length(th_v) - 2
+    }
+  return(M)
+}
+
+#' @export
 powLawOrdGradNegLogLik <- function(th_v,x,v,hetero=F,transformVar=F) {
   # th_v has ordering [rho,tau_1,...tau_2,s,kappa]
   # eta_v is the negative log-likelihood
   # For optimization, th_v is the first input
+  M <- calc_M(th_v,hetero)
   if(transformVar) {
-    if(!hetero) {
-      hp <- list(paramModel='powLawOrdHomo')
-      hp$J <- 1
-      hp$M <- length(th_v) - 2
+    # Build modSpec
+    modSpec <- list(meanSpec='powLaw')
+    modSpec$J <- 1
+    modSpec$M <- M
+    if(hetero) {
+      modSpec$hetSpec <- 'linearSd'
+      modSpec$hetGroups <- 1
     } else {
-      hp <- list(paramModel='powLawOrdHetero')
-      hp$J <- 1
-      hp$M <- length(th_v) - 3
+      modSpec$M <- length(th_v) - 2
+      modSpec$hetSpec <- 'none'
     }
 
-    th_v <- theta_y_unconstr2constr(th_v,hp)
+    th_v <- theta_y_unconstr2constr(th_v,modSpec)
     eta_v <- powLawOrdGradNegLogLik(th_v,x,v,hetero,transformVar=F)
     # rho   = exp(rho_bar)
     # tau1  = tau1_bar
@@ -189,13 +205,13 @@ powLawOrdGradNegLogLik <- function(th_v,x,v,hetero=F,transformVar=F) {
     eta_v[1] <- eta_v[1]*th_v[1]
 
     # extract tau and the gradient for tau
-    tau       <- th_v [2:(1+hp$M)]
-    eta_v_tau <- eta_v[2:(1+hp$M)]
+    tau       <- th_v [2:(1+M)]
+    eta_v_tau <- eta_v[2:(1+M)]
 
     # Make the Jacobian
-    J <- matrix(0,hp$M,hp$M)
-    for(cc in 1:hp$M) {
-      for(rr in cc:hp$M) {
+    J <- matrix(0,M,M)
+    for(cc in 1:M) {
+      for(rr in cc:M) {
         if(cc == 1) {
           J[rr,cc] <- 1
         } else {
@@ -204,14 +220,14 @@ powLawOrdGradNegLogLik <- function(th_v,x,v,hetero=F,transformVar=F) {
       }
     }
 
-    eta_v[2:(1+hp$M)] <- t(J) %*% eta_v_tau
+    eta_v[2:(1+M)] <- t(J) %*% eta_v_tau
 
     # s
-    eta_v[hp$M+2] <- eta_v[hp$M+2] * th_v[hp$M+2]
+    eta_v[M+2] <- eta_v[M+2] * th_v[M+2]
 
     # kappa (if necessary)
     if(hetero) {
-      eta_v[hp$M+3] <- eta_v[hp$M+3] * th_v[hp$M+3]
+      eta_v[M+3] <- eta_v[M+3] * th_v[M+3]
     }
     
     return(eta_v)
@@ -219,12 +235,6 @@ powLawOrdGradNegLogLik <- function(th_v,x,v,hetero=F,transformVar=F) {
 
   if(transformVar) {
     stop('Should not reach this point if transformVar is TRUE')
-  }
-
-  if(!hetero) {
-    M <- length(th_v) - 2
-  } else {
-    M <- length(th_v) - 3
   }
 
   rho <- th_v[1]         # rho
@@ -320,14 +330,17 @@ fitPowLawOrd <- function(x,v,hetero=F) {
   # th_v has ordering [rho,tau_1,...tau_2,s,kap]
   M <- length(unique(v)) - 1
 
+  # Build modSpec
+  modSpec <- list(meanSpec='powLaw')
+  modSpec$J <- 1
+  modSpec$M <- M
   if(hetero) {
-    hp <- list(paramModel = 'powLawOrdHetero')
+    modSpec$hetSpec <- 'linearSd'
+    modSpec$hetGroups <- 1
   } else {
-    hp <- list(paramModel = 'powLawOrdHomo')
+    modSpec$hetSpec <- 'none'
   }
 
-  hp$J <- 1
-  hp$M <- M
   # To initialize, fit a set of binary probits at the different levels in order
   # to get tau0 and s0
 
@@ -364,12 +377,12 @@ fitPowLawOrd <- function(x,v,hetero=F) {
     th_v0 <- c(th_v0,kappa0)
   }
 
-  th_v_bar0 <- theta_y_constr2unconstr(th_v0,hp)
+  th_v_bar0 <- theta_y_constr2unconstr(th_v0,modSpec)
 
   optimControl <- list(reltol=1e-12,maxit=100000,ndeps=rep(1e-8,length(th_v_bar0)))
   fit <- optim(th_v_bar0,powLawOrdNegLogLik,control=optimControl,x=x,v=v,hetero=hetero,hessian=T,transformVar=T,method='BFGS')
 
-  th_v <- theta_y_unconstr2constr(fit$par,hp)
+  th_v <- theta_y_unconstr2constr(fit$par,modSpec)
   
   return(list(fit=fit,th_v=th_v,th_v0=th_v0))
 }

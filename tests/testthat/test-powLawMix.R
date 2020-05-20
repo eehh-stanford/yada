@@ -25,9 +25,8 @@ th_y_sim_homo$tau[[2]] <- c(1,3)
 th_y_sim_homo$a <- c(2,3)
 th_y_sim_homo$r <- c(.45,.10)
 th_y_sim_homo$b <- c(1.2,-.5)
-th_y_sim_homo$Sigma <- diag(c(.01,.02,.05,.04))
+th_y_sim_homo$s <- c(.01,.02,.05,.04)
 
-s <- sqrt(diag(th_y_sim_homo$Sigma))
 th_y_sim_hetero <- th_y_sim_homo
 th_y_sim_hetero$modSpec <- modSpec_hetero
 th_y_sim_hetero$kappa <- rep(0.02,4)

@@ -36,35 +36,63 @@
 #' @author Michael Holton Price <MichaelHoltonPrice@gmail.com>
 
 #' @export
-powLaw <- function(x,th_w) {
+powLaw <- function(x,th_w,transformVar=F) {
   # th_w has ordering [a,r,b,s,kappa]
-  return(th_w[1]*x^th_w[2] + th_w[3])
+  a <- th_w[1]
+  r <- th_w[2]
+  b <- th_w[3]
+  if(transformVar) {
+    a <- exp(a)
+    r <- exp(b)
+  }
+  return(a*x^r + b)
 }
 
 #' @export
-powLawSigma <- function(x,th_w) {
+powLawSigma <- function(x,th_w,hetSpec='none',transformVar=F) {
   # th_w has ordering [a,r,b,s,kappa]
   # returns a scalar for hetero=F even if x is not length 1
-  hetero <- is_th_w_hetero(th_w)
-  
   sig <- th_w[4]
-  if(hetero) {
-    sig <- sig * (1+th_w[5]*x)
+  if(transformVar) {
+    sig <- exp(sig)
+  }
+
+  if(!is_th_w_hetero(th_w)) {
+    return(sig)
+  }
+
+  # If this point is reached, the model is heteroskedastic
+  a <- th_w[1]
+  r <- th_w[2]
+  b <- th_w[3] 
+  kappa <- th_w[5]
+
+  if(transformVar) {
+    a <- exp(a)
+    r <- exp(r)
+    kappa <- exp(kappa)
+  }
+
+  if(hetSpec == 'linearSd') {
+    sig <- sig * (1+kappa*x)
+  } else if(hetSpec == 'linearSd_y') {
+    sig <- sig * (1+a*kappa*x^r)
+  } else {
+    stop(paste('Unrecognized hetSpec,',hetSpec))
   }
   return(sig)
 }
 
 #' @export
-powLawDensity <- function(x,w,th_w) {
+powLawDensity <- function(x,w,th_w,hetSpec='none') {
   # th_w has ordering [a,r,b,s,kappa]
-  hetero <- is_th_w_hetero(th_w)
   h   <- powLaw(x,th_w)
-  sig <- powLawSigma(x,th_w)
-  1/sqrt(2*pi)/sig*exp(-0.5*(w-h)^2/sig^2)
+  sig <- powLawSigma(x,th_w,hetSpec)
+  return(1/sqrt(2*pi)/sig*exp(-0.5*(w-h)^2/sig^2))
 }
 
 #' @export
-powLawNegLogLikVect <- function(th_w,x,w,transformVar=F) {
+powLawNegLogLikVect <- function(th_w,x,w,hetSpec='none',transformVar=F) {
   # th_w has ordering [a,r,b,s,kappa]
   # eta_w is the negative log-likelihood
   # For optimization, th_w is the first input
@@ -74,11 +102,9 @@ powLawNegLogLikVect <- function(th_w,x,w,transformVar=F) {
     # Build modSpec
     modSpec <- list(meanSpec='powLaw')
     modSpec$K <- 1
+    modSpec$hetSpec <- hetSpec
     if(hetero) {
-      modSpec$hetSpec <- 'linearSd'
       modSpec$hetGroups <- 1
-    } else {
-      modSpec$hetSpec <- 'none'
     }
 
     th_w <- theta_y_unconstr2constr(th_w,modSpec)
@@ -87,21 +113,21 @@ powLawNegLogLikVect <- function(th_w,x,w,transformVar=F) {
 
   N <- length(x) # No error checking is done on input lengths
   h   <- powLaw(x,th_w)
-  sig <- powLawSigma(x,th_w)
+  sig <- powLawSigma(x,th_w,hetSpec)
   eta_w <- 0.5*log(2*pi) + log(sig) + 0.5*(w-h)^2/sig^2
   return(eta_w)
 }
 
 #' @export
-powLawNegLogLik <- function(th_w,x,w,transformVar=F) {
+powLawNegLogLik <- function(th_w,x,w,hetSpec='none',transformVar=F) {
   # th_w has ordering [a,r,b,s,kappa]
   # eta_w is the negative log-likelihood
   # For optimization, th_w is the first input
-  return(sum(powLawNegLogLikVect(th_w,x,w,transformVar)))
+  return(sum(powLawNegLogLikVect(th_w,x,w,hetSpec,transformVar)))
 }
 
 #' @export
-powLawGradNegLogLik <- function(th_w,x,w,transformVar=F) {
+powLawGradNegLogLik <- function(th_w,x,w,hetSpec='none',transformVar=F) {
   # th_w has ordering [a,r,b,s,kappa]
   # eta_w is the negative log-likelihood
   # eta_w_a is the partial derivative with respect to a (etc.)
@@ -112,14 +138,12 @@ powLawGradNegLogLik <- function(th_w,x,w,transformVar=F) {
     # Build modSpec
     modSpec <- list(meanSpec='powLaw')
     modSpec$K <- 1
+    modSpec$hetSpec <- hetSpec
     if(hetero) {
-      modSpec$hetSpec <- 'linearSd'
       modSpec$hetGroups <- 1
-    } else {
-      modSpec$hetSpec <- 'none'
     }
     th_w <- theta_y_unconstr2constr(th_w,modSpec)
-    eta_w <- powLawGradNegLogLik(th_w,x,w,transformVar=F)
+    eta_w <- powLawGradNegLogLik(th_w,x,w,hetSpec=hetSpec,transformVar=F)
     indToChange <- c(1,2,4)
     if(hetero) {
       indToChange <- c(indToChange,5)
@@ -142,7 +166,7 @@ powLawGradNegLogLik <- function(th_w,x,w,transformVar=F) {
   h   <- powLaw(x,th_w)
   wbar <- (w-h)
   wbar_sq <- wbar^2
-  sig <- powLawSigma(x,th_w)
+  sig <- powLawSigma(x,th_w,hetSpec)
   sig_sq <- sig^2
   sig_cb <- sig^3
   x_to_r <- x^r
@@ -155,22 +179,35 @@ powLawGradNegLogLik <- function(th_w,x,w,transformVar=F) {
   eta_w_b <- sum(-wbar/sig_sq)
 
   if(hetero) {
-    eta_w_s <- sum((sig_inv-wbar_sq/sig_cb)*(1+kappa*x))
+    if(hetSpec == 'linearSd') {
+      eta_w_s <- sum((sig_inv-wbar_sq/sig_cb)*(1+kappa*x))
+    } else if(hetSpec == 'linearSd_y') {
+      eta_w_s <- sum((sig_inv-wbar_sq/sig_cb)*(1+a*kappa*x_to_rho))
+    } else {
+      stop(paste('Unrecognized hetSpec,',hetSpec))
+    }
   } else {
     eta_w_s <- sum((sig_inv-wbar_sq/sig_cb))
   }
 
   grad_eta_w <- c(eta_w_a,eta_w_r,eta_w_b,eta_w_s)
   if(hetero) {
-    eta_w_kappa <- sum((sig_inv-wbar_sq/sig_cb)*s*x)
+    if(hetSpec == 'linearSd') {
+      eta_w_kappa <- sum((sig_inv-wbar_sq/sig_cb)*s*x)
+    } else if(hetSpec == 'linearSd_y') {
+      eta_w_kappa <- sum((sig_inv-wbar_sq/sig_cb)*s*a*x_to_rho)
+    } else {
+      stop(paste('Unrecognized hetSpec,',hetSpec))
+    }
     grad_eta_w <- c(grad_eta_w,eta_w_kappa)
   }
   return(grad_eta_w)
 }
 
 #' @export
-fitPowLaw <- function(x,w,hetero=F) {
+fitPowLaw <- function(x,w,hetSpec='none') {
   # th_w has ordering [a,r,b,s,kappa]
+  hetero <- hetSpec != 'none'
 
   # Initialize parameters
   r0 <- 1 # linear in x
@@ -184,21 +221,17 @@ fitPowLaw <- function(x,w,hetero=F) {
     th_w0 <- c(th_w0,kappa0)
   }
 
-
-
  # Build modSpec
   modSpec <- list(meanSpec='powLaw')
   modSpec$K <- 1
+  modSpec$hetSpec <- hetSpec
   if(hetero) {
-    modSpec$hetSpec <- 'linearSd'
     modSpec$hetGroups <- 1
-  } else {
-    modSpec$hetSpec <- 'none'
   }
 
   th_w_bar0 <- theta_y_constr2unconstr(th_w0,modSpec)
   optimControl <- list(reltol=1e-12,maxit=100000,ndeps=rep(1e-8,length(th_w_bar0)))
-  fit <- optim(th_w_bar0,powLawNegLogLik,method='BFGS',control=optimControl,x=x,w=w,hessian=T,transformVar=T)
+  fit <- optim(th_w_bar0,powLawNegLogLik,method='BFGS',control=optimControl,x=x,w=w,hessian=T,hetSpec=hetSpec,transformVar=T)
 
   th_w <- theta_y_unconstr2constr(fit$par,modSpec)
 
@@ -206,7 +239,7 @@ fitPowLaw <- function(x,w,hetero=F) {
 }
 
 #' @export
-simPowLaw <- function(N,th_x,th_w,hetero=F) {
+simPowLaw <- function(N,th_x,th_w,hetSpec='none') {
   # N is the number of simulated observations
   # th_x parameterizes x. Currently, only a uniform distribution is supported
   # th_w parameterizes w (given x)
@@ -215,13 +248,14 @@ simPowLaw <- function(N,th_x,th_w,hetero=F) {
   b <- th_w[3]
   s <- th_w[4]
 
+  hetero <- hetSpec != 'none'
   if(hetero) {
     kappa <- th_w[5]
   }
 
   x <- runif(N,th_x[1],th_x[2])
   h   <- powLaw(x,th_w)
-  sig <- powLawSigma(x,th_w)
+  sig <- powLawSigma(x,th_w,hetSpec)
 
   w <- h + rnorm(N)*sig
   

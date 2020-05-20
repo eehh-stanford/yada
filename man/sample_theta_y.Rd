@@ -4,8 +4,19 @@
 \alias{sample_theta_y}
 \title{Sample theta_y in the mixed cumulative probit model}
 \usage{
-sample_theta_y(x, Y, hp, numSamp, burnIn, verbose = T, start = NA,
-  fileName = NA, savePeriod = 1000, known = NA, varNames = NA)
+sample_theta_y(
+  x,
+  Y,
+  hp,
+  numSamp,
+  burnIn,
+  verbose = T,
+  start = NA,
+  fileName = NA,
+  savePeriod = 1000,
+  known = NA,
+  varNames = NA
+)
 }
 \arguments{
 \item{x}{Vector of indepenent variable observations}

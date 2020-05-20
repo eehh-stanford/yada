@@ -4,12 +4,14 @@
 \alias{powLaw}
 \title{Power law with a constant offset}
 \usage{
-powLaw(x, th_w)
+powLaw(x, th_w, transformVar = F)
 }
 \arguments{
 \item{x}{Vector of independent variable observations}
 
 \item{th_w}{Vector of parameters with ordering [a,r,b,s,kappa]}
+
+\item{transformVar}{Whether a transformation of the parameterization is needed [Default FALSE]}
 
 \item{w}{Vector of dependent variable observations}
 
@@ -24,8 +26,6 @@ powLaw(x, th_w)
 \item{kappa}{Slope of noise [Optional]}
 
 \item{hetero}{Whether the model is heteroskedastic [Default FALSE]}
-
-\item{transformVar}{Whether a transformation of the parameterization is needed [Default FALSE]}
 }
 \description{
 \code{powLaw} calculates the mean (h). \code{powLawSigma} calculates the noise (sigma, or sig for short). \code{powLawDensity} calculates the density. \code{powLawNegLogLikVect} calculates a vector of negative log-likelihood. \code{powLawNegLogLik} calculates the negative log-likelihood (sum of \code{powLawNegLogLikVect}). \code{fitPowLaw} returns the maximum likelihood fit. \code{simPowLaw} creates simulated data.

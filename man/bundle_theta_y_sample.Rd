@@ -4,8 +4,15 @@
 \alias{bundle_theta_y_sample}
 \title{Bundle result of Metropolis sampling into a single convenient list}
 \usage{
-bundle_theta_y_sample(theta_yList, logLikVect, x, Y, hp, varNames = NA,
-  known = NA)
+bundle_theta_y_sample(
+  theta_yList,
+  logLikVect,
+  x,
+  Y,
+  hp,
+  varNames = NA,
+  known = NA
+)
 }
 \arguments{
 \item{theta_yList}{A list of samples of theta_y (samples are a list, not a vector)}

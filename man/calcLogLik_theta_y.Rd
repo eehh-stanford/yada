@@ -4,7 +4,7 @@
 \alias{calcLogLik_theta_y}
 \title{Calculate the log-likelihood for theta_y in the mixed cumulative probit model}
 \usage{
-calcLogLik_theta_y(theta_y_list, x, Y, hp)
+calcLogLik_theta_y(theta_y_list, x, Y)
 }
 \arguments{
 \item{theta_y_list}{theta_y as a list}
@@ -13,7 +13,7 @@ calcLogLik_theta_y(theta_y_list, x, Y, hp)
 
 \item{Y}{Matrix of dependent variable observations}
 
-\item{hp}{Hyperparameters}
+\item{modSpec}{Model specification}
 }
 \value{
 The log-likelihood

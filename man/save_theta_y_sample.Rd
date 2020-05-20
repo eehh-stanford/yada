@@ -4,8 +4,16 @@
 \alias{save_theta_y_sample}
 \title{Save a sample of theta_y from the adaptive Metropolis algorithm}
 \usage{
-save_theta_y_sample(fileName, thetaList, logLikVect, x, Y, hp,
-  varNames = NA, known = NA)
+save_theta_y_sample(
+  fileName,
+  thetaList,
+  logLikVect,
+  x,
+  Y,
+  hp,
+  varNames = NA,
+  known = NA
+)
 }
 \arguments{
 \item{fileName}{The save file}

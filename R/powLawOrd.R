@@ -56,9 +56,10 @@ powLawOrd <- function(x,th_v,transformVar=F) {
 }
 
 #' @export
-powLawOrdSigma <- function(x,th_v,hetero=F,transformVar=F) {
+powLawOrdSigma <- function(x,th_v,hetSpec='none',transformVar=F) {
   # th_v has ordering [rho,tau_1,...tau_2,s,kappa]
   # returns a scalar for hetero=F even if x is not length 1
+  hetero <- hetSpec != 'none'
   numParam <- length(th_v)
 
   if(hetero) {
@@ -69,7 +70,13 @@ powLawOrdSigma <- function(x,th_v,hetero=F,transformVar=F) {
       s   <- th_v[numParam-1]
       kappa <- th_v[numParam]
     }
-    sig <- s*(1 + kappa*x)
+    if(hetSpec == 'linearSd') {
+      sig <- s*(1+kappa*x)
+    } else if(hetSpec == 'linearSd_y') {
+      sig <- s*(1+kappa*x^rho)
+    } else {
+      stop(paste('Unrecognized hetSpec,',hetSpec))
+    }
   } else {
     if(transformVar) { 
       s   <- exp(th_v[numParam])
@@ -83,11 +90,12 @@ powLawOrdSigma <- function(x,th_v,hetero=F,transformVar=F) {
 }
 
 #' @export
-powLawOrdNegLogLikVect <- function(th_v,x,v,hetero=F,transformVar=F) {
+powLawOrdNegLogLikVect <- function(th_v,x,v,hetSpec='none',transformVar=F) {
   # th_v has ordering [rho,tau_1,...tau_2,s,kappa]
   # eta_v is the negative log-likelihood
   # For optimization, make th_v the first input
 
+  hetero <- hetSpec != 'none'
   if(hetero) {
     M <- length(th_v) - 3
   } else {
@@ -99,11 +107,9 @@ powLawOrdNegLogLikVect <- function(th_v,x,v,hetero=F,transformVar=F) {
     modSpec <- list(meanSpec='powLaw')
     modSpec$J <- 1
     modSpec$M <- M
+    modSpec$hetSpec <- hetSpec
     if(hetero) {
-      modSpec$hetSpec <- 'linearSd'
       modSpec$hetGroups <- 1
-    } else {
-      modSpec$hetSpec <- 'none'
     }
 
     th_v <- theta_y_unconstr2constr(th_v,modSpec)
@@ -129,7 +135,13 @@ powLawOrdNegLogLikVect <- function(th_v,x,v,hetero=F,transformVar=F) {
     if(sum(ind) > 0 ) {
       xm <- x[ind]
       if(hetero) {
-        sig <- s*(1+kappa*xm)
+        if(hetSpec == 'linearSd') {
+          sig <- s*(1+kappa*xm)
+        } else if(hetSpec == 'linearSd_y') {
+          sig <- s*(1+kappa*xm^rho)
+        } else {
+          stop(paste('Unrecognized hetSpec,',hetSpec))
+        }
       } else {
         sig <- s 
       }
@@ -154,16 +166,17 @@ powLawOrdNegLogLikVect <- function(th_v,x,v,hetero=F,transformVar=F) {
 }
 
 #' @export
-powLawOrdNegLogLik <- function(th_v,x,v,hetero=F,transformVar=F) {
+powLawOrdNegLogLik <- function(th_v,x,v,hetSpec='none',transformVar=F) {
   # th_v has ordering [rho,tau_1,...tau_2,s,kappa]
   # eta_v is the negative log-likelihood
   # For optimization, make th_v the first input
-  return(sum(powLawOrdNegLogLikVect(th_v,x,v,hetero,transformVar)))
+  return(sum(powLawOrdNegLogLikVect(th_v,x,v,hetSpec,transformVar)))
 }
 
 #' @export
-calc_M <- function(th_v,hetero) {
+calc_M <- function(th_v,hetSpec) {
   # A helper function to calculate M from the length of th_v
+  hetero <- hetSpec != 'none'
   if(hetero) {
     M <- length(th_v) - 3
   } else {
@@ -173,26 +186,24 @@ calc_M <- function(th_v,hetero) {
 }
 
 #' @export
-powLawOrdGradNegLogLik <- function(th_v,x,v,hetero=F,transformVar=F) {
+powLawOrdGradNegLogLik <- function(th_v,x,v,hetSpec='none',transformVar=F) {
   # th_v has ordering [rho,tau_1,...tau_2,s,kappa]
   # eta_v is the negative log-likelihood
   # For optimization, th_v is the first input
-  M <- calc_M(th_v,hetero)
+  hetero <- hetSpec != 'none'
+  M <- calc_M(th_v,hetSpec)
   if(transformVar) {
     # Build modSpec
     modSpec <- list(meanSpec='powLaw')
     modSpec$J <- 1
     modSpec$M <- M
+    modSpec$hetSpec <- hetSpec
     if(hetero) {
-      modSpec$hetSpec <- 'linearSd'
       modSpec$hetGroups <- 1
-    } else {
-      modSpec$M <- length(th_v) - 2
-      modSpec$hetSpec <- 'none'
     }
 
     th_v <- theta_y_unconstr2constr(th_v,modSpec)
-    eta_v <- powLawOrdGradNegLogLik(th_v,x,v,hetero,transformVar=F)
+    eta_v <- powLawOrdGradNegLogLik(th_v,x,v,hetSpec,transformVar=F)
     # rho   = exp(rho_bar)
     # tau1  = tau1_bar
     # tau2  = tau1_bar + exp(tau2_bar)
@@ -222,7 +233,7 @@ powLawOrdGradNegLogLik <- function(th_v,x,v,hetero=F,transformVar=F) {
 
     eta_v[2:(1+M)] <- t(J) %*% eta_v_tau
 
-    eta_v[2:(1+hp$M)] <- t(J) %*% eta_v_tau
+    eta_v[2:(1+M)] <- t(J) %*% eta_v_tau
 
     # s
     eta_v[M+2] <- eta_v[M+2] * th_v[M+2]
@@ -230,6 +241,13 @@ powLawOrdGradNegLogLik <- function(th_v,x,v,hetero=F,transformVar=F) {
     # kappa (if necessary)
     if(hetero) {
       eta_v[M+3] <- eta_v[M+3] * th_v[M+3]
+#      if(hetSpec == 'linearSd') {
+#        eta_v[M+3] <- eta_v[M+3] * th_v[M+3]
+#      } else if(hetSpec == 'linearSd_y') {
+#        eta_v[M+3] <- eta_v[M+3] * th_v[M+3]
+#      } else {
+#        stop(paste('Unrecognized hetSpec,',hetSpec))
+#      }
     }
     
     return(eta_v)
@@ -245,15 +263,11 @@ powLawOrdGradNegLogLik <- function(th_v,x,v,hetero=F,transformVar=F) {
 
   if(hetero) {
     kappa <- th_v[M+3]     # kappa
-  }
-
- 
-  if(hetero) {
     gradVect <- rep(0,3+M)
   } else {
     gradVect <- rep(0,2+M)
   }
-  
+
   for(m in 0:M) { 
     ind <- v == m
     if(sum(ind) > 0) {
@@ -264,8 +278,16 @@ powLawOrdGradNegLogLik <- function(th_v,x,v,hetero=F,transformVar=F) {
       log_x <- log(xm)
       log_x[xm==0] <- 0
 
+
+
       if(hetero) {
-        sig <- s*(1+kappa*xm)
+        if(hetSpec == 'linearSd') {
+          sig <- s*(1+kappa*xm)
+        } else if(hetSpec == 'linearSd_y') {
+          sig <- s*(1+kappa*xm^rho)
+        } else {
+          stop(paste('Unrecognized hetSpec,',hetSpec))
+        }
       } else {
         sig <- s
       }
@@ -320,7 +342,13 @@ powLawOrdGradNegLogLik <- function(th_v,x,v,hetero=F,transformVar=F) {
 
       if(hetero) {
         # kappa
-        gradVect[M+3] <- gradVect[M+3] + sum(leadingTerm * s * xm)
+        if(hetSpec == 'linearSd') {
+          gradVect[M+3] <- gradVect[M+3] + sum(leadingTerm * s * xm)
+        } else if(hetSpec == 'linearSd_y') {
+          gradVect[M+3] <- gradVect[M+3] + sum(leadingTerm * s * x_to_rho)
+        } else {
+          stop(paste('Unrecognized hetSpec,',hetSpec))
+        }
       }
     } # end  if(sum(ind) > 0)
   } # end for(m in 0:M)
@@ -328,19 +356,18 @@ powLawOrdGradNegLogLik <- function(th_v,x,v,hetero=F,transformVar=F) {
 }
 
 #' @export
-fitPowLawOrd <- function(x,v,hetero=F) {
+fitPowLawOrd <- function(x,v,hetSpec='none') {
   # th_v has ordering [rho,tau_1,...tau_2,s,kap]
+  hetero <- hetSpec != 'none'
   M <- length(unique(v)) - 1
 
   # Build modSpec
   modSpec <- list(meanSpec='powLaw')
   modSpec$J <- 1
   modSpec$M <- M
+  modSpec$hetSpec <- hetSpec
   if(hetero) {
-    modSpec$hetSpec <- 'linearSd'
     modSpec$hetGroups <- 1
-  } else {
-    modSpec$hetSpec <- 'none'
   }
 
   # To initialize, fit a set of binary probits at the different levels in order
@@ -382,18 +409,20 @@ fitPowLawOrd <- function(x,v,hetero=F) {
   th_v_bar0 <- theta_y_constr2unconstr(th_v0,modSpec)
 
   optimControl <- list(reltol=1e-12,maxit=100000,ndeps=rep(1e-8,length(th_v_bar0)))
-  fit <- optim(th_v_bar0,powLawOrdNegLogLik,control=optimControl,x=x,v=v,hetero=hetero,hessian=T,transformVar=T,method='BFGS')
+  fit <- optim(th_v_bar0,powLawOrdNegLogLik,control=optimControl,x=x,v=v,hetSpec=hetSpec,hessian=T,transformVar=T,method='BFGS')
 
   th_v <- theta_y_unconstr2constr(fit$par,modSpec)
   
-  return(list(fit=fit,th_v=th_v,th_v0=th_v0))
+  return(th_v)
 }
 
 #' @export
-simPowLawOrd <- function(N,th_x,th_v,hetero=F) {
+simPowLawOrd <- function(N,th_x,th_v,hetSpec='none') {
   # N is the number of simulated observations
   # th_x parameterizes x. Currently, only a uniform distribution is supported
   # th_v parameterizes v (given x)
+
+  hetero <- hetSpec != 'none'
 
   if(hetero) {
     M <- length(th_v) - 3
@@ -404,7 +433,7 @@ simPowLawOrd <- function(N,th_x,th_v,hetero=F) {
 
   x <- runif(N,th_x[1],th_x[2])
   g   <- powLawOrd(x,th_v)
-  sig <- powLawOrdSigma(x,th_v,hetero)
+  sig <- powLawOrdSigma(x,th_v,hetSpec)
 
   vstar <- g + sig*rnorm(N)
   v <- rep(NA,N)

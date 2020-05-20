@@ -4,8 +4,7 @@
 \alias{theta_y_plot_sample_variable}
 \title{Plot a variable in theta_y across Metropolis samples}
 \usage{
-theta_y_plot_sample_variable(bundle, variable, decim = 1,
-  fileName = NA)
+theta_y_plot_sample_variable(bundle, variable, decim = 1, fileName = NA)
 }
 \arguments{
 \item{bundle}{The bundle of variables (see \code{bundle_theta_y_sample})}

@@ -123,11 +123,12 @@ is_hetero <- function(modSpec) {
     return(F)
   } else if(tolower(modSpec$hetSpec) == 'linearsd') {
     return(!all(is.na(modSpec$hetGroups)))
+  } else if(tolower(modSpec$hetSpec) == 'linearsd_y') {
+    return(!all(is.na(modSpec$hetGroups)))
   } else {
     stop(paste('Unsupported hetSpec,',modSpec$hetSpec))
   }
 }
-
 
 #' @export
 is_cdep <- function(modSpec) {
@@ -165,16 +166,61 @@ get_z_length <- function(modSpec) {
 
 #' @export
 get_non_singleton_groups <- function(groups) {
+  counts <- table(groups)
   return(sort(as.numeric(names(counts))[counts > 1]))
 }
 
-#get_num_nonsing_groups <- function(groups) {
-#  return(sum(as.vector(table(modSpec$cdepGroups)) > 1))
-#}
 
-#get_num_groups <- function(groups) {
-#  return(length(unique(groups)))
-#}
+
+#' @export
+get_num_var <- function(varName,modSpec,preceding=F) {
+  # Get the number of variables give the model specification for the following
+  # variables:
+  #
+  # rho tau a r b s z kappa
+  #
+  # If the variable is not part of the model, 0 is returned (rather than
+  # throwing an error). This happens, for example, with rho if J=0 or with
+  # kappa if the model is homoskedastic.
+  check_model(modSpec)
+
+  variables <- c('rho','tau','a','r','b','s','z','kappa')
+
+  if(!(varName %in% variables)) {
+    stop(paste('Unrecognized variable name,',varName))
+  }
+
+  if(preceding) {
+    if(varName == 'rho') {
+      return(0)
+#    } else if(varName == 'tau') {
+#      return(get_num_var('rho',modSpec,preceding=F))
+    } else {
+      ind <- which(variables == varName) # index in variables
+      return(get_num_var(variables[ind-1],modSpec,preceding=T) + get_num_var(variables[ind-1],modSpec,preceding=F))
+    }
+  }
+
+  if(varName == 'rho') {
+    return(get_J(modSpec))
+  } else if(varName == 'tau') {
+    J <- get_J(modSpec)
+    if(J==0) {
+      return(0)
+    } else {
+      return(sum(modSpec$M))
+    }
+  } else if(varName %in% c('a','r','b')) {
+    return(get_K(modSpec))
+  } else if(varName == 's') {
+    return(get_J(modSpec) + get_K(modSpec))
+  } else if(varName == 'z') {
+    return(get_z_length(modSpec))
+  } else if(varName == 'kappa') {
+    return(get_Gkappa(modSpec))
+  }
+  stop('This point should never get reached')
+}
 
 #' @export
 get_var_index <- function(varName,modSpec,j=NA,k=NA,i1=NA,i2=NA) {
@@ -193,17 +239,16 @@ get_var_index <- function(varName,modSpec,j=NA,k=NA,i1=NA,i2=NA) {
   J <- get_J(modSpec)
   K <- get_K(modSpec)
 
+  # Handle z specially before handling other variables
   if(varName == 'z') {
     if(!cdep) {
       stop('z requested but model is not conditionally dependent')
     }
 
-    #         rho   M                a/r/b  s
-    offset <- 1*J + sum(modSpec$M) + 3*K  + J+K
-
+    offset <- get_num_var('z',modSpec,preceding=T)
     if(is.na(i1) && is.na(i2)) {
       # Then return all the indices
-      return(offset + (1:get_z_length(modSpec)))
+      return(offset + 1:get_num_var('z',modSpec))
     }
 
     if(i1 == i2) {
@@ -231,31 +276,37 @@ get_var_index <- function(varName,modSpec,j=NA,k=NA,i1=NA,i2=NA) {
     return(offset+index)
   }
 
+  # Also handle kappa specially before handling other variables
   if(varName == 'kappa') {
     if(!hetero) {
       stop('kappa requested but model is not heteroskedastic')
     }
 
     # If modSpec$M is not in M, sum(modSpec$M) evaluates to 0
-    #         rho   M                a/r/b  s     z
-    offset <- 1*J + sum(modSpec$M) + 3*K  + J+K + get_z_length(modSpec)
+    offset <- get_num_var('kappa',modSpec,preceding=T)
 
     if(is.na(j) && is.na(k)) {
       # Then return all the indices
-      return(offset + (1:length(unique(modSpec$hetGroups))))
+      return(offset + (1:get_num_var('kappa',modSpec)))
     }
 
     if(!is.na(j)) {
-      return(offset+modSpec$hetGroups[j])
+      value <- modSpec$hetGroups[j]
     } else {
-      return(offset+modSpec$hetGroups[J+k])
+      value <- modSpec$hetGroups[J+k]
+    }
+
+    # If this variable is not heteroskedastic, return NA
+    if(is.na(value)) {
+      return(NA)
+    } else {
+      return(offset+value)
     }
   }
 
   if(!is.na(j) && !(is.na(k))) {
     stop('Both j and k are specified')
   }
-
 
   if(!is.na(j)) {
     if(!(varName %in% c('rho','tau','s')) ) {
@@ -275,60 +326,69 @@ get_var_index <- function(varName,modSpec,j=NA,k=NA,i1=NA,i2=NA) {
     }
   }
 
+  # If neither j nor k is specified, return all indices for the variable
+  if(is.na(j) && is.na(k)) {
+    return(get_num_var(varName,modSpec,preceding=T) + (1:get_num_var(varName,modSpec)))
+  }
+
   # th_y has ordering th_y = [rho,tau,a,r,b,kappa,s,z]
+  offset <- get_num_var(varName,modSpec,preceding=T)
   if(varName == 'rho') {
-    if(is.na(j)) {
-      return(1:J)
-    } else {
-      return(j)
-    }
+    return(offset+j)
   } else if(varName == 'tau') {
-    if(is.na(j)) {
-      stop('j must be specified for variable tau')
-    }
-    if(j == 1) {
-      offset <- J
-    } else {
-      offset <- J + sum(modSpec$M[1:(j-1)])
+    if(j > 1) {
+      offset <- offset + sum(modSpec$M[1:(j-1)])
     }
     return((offset + 1):(offset+modSpec$M[j]))
-  } else if(varName == 'a') {
-    #         rho   M
-    offset <- 1*J + sum(modSpec$M)
-    if(is.na(k)) {
-      return(offset + 1:K)
-    } else {
-      return(offset + k)
-    }
-  } else if(varName == 'r') {
-    #         rho   M                a
-    offset <- 1*J + sum(modSpec$M) + 1*K
-    if(is.na(k)) {
-      return(offset + 1:K)
-    } else {
-      return(offset + k)
-    }
-  } else if(varName == 'b') {
-    #         rho   M                a/r
-    offset <- 1*J + sum(modSpec$M) + 2*K
-    if(is.na(k)) {
-      return(offset + 1:K)
-    } else {
-      return(offset + k)
-    }
+  } else if(varName %in% c('a','r','b')) {
+    return(offset + k)
   } else if(varName == 's') {
     #         rho   M                a/r/b
     offset <- 1*J + sum(modSpec$M) + 3*K
     if(!is.na(j)) {
       return(offset + j)
-    } else if(!is.na(k)) {
-      return(offset + J + k)
     } else {
-      return(offset + 1:(J+K))
+      return(offset + J + k)
     }
   } else {
     stop(paste('Unrecognized variable',varName))
   }
+}
+
+#' @export
+theta_y_list2vect <- function(th_y_list) {
+  modSpec <- th_y_list$modSpec # Extract to improve code readability
+  check_model(modSpec)
+  hetero <- is_hetero(modSpec)
+  cdep   <- is_cdep  (modSpec)
+
+  J <- get_J(modSpec)
+  K <- get_K(modSpec)
+ 
+  th_y_vect <- c()
+  if(J > 0) {
+    th_y_vect <- c(th_y_vect,th_y_list$rho)
+    th_y_vect <- c(th_y_vect,unlist(th_y_list$tau))
+  }
+
+  if(K > 0) {
+    th_y_vect <- c(th_y_vect,th_y_list$a)
+    th_y_vect <- c(th_y_vect,th_y_list$r)
+    th_y_vect <- c(th_y_vect,th_y_list$b)
+  }
+
+  th_y_vect <- c(th_y_vect,th_y_list$s)
+  if(cdep) {
+    # Then need to add z
+    th_y_vect <- c(th_y_vect,th_y_list$z)
+  }
+
+  if(hetero) {
+    # Then need to add kappa
+    th_y_vect <- c(th_y_vect,th_y_list$kappa)
+  }
+
+  return(th_y_vect)
 }
 
 #' @export
@@ -369,105 +429,20 @@ theta_y_vect2list <- function(th_y_vect,modSpec) {
     }
   }
 
-  Sigma <- diag(s^2)
+  th_y_list$s <- s
 
-  # For a conditionally dependent model, add the off-diagonal terms to Sigma
+  # For a conditionally dependent model, add z
   if(cdep) {
-#    z <- th_y_vect[get_var_index('z',modSpec)]
-    for(i1 in 1:(J+K-1)) {
-      g1 <- modSpec$cdepGroups[i1]
-      for(i2 in (i1+1):(J+K)) {
-        g2 <- modSpec$cdepGroups[i2]
-        z <- th_y_vect[get_var_index('z',modSpec,i1=i1,i2=i2)]
-        Sigma[i1,i2] <- s[i1]*s[i2]*z
-        Sigma[i2,i1] <- Sigma[i1,i2]
-      }
-    }
+    th_y_list$z <- th_y_vect[get_var_index('z',modSpec)]
   }
-  th_y_list$Sigma <- Sigma
 
-  # For a heteroskedastic model, build the full-length kappa (length J+K)
+  # For a heteroskedastic model, add kappa
   if(hetero) {
-    th_y_list$kappa <- rep(NA,J+K)
-    for(j in 1:J) {
-      th_y_list$kappa[j] <- th_y_vect[get_var_index('kappa',modSpec,j=j)]
-    }
-    for(k in 1:K) {
-      th_y_list$kappa[J+k] <- th_y_vect[get_var_index('kappa',modSpec,k=k)]
-    }
+    th_y_list$kappa <- th_y_vect[get_var_index('kappa',modSpec)]
   }
 
   return(th_y_list)
 }
-
-#' @export
-theta_y_list2vect <- function(th_y_list) {
-  modSpec <- th_y_list$modSpec # Extract to improve code readability
-  check_model(modSpec)
-  # TODO: add a check here of the parameterization consistency
-  hetero <- is_hetero(modSpec)
-  cdep   <- is_cdep  (modSpec)
-
-  J <- get_J(modSpec)
-  K <- get_K(modSpec)
- 
-  th_y_vect <- c()
-  if(J > 0) {
-    th_y_vect <- c(th_y_vect,th_y_list$rho)
-    th_y_vect <- c(th_y_vect,unlist(th_y_list$tau))
-  }
-
-  if(K > 0) {
-    th_y_vect <- c(th_y_vect,th_y_list$a)
-    th_y_vect <- c(th_y_vect,th_y_list$r)
-    th_y_vect <- c(th_y_vect,th_y_list$b)
-  }
-
-  s <- sqrt(diag(th_y_list$Sigma))
-  th_y_vect <- c(th_y_vect,s)
-  if(cdep) {
-    # Then need to add z
-    # The leading, intragroup components of z come from groups with two or more
-    # members (non-singleton groups)
-#    numIntra <- get_num_nonsing_groups(modSpec$cdepGroups)
-    nsGroups <-  get_non_singleton_groups(modSpec$cdepGroups) # The non-singleton groups
-    zns <- rep(NA,length(nsGroups))
-    for(n in 1:length(nsGroups)) {
-      g <- nsGroups[n]
-      matches <- which(modSpec$cdepGroups == g)
-      i1 <- matches[1]
-      i2 <- matches[2]
-      zns[n] <- th_y_list$Sigma[i1,i2]/s[i1]/s[i2]
-    }
-    zcross <- rep(NA,choose(numGroups,2))
-    for(n in 1:choose(numGroups,2)) {
-      e <- elem(n-1,numGroups,2) + 1
-      g1 <- e[1]
-      g2 <- e[2]
-      matches1 <- which(modSpec$cdepGroups == g1)
-      matches2 <- which(modSpec$cdepGroups == g2)
-      i1 <- matches1[1]
-      i2 <- matches2[1]
-      zcross[n] <- th_y_list$Sigma[i1,i2]/s[i1]/s[i2]
-    }
-    th_y_vect <- c(th_y_vect,zns,zcross)
-  }
-
-  if(hetero) {
-    # Get the first element for each group
-    numGroups <- length(unique(modSpec$hetGroups))
-    kappa <- rep(NA,numGroups)
-    for(g in 1:numGroups) {
-      kappa[g] <- th_y_list$kappa[which(th_y_list$modSpec$hetGroups == g)[1]]
-    }
-    th_y_vect <- c(th_y_vect,kappa)
-  }
-
-  return(th_y_vect)
-}
-
-
-
 
 #' @export
 theta_y_constr2unconstr <- function(th_y_vect,modSpec) {
@@ -638,4 +613,152 @@ theta_y_unconstr2constr <- function(th_y_vect,modSpec) {
     kappa <- c()
   }
   return(c(rho,tau,a,r,b,s,z,kappa))
+}
+
+#' @export
+get_kappa_full <- function(th_y,modSpec=NA,asMatrix=F) {
+  # If modSpec is NA (not input), then the input is th_y_list. If it is given,
+  # it is th_y_vect.
+  if(!all(is.na(modSpec))) {
+    th_y_vect <- th_y
+    th_y_list <- theta_y_vect2list(th_y,modSpec)
+  } else {
+    th_y_list <- th_y
+    th_y_vect <- theta_y_list2vect(th_y_list)
+  }
+  
+  check_model(th_y_list$modSpec)
+
+  modSpec <- th_y_list$modSpec
+  if(!is_hetero(modSpec)) {
+    stop('get_kappa_full called, but model is not heteroskedastic')
+  }
+
+
+  J <- get_J(modSpec)
+  K <- get_K(modSpec)
+  kappa <- rep(NA,J+K)
+
+  if(J > 0) {
+    for(j in 1:J) {
+      ind <- get_var_index('kappa',modSpec,j=j)
+      if(is.na(ind)) {
+        kappa[j] <- 0
+      } else {
+        kappa[j] <- th_y_vect[ind]
+      }
+    }
+  }
+
+  if(K > 0) {
+    for(k in 1:K) {
+      ind <- get_var_index('kappa',modSpec,k=k)
+      if(is.na(ind)) {
+        kappa[J+k] <- 0
+      } else {
+        kappa[J+k] <- th_y_vect[ind]
+      }
+    }
+  }
+
+  if(!asMatrix) {
+    return(kappa)
+  } else {
+    kappa <- matrix(kappa) # a column vector
+    return(kappa %*% t(kappa))
+  }
+}
+
+#' @export
+get_Sigma0 <- function(th_y,modSpec=NA) {
+  # If modSpec is NA (not input), then the input is th_y_list. If it is given,
+  # it is th_y_vect.
+  if(!all(is.na(modSpec))) {
+    th_y_vect <- th_y
+    th_y_list <- theta_y_vect2list(th_y,modSpec)
+  } else {
+    th_y_list <- th_y
+    th_y_vect <- theta_y_list2vect(th_y_list)
+  }
+  
+  check_model(th_y_list$modSpec)
+
+  modSpec <- th_y_list$modSpec
+  s <- th_y_list$s
+  Sigma <- diag(s^2)
+
+  if(!is_cdep(modSpec)) {
+    retrun(Sigma)
+  }
+
+  # If this point is reached, the model is conditionally dependent. Add
+  # off-diagonal terms.
+  J <- get_J(modSpec)
+  K <- get_K(modSpec)
+
+  for(i1 in 1:(J+K-1)) {
+    g1 <- modSpec$cdepGroups[i1]
+    for(i2 in (i1+1):(J+K)) {
+      g2 <- modSpec$cdepGroups[i2]
+      z12 <- th_y_vect[get_var_index('z',modSpec,i1=i1,i2=i2)]
+      Sigma[i1,i2] <- s[i1]*s[i2]*z12
+      Sigma[i2,i1] <- Sigma[i1,i2]
+    }
+  }
+  return(Sigma)
+}
+
+#' @export
+get_Sigma <- function(th_y,x,modSpec=NA,transformVar=F) {
+  # If modSpec is NA (not input), then the input is th_y_list. If it is given,
+  # it is th_y_vect.
+  if(all(is.na(modSpec))) {
+    modSpec <- th_y$modSpec
+    th_y_vect <- theta_y_list2vect(th_y)
+  } else {
+    th_y_vect <- th_y
+  }
+
+  if(transformVar) {
+    th_y_vect <- theta_y_unconstr2constr(th_y_vect,modSpec)
+  }
+
+  th_y_list <- theta_y_vect2list(th_y_vect,modSpec)
+ 
+
+  check_model(th_y_list$modSpec)
+  J <- get_J(th_y_list$modSpec)
+  K <- get_K(th_y_list$modSpec)
+
+  N <- length(x)
+  if(N > 1) {
+    Sigma <- array(NA,c(N,J+K,J+K))
+    for(n in 1:N) {
+      Sigma[n,,] <- get_Sigma(th_y_list,x[n])
+    }
+    return(Sigma)
+  }
+
+  # If this point is reached, x is a scalar
+  Sigma0 <- get_Sigma0(th_y_list)
+
+  if(!is_hetero(modSpec)) {
+    return(Sigma0)
+  }
+ 
+  # If this point is reached, x is a scalar and the model is
+  # heteroskedastic
+  kappa_full <- get_kappa_full(th_y_list)
+  heteroTerm <- rep(NA,length(kappa_full)) # length J+K
+
+  if(modSpec$hetSpec == 'linearSd') {
+    heteroTerm <- 1 + kappa_full*x
+  } else if(modSpec$hetSpec == 'linearSd_y') {
+    heteroTerm <- 1 + kappa_full*get_response(x,th_y_vect,modSpec)
+  } else {
+    stop(paste('Unsupported hetSpec,',th_y_list$modSpec$hetSpec))
+  }
+  # A column vector:
+  heteroTerm <- matrix(heteroTerm)
+  return((heteroTerm %*% t(heteroTerm) ) * Sigma0)
 }

@@ -7,7 +7,7 @@
 #' @param theta_y_list theta_y as a list
 #' @param x Vector of indepenent variable observations
 #' @param Y Matrix of dependent variable observations
-#' @param hp Hyperparameters
+#' @param modSpec Model specification
 #'
 # @keywords
 #' @export
@@ -17,24 +17,21 @@
 #' @author Michael Holton Price <MichaelHoltonPrice@gmail.com>
 
 #' @export
-calcLogLik_theta_y <- function(theta_y_list,x,Y,hp) {
+calcLogLik_theta_y <- function(theta_y_list,x,Y) {
+  modSpec <- theta_y_list$modSpec
+  check_model(modSpec)
   '%dopar%' <- foreach::'%dopar%'
   integInfo <- getIntegInfo_theta_y(theta_y_list,Y)
   if(is.matrix(Y)) {
     # For more than one variable, call calcLogLik_theta_y for each observation in parallel
     logLikVect <- foreach::foreach(n=1:ncol(Y), .combine=cbind) %dopar% {
-      logLik <- calcLogLik_theta_y(theta_y_list,x[n],Y[,n],hp)
+      logLik <- calcLogLik_theta_y(theta_y_list,x[n],Y[,n])
     }
     return(sum(logLikVect))
   } else {
     # The calculation for one observation
-    if('kappa' %in% names(theta_y_list)) {
-      # using correlations
-      covMat <- (1+theta_y_list$kappa*x)^2 * theta_y_list$Sigma
-    } else {
-      # not using correlations
-      covMat <- theta_y_list$Sigma
-    }
+    covMat <- get_Sigma(theta_y_list,x)
+    #hetero <- is_hetero(modSpec)
     intAll <- all(integInfo$doIntegral)
     # If all variables are integrated, the conditional calculations are not needed
     if(intAll) {
@@ -58,7 +55,7 @@ calcLogLik_theta_y <- function(theta_y_list,x,Y,hp) {
         logLik <- 0
       }
 
-      if(length(giv) == 1) { # The contribution of the point calculation integral
+      if(length(giv) == 1) { # The contribution of the point calculation to the integral
         logLik <- logLik + log(dnorm(Y[giv],mean=calc_theta_y_means(x,theta_y_list,giv),sd=sqrt(covMat[giv,giv])))
       } else {
         logLik <- logLik + mvtnorm::dmvnorm(Y[giv],mean=calc_theta_y_means(x,theta_y_list,giv),sigma=covMat[giv,giv],log=T)
@@ -69,10 +66,15 @@ calcLogLik_theta_y <- function(theta_y_list,x,Y,hp) {
 }
 
 # A wrapper function to calculate the mean for each variable
+# @export
 calc_theta_y_means <- function(xScalar,theta_y_list,giv=NA) {
-  haveOrd <- 'rho' %in% names(theta_y_list)
-  haveCont <- 'r' %in% names(theta_y_list)
-  check_model(theta_y_list$paramModel)
+
+  check_model(theta_y_list$modSpec)
+  J <- get_J(theta_y_list$modSpec)
+  K <- get_K(theta_y_list$modSpec)
+  haveOrd  <- J != 0
+  haveCont <- K != 0
+
 
   if(haveOrd) {
     rho <- theta_y_list$rho
@@ -86,7 +88,6 @@ calc_theta_y_means <- function(xScalar,theta_y_list,giv=NA) {
 
   if(!any(is.na(giv))) {
     if(haveOrd && haveCont) {
-      J <- length(rho)
       givOrd  <- giv[giv <= J]
       givCont <- giv[giv > J]
       rho <- rho[givOrd]

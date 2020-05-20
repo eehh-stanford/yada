@@ -59,7 +59,7 @@ powLawMixNegLogLik <- function(th_y,x,Y,modSpec,transformVar=F) {
     xj <-  x[indj]
     vj <- vj[indj]
     th_v <- extract_th_v(th_y,modSpec,j)
-    negLogLik <- negLogLik + powLawOrdNegLogLik(th_v,xj,vj,hetero,transformVar)
+    negLogLik <- negLogLik + powLawOrdNegLogLik(th_v,xj,vj,modSpec$hetSpec,transformVar)
   }
  }
 
@@ -71,7 +71,7 @@ powLawMixNegLogLik <- function(th_y,x,Y,modSpec,transformVar=F) {
     xk <-  x[indk]
     wk <- wk[indk]
     th_w <- extract_th_w(th_y,modSpec,k)
-    negLogLik <- negLogLik + powLawNegLogLik(th_w,xk,wk,transformVar)
+    negLogLik <- negLogLik + powLawNegLogLik(th_w,xk,wk,modSpec$hetSpec,transformVar)
   }
  }
   return(negLogLik)
@@ -98,7 +98,7 @@ powLawMixGradNegLogLik <- function(th_y,x,Y,modSpec,transformVar=F) {
     xj <-  x[indj]
     vj <- vj[indj]
     th_v <- extract_th_v(th_y,modSpec,j)
-    eta_v <- powLawOrdGradNegLogLik(th_v,xj,vj,hetero,transformVar)
+    eta_v <- powLawOrdGradNegLogLik(th_v,xj,vj,modSpec$hetSpec,transformVar)
     
     l <- get_var_index('rho',modSpec,j=j)
     gradNegLogLik[l] <- gradNegLogLik[l] + eta_v[1]
@@ -120,7 +120,7 @@ powLawMixGradNegLogLik <- function(th_y,x,Y,modSpec,transformVar=F) {
     xk <-  x[indk]
     wk <- wk[indk]
     th_w <- extract_th_w(th_y,modSpec,k)
-    eta_w <- powLawGradNegLogLik(th_w,xk,wk,transformVar)
+    eta_w <- powLawGradNegLogLik(th_w,xk,wk,modSpec$hetSpec,transformVar)
     
   # th_y has ordering th_y = [rho,tau,a,r,b,s,kappa]
     l <- get_var_index('a',modSpec,k=k)
@@ -187,6 +187,39 @@ extract_th_w <- function(th_y,modSpec,k) {
 }
 
 #' @export
+get_response <- function(x,th_y,modSpec,transformVar=F) {
+  check_model(modSpec)
+  J <- get_J(modSpec)
+  K <- get_K(modSpec)
+
+  if(modSpec$meanSpec != 'powLaw') {
+    stop('Only a power law is currenty supported for the mean specification')
+  }
+
+  if(J > 0) {
+    for(j in 1:J) {
+      v <- rep(NA,J)
+      th_v <- extract_th_v(th_y,modSpec,j)
+      v[j] <- powLawOrd(x,th_v,transformVar)
+    }
+  } else {
+      v <- c()
+  }
+
+  if(K > 0) {
+    for(k in 1:K) {
+      w <- rep(NA,K)
+      th_w <- extract_th_w(th_y,modSpec,k)
+      w[k] <- powLaw(x,th_w,transformVar)
+    }
+  } else {
+     w <- c()
+  }
+
+  return(c(v,w))
+}
+
+#' @export
 simPowLawMix <- function(th_y_list,th_x_list,N,modSpec) {
   if(th_x_list$fitType == 'uniform') {
     x <- runif(N,th_x_list$xmin,th_x_list$xmax)
@@ -202,11 +235,11 @@ simPowLawMix <- function(th_y_list,th_x_list,N,modSpec) {
   for(n in 1:N) {
     for(j in 1:J) {
       th_v <- extract_th_v(th_y_vect,modSpec,j)
-      Ystar[j,n] <- rnorm(1,powLawOrd(x[n],th_v),powLawOrdSigma(x[n],th_v,hetero))
+      Ystar[j,n] <- rnorm(1,powLawOrd(x[n],th_v),powLawOrdSigma(x[n],th_v,modSpec$hetSpec))
     }
     for(k in 1:K) {
       th_w <- extract_th_w(th_y_vect,modSpec,k)
-      Ystar[J+k,n] <- rnorm(1,powLaw(x[n],th_w),powLawSigma(x[n],th_w))
+      Ystar[J+k,n] <- rnorm(1,powLaw(x[n],th_w),powLawSigma(x[n],th_w,modSpec$hetSpec))
     }
   }
 

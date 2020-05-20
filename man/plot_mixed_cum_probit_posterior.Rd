@@ -4,8 +4,7 @@
 \alias{plot_mixed_cum_probit_posterior}
 \title{Plot posterior for mixed cumulative probit model}
 \usage{
-plot_mixed_cum_probit_posterior(theta_y_list, theta_x, xv, y, hp,
-  knownX = NA)
+plot_mixed_cum_probit_posterior(theta_y_list, theta_x, xv, y, hp, knownX = NA)
 }
 \arguments{
 \item{theta_y_list}{theta_y as a list}

@@ -20,20 +20,11 @@
 #' @author Michael Holton Price <MichaelHoltonPrice@gmail.com>
 
 getIntegInfo_theta_y <- function(theta_y_list,Y) {
-  haveOrd <- 'rho' %in% names(theta_y_list)
-  haveCont <- 'r' %in% names(theta_y_list)
 
-  if(haveOrd) {
-    J <- length(theta_y_list$rho)
-  } else {
-    J <- 0
-  }
-
-  if(haveCont) {
-    K <- length(theta_y_list$r)
-  } else {
-    K <- 0
-  }
+  J <- get_J(theta_y_list$modSpec)
+  K <- get_K(theta_y_list$modSpec)
+  haveOrd  <- J != 0
+  haveCont <- K != 0
 
   isCont <- c(rep(F,J),rep(T,K)) # Is the variable continuous?
   # For non-missing observations, columns of doIntegral are T for ordinal variables and F for continuous variables

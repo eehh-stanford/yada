@@ -66,7 +66,7 @@ calcLogLik_theta_y <- function(theta_y_list,x,Y) {
 }
 
 # A wrapper function to calculate the mean for each variable
-# @export
+#' @export
 calc_theta_y_means <- function(xScalar,theta_y_list,giv=NA) {
 
   check_model(theta_y_list$modSpec)

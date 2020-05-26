@@ -267,7 +267,7 @@ get_var_index <- function(varName,modSpec,j=NA,k=NA,i1=NA,i2=NA) {
     # correlation that is stored after the intragroup correlations.
 
     offset <- offset + sum(as.vector(table(modSpec$cdepGroups)) > 1)
-    numGroups <- length(unique(modSpec$cdepGroups))
+    numGroups <- length(unique(modSpec$cdepGroups)[!is.na(unique(modSpec$cdepGroups))])
     if(g1 < g2) {
       index <- elemToIndex(c(g1-1,g2-1),numGroups) + 1
     } else {
@@ -670,6 +670,44 @@ get_kappa_full <- function(th_y,modSpec=NA,asMatrix=F) {
 }
 
 #' @export
+get_z_full <- function(th_y,modSpec=NA,asMatrix=F) {
+  # If modSpec is NA (not input), then the input is th_y_list. If it is given,
+  # it is th_y_vect.
+  if(!all(is.na(modSpec))) {
+    th_y_vect <- th_y
+    th_y_list <- theta_y_vect2list(th_y,modSpec)
+  } else {
+    th_y_list <- th_y
+    th_y_vect <- theta_y_list2vect(th_y_list)
+  }
+  
+  check_model(th_y_list$modSpec)
+
+  modSpec <- th_y_list$modSpec
+  if(!is_cdep(modSpec)) {
+    stop('get_z_full called, but model is not conditionally dependent')
+  }
+
+
+  J <- get_J(modSpec)
+  K <- get_K(modSpec)
+  z <- rep(NA,choose(J+K,2))
+
+  for(n in 1:choose(J+K,2)) {
+    e <- elem(n-1,J+K,2)
+    i1 <- e[1] + 1
+    i2 <- e[2] + 1
+    ind <- get_var_index('z',modSpec,i1=i1,i2=i2)
+    if(is.na(ind)) {
+      z[n] <- 0
+    } else {
+      z[n] <- th_y_vect[ind]
+    }
+  }
+  return(z)
+}
+
+#' @export
 get_Sigma0 <- function(th_y,modSpec=NA) {
   # If modSpec is NA (not input), then the input is th_y_list. If it is given,
   # it is th_y_vect.
@@ -700,7 +738,11 @@ get_Sigma0 <- function(th_y,modSpec=NA) {
     g1 <- modSpec$cdepGroups[i1]
     for(i2 in (i1+1):(J+K)) {
       g2 <- modSpec$cdepGroups[i2]
-      z12 <- th_y_vect[get_var_index('z',modSpec,i1=i1,i2=i2)]
+      if(is.na(g1) || is.na(g2)) {
+        z12 <- 0
+      } else {
+        z12 <- th_y_vect[get_var_index('z',modSpec,i1=i1,i2=i2)]
+      }
       Sigma[i1,i2] <- s[i1]*s[i2]*z12
       Sigma[i2,i1] <- Sigma[i1,i2]
     }

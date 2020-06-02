@@ -723,10 +723,13 @@ get_Sigma0 <- function(th_y,modSpec=NA) {
 
   modSpec <- th_y_list$modSpec
   s <- th_y_list$s
+  if(length(s) == 1) {
+    return(matrix(s^2,1,1))
+  }
   Sigma <- diag(s^2)
 
   if(!is_cdep(modSpec)) {
-    retrun(Sigma)
+    return(Sigma)
   }
 
   # If this point is reached, the model is conditionally dependent. Add

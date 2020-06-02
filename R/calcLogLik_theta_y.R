@@ -21,8 +21,7 @@ calcLogLik_theta_y <- function(theta_y_list,x,Y) {
   modSpec <- theta_y_list$modSpec
   check_model(modSpec)
   '%dopar%' <- foreach::'%dopar%'
-  integInfo <- getIntegInfo_theta_y(theta_y_list,Y)
-  if(is.matrix(Y)) {
+  if(length(x) > 1) {
     # For more than one variable, call calcLogLik_theta_y for each observation in parallel
     logLikVect <- foreach::foreach(n=1:ncol(Y), .combine=cbind) %dopar% {
       logLik <- calcLogLik_theta_y(theta_y_list,x[n],Y[,n])
@@ -32,6 +31,7 @@ calcLogLik_theta_y <- function(theta_y_list,x,Y) {
     # The calculation for one observation
     covMat <- get_Sigma(theta_y_list,x)
     #hetero <- is_hetero(modSpec)
+    integInfo <- getIntegInfo_theta_y(theta_y_list,Y)
     intAll <- all(integInfo$doIntegral)
     # If all variables are integrated, the conditional calculations are not needed
     if(intAll) {
@@ -46,7 +46,6 @@ calcLogLik_theta_y <- function(theta_y_list,x,Y) {
       hi <- integInfo$limArray[dep,2]
       if(length(dep) > 0) {
         # Integral needed
-        #condNorm <- condMVNorm::condMVN(mean=calc_theta_y_means(x,theta_y_list),sigma=covMat, dependent=dep, given=giv,X.given=Y[giv])
         condNorm <- condMVNorm::condMVN(mean=calc_theta_y_means(x,theta_y_list),sigma=covMat, dependent=dep, given=giv,X.given=Y[giv],check.sigma=F)
         p <- mvtnorm::pmvnorm(lower=lo, upper=hi,mean=condNorm$condMean,sigma=condNorm$condVar) # The integral
         logLik <- log(as.numeric(p))

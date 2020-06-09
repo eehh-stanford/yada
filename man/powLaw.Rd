@@ -51,7 +51,7 @@ and
 
 \deqn{sig = s}                    [hetSepc = 'none']
 \deqn{sig = s*(1 + kappa*x)}      [hetSpec = 'sd_x']
-\deqn{sig = s*(1 + kappa*h)}      [hetSpec = 'sd_resp']
+\deqn{sig = s*(1 + kappa*a*x^r)}  [hetSpec = 'sd_resp']
 }
 \author{
 Michael Holton Price <MichaelHoltonPrice@gmail.com>

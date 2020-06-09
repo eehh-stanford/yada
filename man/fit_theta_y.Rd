@@ -12,12 +12,14 @@ fit_theta_y(x, Y, modSpec, verbose = F)
 \item{Y}{Matrix of dependent variable observations}
 
 \item{modSpec}{A list specifying the model to use}
+
+\item{verbose}{Whether to print out information on the fit}
 }
 \value{
-The log-likelihood
+The fit as a vector
 }
 \description{
-\code{fit_thy} does a maximum likelihood fit for theta_y
+\code{fit_theta_y} does a maximum likelihood fit for theta_y
 }
 \details{
 x is a vector of length n and Y is a matrix of size (J+K) by N, where J is
@@ -31,20 +33,29 @@ M          Number of ordinal categories for each ordinal variable (a vector
            of length J)
 meanSpec   Specification of the parametetric form of the mean response.
            Currently, only powLaw, for power law, is supported.
-hetSpec    Heteroskedasticity specification. Currently, only none (yielding
-           a homoskedastic model) and linearSd (in which the noise standard
-           deviation scales linearly with x) are supported. For linearSd,
-           the variable hetGroups must also be specified.
+hetSpec    Heteroskedasticity specification. Currently, 'none'
+           (homoskedastic), sd_x (the standard deviation scales linearly
+           with x), and sd_resp (the standard deviation scales lienarly with
+           the response) are supported. For sd_x and sd_resp, the variable
+           hetGroups must also be specified.
 hetGroups  The groups for the heteroskedastic parameters (kappa). A vector
            of length J+K. Each variable must be assigned a unique group 
-           between 1 and G_kappa. Only required if hetSpec is linearSd.
+           between 1 and G_kappa, and NA can be used so that specific 
+           variables are homoskedastic. Only required if hetSpec is sd_x
+           or sd_resp.
 cdepSpec   Conditional dependence specification, which equals either indep
            (for independent) or dep (for dependent). For dep, the variable
            cdepGroups must be specified.
 cdepGroups The groups for the correlation terms for a conditional dependence
            setting of dep. A vector of length J+K. Each variable must be
-           assigned a unique group between 1 and G_rho. Only required if
-           cdepSpec is dep.
+           assigned a unique group between 1 and G_rho, and NA can be used
+           so that specific variables are conditionally independent. Only
+           required if cdepSpec is dep.
+
+Distinct cases for the fit are:
+
+A single variable model
+Call fitPowLawOrd (ordinal variable) or fitPowLaw (continuous variable)
 }
 \author{
 Michael Holton Price <MichaelHoltonPrice@gmail.com>

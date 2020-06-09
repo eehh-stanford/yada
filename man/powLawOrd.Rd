@@ -23,10 +23,10 @@ powLawOrd(x, th_v, transformVar = F)
 
 \item{kappa}{Slope of noise [Optional]}
 
-\item{hetero}{Whether the model is heteroskedastic [Default FALSE]}
+\item{hetSpec}{Specification for the heteroskedasticity [Default 'none']}
 }
 \description{
-\code{powLawOrd} calculates the mean (h). \code{powLawOrdSigma} calculates the noise (sigma, or sig for short). \code{powLawOrdNegLogLikVect} calculates a vector of the negative log-likelihoods. \code{powLawOrdNegLogLik} calculates the negative log-likelihood (sum of \code{powLawOrdNegLogLikVect}). \code{fitPowLawOrd} returns the maximum likelihood fit. \code{simPowLawOrd} creates simulated data. \code{powLawOrdCalc_x_list} transforms from a vector to list representation for the input data.
+\code{powLawOrd} calculates the mean (h). \code{powLawOrdSigma} calculates the noise (sigma, or sig for short). \code{powLawOrdNegLogLikVect} calculates a vector of the negative log-likelihoods. \code{powLawOrdNegLogLik} calculates the negative log-likelihood (sum of \code{powLawOrdNegLogLikVect}). \code{fitPowLawOrd} returns the maximum likelihood fit. \code{simPowLawOrd} creates simulated data.
 }
 \details{
 We assume that the latent response variable vstar (for v^*) is distributed as
@@ -55,7 +55,9 @@ For the mean and noise, we adopt the parametric forms
 
 and
 
-\deqn{sig = s*(1 + kappa*x)}
+\deqn{sig = s}                    [hetSpec = 'none']
+\deqn{sig = s*(1 + kappa*x)}      [hetSpec = 'sd_x']
+\deqn{sig = s*(1 + kappa*x^rho)}  [hetSpec = 'sd_resp']
 
 The choice of x^rho comes from using an offset power law, alpha*x^rho + beta, and requiring alpha=1 and beta=0 for identifiability. For optimization, it is often preferable to work with an unconstrained variable. This is supported via the optional input transformVar. rho, s, kappa, and the differences between successive values of tau must be positive. This is accomplished by using, for example, rho_bar = log(rho) and rho = exp(rho_bar).
 }

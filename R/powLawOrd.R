@@ -1,6 +1,6 @@
 #' @title Power law with ordinal observations
 #'
-#' @description \code{powLawOrd} calculates the mean (h). \code{powLawOrdSigma} calculates the noise (sigma, or sig for short). \code{powLawOrdNegLogLikVect} calculates a vector of the negative log-likelihoods. \code{powLawOrdNegLogLik} calculates the negative log-likelihood (sum of \code{powLawOrdNegLogLikVect}). \code{fitPowLawOrd} returns the maximum likelihood fit. \code{simPowLawOrd} creates simulated data. \code{powLawOrdCalc_x_list} transforms from a vector to list representation for the input data.
+#' @description \code{powLawOrd} calculates the mean (h). \code{powLawOrdSigma} calculates the noise (sigma, or sig for short). \code{powLawOrdNegLogLikVect} calculates a vector of the negative log-likelihoods. \code{powLawOrdNegLogLik} calculates the negative log-likelihood (sum of \code{powLawOrdNegLogLikVect}). \code{fitPowLawOrd} returns the maximum likelihood fit. \code{simPowLawOrd} creates simulated data.
 #'
 #' @details We assume that the latent response variable vstar (for v^*) is distributed as
 #'
@@ -28,7 +28,9 @@
 #'
 #' and
 #'
-#' \deqn{sig = s*(1 + kappa*x)}
+#' \deqn{sig = s}                    [hetSpec = 'none']
+#' \deqn{sig = s*(1 + kappa*x)}      [hetSpec = 'sd_x']
+#' \deqn{sig = s*(1 + kappa*x^rho)}  [hetSpec = 'sd_resp']
 #'
 #' The choice of x^rho comes from using an offset power law, alpha*x^rho + beta, and requiring alpha=1 and beta=0 for identifiability. For optimization, it is often preferable to work with an unconstrained variable. This is supported via the optional input transformVar. rho, s, kappa, and the differences between successive values of tau must be positive. This is accomplished by using, for example, rho_bar = log(rho) and rho = exp(rho_bar).
 #'
@@ -39,7 +41,7 @@
 #' @param s Baseline noise
 #' @param kappa Slope of noise [Optional]
 #' @param th_v Vector of parameters with ordering [rho,tau_1,...,tau_M,s,kappa]
-#' @param hetero Whether the model is heteroskedastic [Default FALSE]
+#' @param hetSpec Specification for the heteroskedasticity [Default 'none']
 #' @param transformVar Whether a transformation of the parameterization is needed [Default FALSE]
 #'
 #' @author Michael Holton Price <MichaelHoltonPrice@gmail.com>
@@ -58,7 +60,7 @@ powLawOrd <- function(x,th_v,transformVar=F) {
 #' @export
 powLawOrdSigma <- function(x,th_v,hetSpec='none',transformVar=F) {
   # th_v has ordering [rho,tau_1,...tau_2,s,kappa]
-  # returns a scalar for hetero=F even if x is not length 1
+  # returns a scalar for hetSpec == 'none' even if x is not length 1
   hetero <- hetSpec != 'none'
   numParam <- length(th_v)
 
@@ -66,9 +68,15 @@ powLawOrdSigma <- function(x,th_v,hetSpec='none',transformVar=F) {
     if(transformVar) { 
       s   <- exp(th_v[numParam-1])
       kappa <- exp(th_v[numParam])
+      if(hetSpec == 'sd_resp') {
+        rho   <- exp(th_v[1])
+      }
     } else {
       s   <- th_v[numParam-1]
       kappa <- th_v[numParam]
+      if(hetSpec == 'sd_resp') {
+        rho   <- th_v[1]
+      }
     }
 
     if(hetSpec == 'sd_x') {

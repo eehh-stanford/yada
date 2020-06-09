@@ -22,7 +22,7 @@
 #'
 #' \deqn{sig = s}                    [hetSepc = 'none']
 #' \deqn{sig = s*(1 + kappa*x)}      [hetSpec = 'sd_x']
-#' \deqn{sig = s*(1 + kappa*h)}      [hetSpec = 'sd_resp']
+#' \deqn{sig = s*(1 + kappa*a*x^r)}  [hetSpec = 'sd_resp']
 #' 
 #' @param x Vector of independent variable observations
 #' @param w Vector of dependent variable observations
@@ -45,7 +45,7 @@ powLaw <- function(x,th_w,transformVar=F) {
   b <- th_w[3]
   if(transformVar) {
     a <- exp(a)
-    r <- exp(b)
+    r <- exp(r)
   }
   return(a*x^r + b)
 }

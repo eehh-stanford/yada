@@ -6,12 +6,55 @@
 \usage{
 comb(m, N, k)
 }
+\arguments{
+\item{m}{The lexical index of each unique choice (starting from 0)}
+
+\item{N}{The number of unique things}
+
+\item{k}{The number of things to choose out of N total things}
+
+\item{c}{The combinadic (a vector; see details)}
+
+\item{d}{The dual(see details)}
+
+\item{e}{The element (a vector; see details)}
+}
 \description{
 Implementation of combinadic-related functions as described here:
 
 James McCaffrey -- Generating the mth Lexicographical Element of a Mathematical Combination
 
 Indexing begins from 0, not 1.
+}
+\details{
+Consider a set of N things of which k unique ones are chosen. The number of
+unique sets of things that can be chosen is choose(N,k). For example, if N=5
+and k=3 there are choose(5,3) = 10 unique such sets. Adopting lexigraphic
+ordering starting at 0, the combinadic (comb), dual, and element (elem) are:
+
+m	comb	dual	elem
+0	210	9	012
+1	310	8	013
+2	320	7	014
+3	321	6	023
+4	410	5	024
+5	420	4	034
+6	421	3	123
+7	430	2	124
+8	431	1	134
+9	432	0	234
+
+If the lexical index, m, is 2, the corresponding element with N=5 and k=3 is:
+
+e <- elem(2,5,3)
+print(e)
+[1] 0 1 4
+
+If the element is 421, the corresponding lexical index is:
+
+m <- elemToIndex(c(1,2,3),5)
+print(m)
+[1] 6
 }
 \author{
 Michael Holton Price <MichaelHoltonPrice@gmail.com>

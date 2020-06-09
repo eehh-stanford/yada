@@ -9,8 +9,8 @@ th_w_bar_hetero <- c(log(2),log(.45),1.2,log(1),log(0.02))
 # Test helper function is_th_w_hetero
 
 expect_error(
-  is_th_w_hetero(c(th_w_hetero,10,12)),
-  'Length of th_w should be 4, 5, or 6, not 7'
+  is_th_w_hetero(c(th_w_hetero,10)),
+  'Length of th_w should be 4 or 5, not 6'
 )
 
 expect_equal(

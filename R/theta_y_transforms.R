@@ -50,7 +50,7 @@ check_model <- function(modSpec) {
   # Reject models specified as heteroskedatic for which hetGroups is
   # mis-specified.
   if('hetSpec' %in% names(modSpec)) {
-    if(tolower(modSpec$hetSpec) == 'linearsd') { # At least for now, this is the only heteroskedastic parameterization
+    if(tolower(modSpec$hetSpec) == 'sd_x') { # At least for now, this is the only heteroskedastic parameterization
       if( !('hetGroups' %in% names(modSpec)) ) {
         stop('Model is heteroskedastic, but hetGroups not given')
       }
@@ -121,9 +121,9 @@ is_hetero <- function(modSpec) {
   # (2) modSpec$hetSpec is 'linearSd', but hetGroups is all NA.
   if(tolower(modSpec$hetSpec) == 'none') {
     return(F)
-  } else if(tolower(modSpec$hetSpec) == 'linearsd') {
+  } else if(tolower(modSpec$hetSpec) == 'sd_x') {
     return(!all(is.na(modSpec$hetGroups)))
-  } else if(tolower(modSpec$hetSpec) == 'linearsd_y') {
+  } else if(tolower(modSpec$hetSpec) == 'sd_resp') {
     return(!all(is.na(modSpec$hetGroups)))
   } else {
     stop(paste('Unsupported hetSpec,',modSpec$hetSpec))
@@ -169,8 +169,6 @@ get_non_singleton_groups <- function(groups) {
   counts <- table(groups)
   return(sort(as.numeric(names(counts))[counts > 1]))
 }
-
-
 
 #' @export
 get_num_var <- function(varName,modSpec,preceding=F) {
@@ -229,7 +227,7 @@ get_var_index <- function(varName,modSpec,j=NA,k=NA,i1=NA,i2=NA) {
   # to improve code readability and make test easier. For tau, a vector is
   # returned.
   #
-  # th_y has ordering th_y = [rho,tau,a,r,b,s,z,kappa]
+  # th_y has ordering th_y = [rho,tau,a,r,b,s,z,kappa,l]
 
 
   check_model(modSpec)
@@ -796,9 +794,9 @@ get_Sigma <- function(th_y,x,modSpec=NA,transformVar=F) {
   kappa_full <- get_kappa_full(th_y_list)
   heteroTerm <- rep(NA,length(kappa_full)) # length J+K
 
-  if(modSpec$hetSpec == 'linearSd') {
+  if(modSpec$hetSpec == 'sd_x') {
     heteroTerm <- 1 + kappa_full*x
-  } else if(modSpec$hetSpec == 'linearSd_y') {
+  } else if(modSpec$hetSpec == 'sd_resp') {
     heteroTerm <- 1 + kappa_full*get_response(x,th_y_vect,modSpec)
   } else {
     stop(paste('Unsupported hetSpec,',th_y_list$modSpec$hetSpec))

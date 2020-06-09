@@ -77,11 +77,6 @@ powLawSigma <- function(x,th_w,hetSpec='none',transformVar=F) {
     sig <- sig * (1+kappa*x)
   } else if(hetSpec == 'sd_resp') {
     sig <- sig * (1+a*kappa*x^r)
-  } else if(hetSpec == 'sd_pow') {
-    l <- th_w[6]
-    if(transformVar) {
-      l <- exp(l)
-    }
     sig <- sig * (1+a*kappa*x^l)
   } else {
     stop(paste('Unrecognized hetSpec,',hetSpec))
@@ -146,10 +141,6 @@ fitPowLaw <- function(x,w,hetSpec='none') {
   if(hetero) {
     kappa0 <- 0.0001
     th_w0 <- c(th_w0,kappa0)
-    if(hetSpec == 'sd_pow') {
-      l0 <- 1
-      th_w0 <- c(th_w0,l0)
-    }
   }
 
  # Build modSpec
@@ -199,9 +190,7 @@ is_th_w_hetero <- function(th_w) {
     return(F)
   } else if(length(th_w) == 5) {
     return(T)
-  } else if(length(th_w) == 6) {
-    return(T)
   } else {
-    stop(paste('Length of th_w should be 4, 5, or 6, not',length(th_w)))
+    stop(paste('Length of th_w should be 4 or 5, not',length(th_w)))
   }
 }

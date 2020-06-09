@@ -31,7 +31,7 @@
 #' @param s Baseline noise
 #' @param kappa Slope of noise [Optional]
 #' @param modSpec Model specification that, among other things, specifies how to unpack th_y
-#' @param th_y Parameter vector with ordering th_y = [rho,tau,a,r,b,s,kappa,lambda]
+#' @param th_y Parameter vector with ordering th_y = [rho,tau,a,r,b,s,kappa]
 #' @param hetero Whether the model is heteroskedastic [Default FALSE]
 #'
 #' @author Michael Holton Price <MichaelHoltonPrice@gmail.com>
@@ -88,16 +88,10 @@ extract_th_v <- function(th_y,modSpec,j) {
 
   if(hetero) {
     kappa <- th_y[get_var_index('kappa',modSpec,j=j)]
-    if(modSpec$hetSpec == 'sd_pow') {
-      lambda <- th_y[get_var_index('lambda',modSpec,j=j)]
-    } else {
-      lambda <- c()
-    }
   } else {
     kappa <- c()
-    lambda <- c()
   }
-  return(c(rho,tau,s,kappa,lambda))
+  return(c(rho,tau,s,kappa))
 }
 
 #' @export
@@ -112,16 +106,10 @@ extract_th_w <- function(th_y,modSpec,k) {
 
   if(hetero) {
     kappa <- th_y[get_var_index('kappa',modSpec,k=k)]
-    if(modSpec$hetSpec == 'sd_pow') {
-      lambda <- th_y[get_var_index('lambda',modSpec,k=k)]
-    } else {
-      lambda <- c()
-    }
   } else {
     kappa <- c()
-    lambda <- c()
   }
-  return(c(a,r,b,s,kappa,lambda))
+  return(c(a,r,b,s,kappa))
 }
 
 #' @export
@@ -180,7 +168,6 @@ simPowLawMix <- function(th_y_list,th_x_list,N,modSpec) {
       Ystar[J+k,n] <- rnorm(1,powLaw(x[n],th_w),powLawSigma(x[n],th_w,modSpec$hetSpec))
     }
   }
-
 
   Y <- Ystar
   for(j in 1:J) {

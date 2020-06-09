@@ -57,38 +57,24 @@ powLawOrd <- function(x,th_v,transformVar=F) {
 
 #' @export
 powLawOrdSigma <- function(x,th_v,hetSpec='none',transformVar=F) {
-  # th_v has ordering [rho,tau_1,...tau_2,s,kappa,lambda]
+  # th_v has ordering [rho,tau_1,...tau_2,s,kappa]
   # returns a scalar for hetero=F even if x is not length 1
   hetero <- hetSpec != 'none'
   numParam <- length(th_v)
 
   if(hetero) {
-    if(hetSpec == 'sd_pow') {
-      if(transformVar) { 
-        s   <- exp(th_v[numParam-2])
-        kappa <- exp(th_v[numParam-1])
-        lambda <- exp(th_v[numParam])
-      } else {
-        s   <- th_v[numParam-2]
-        kappa <- th_v[numParam-1]
-        lambda <- th_v[numParam]
-      }
+    if(transformVar) { 
+      s   <- exp(th_v[numParam-1])
+      kappa <- exp(th_v[numParam])
     } else {
-      if(transformVar) { 
-        s   <- exp(th_v[numParam-1])
-        kappa <- exp(th_v[numParam])
-      } else {
-        s   <- th_v[numParam-1]
-        kappa <- th_v[numParam]
-      }
+      s   <- th_v[numParam-1]
+      kappa <- th_v[numParam]
     }
 
     if(hetSpec == 'sd_x') {
       sig <- s*(1+kappa*x)
     } else if(hetSpec == 'sd_resp') {
       sig <- s*(1+kappa*x^rho)
-    } else if(hetSpec == 'sd_pow') {
-      sig <- s*(1+kappa*x^lambda)
     } else {
       stop(paste('Unrecognized hetSpec,',hetSpec))
     }
@@ -133,9 +119,6 @@ powLawOrdNegLogLikVect <- function(th_v,x,v,hetSpec='none',transformVar=F) {
 
   if(hetero) {
     kappa <- th_v[M+3]     # kappa
-    if(hetSpec == 'sd_pow') {
-      lambda <- th_v[M+4]  # lambda
-    }
   }
 
   # Initialize vector of negative log-likelihoods (eta_v)
@@ -154,8 +137,6 @@ powLawOrdNegLogLikVect <- function(th_v,x,v,hetSpec='none',transformVar=F) {
           sig <- s*(1+kappa*xm)
         } else if(hetSpec == 'sd_resp') {
           sig <- s*(1+kappa*xm^rho)
-        } else if(hetSpec == 'sd_pow') {
-          sig <- s*(1+kappa*xm^lambda)
         } else {
           stop(paste('Unrecognized hetSpec,',hetSpec))
         }
@@ -195,11 +176,7 @@ calc_M <- function(th_v,hetSpec) {
   # A helper function to calculate M from the length of th_v
   hetero <- hetSpec != 'none'
   if(hetero) {
-    if(hetSpec == 'sd_pow') {
-      M <- length(th_v) - 4
-    } else { 
-      M <- length(th_v) - 3
-    }
+    M <- length(th_v) - 3
   } else {
     M <- length(th_v) - 2
   }
@@ -255,10 +232,6 @@ fitPowLawOrd <- function(x,v,hetSpec='none') {
   if(hetero) {
     kappa0   <- 0.001
     th_v0 <- c(th_v0,kappa0)
-    if(hetSpec == 'sd_pow') {
-      lambda0   <- 1
-      th_v0 <- c(th_v0,lambda0)
-    }
   }
 
   th_v_bar0 <- theta_y_constr2unconstr(th_v0,modSpec)

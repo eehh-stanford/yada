@@ -1,10 +1,10 @@
 # Test the functions in powLaw
 
 # th_v has ordering [r,a,b,s,kap]
-th_w_homo   <- c(2,.45,1.2,1)
-th_w_hetero <- c(2,.45,1.2,1,0.02)
-th_w_bar_homo   <- c(log(2),log(.45),1.2,log(1))
-th_w_bar_hetero <- c(log(2),log(.45),1.2,log(1),log(0.02))
+th_w_homo   <- c(2,.45,1.2,1.1)
+th_w_hetero <- c(2,.45,1.2,1.1,0.02)
+th_w_bar_homo   <- c(log(2),log(.45),1.2,log(1.1))
+th_w_bar_hetero <- c(log(2),log(.45),1.2,log(1.1),log(0.02))
 
 # Test helper function is_th_w_hetero
 
@@ -24,32 +24,40 @@ expect_equal(
 )
 
 # test powLaw
+x <- c(1.3,2.1)
+w <- c(.7,3.8)
 expect_equal(
-  powLaw(5,th_w_homo),
-  2*5^.45 + 1.2
+  powLaw(x,th_w_homo),
+  2*x^.45 + 1.2
 )
 
 expect_equal(
-  powLaw(5,th_w_hetero),
-  2*5^.45 + 1.2
+  powLaw(x,th_w_hetero),
+  2*x^.45 + 1.2
 )
 
 # test powLawSigma
 expect_equal(
-  powLawSigma(5,th_w_homo),
-  1
+  powLawSigma(x,th_w_homo),
+  1.1 # a scalar is expected, even though x is a vector
 )
 
 expect_equal(
-  powLawSigma(5,th_w_hetero,hetSpec='sd_x'),
-  1*(1 + 0.02*5)
+  powLawSigma(x,th_w_hetero,hetSpec='sd_x'),
+  1.1*(1 + 0.02*x)
+)
+
+expect_equal(
+  powLawSigma(x,th_w_hetero,hetSpec='sd_resp'),
+  1.1*(1 + 0.02*2*x^.45)
 )
 
 # test powLawDensity
 mean_homo <- powLaw(5,th_w_homo)
 sig_homo  <- powLawSigma(5,th_w_homo)
 mean_hetero <- powLaw(5,th_w_hetero)
-sig_hetero  <- powLawSigma(5,th_w_hetero,hetSpec='sd_x')
+sig_heterox  <- powLawSigma(5,th_w_hetero,hetSpec='sd_x')
+sig_heteror  <- powLawSigma(5,th_w_hetero,hetSpec='sd_resp')
 
 expect_equal(
   powLawDensity(5,1.22,th_w_homo,hetSpec='none'),
@@ -58,16 +66,20 @@ expect_equal(
 
 expect_equal(
   powLawDensity(5,1.22,th_w_hetero,hetSpec='sd_x'),
-  dnorm(1.22,mean=mean_hetero,sd=sig_hetero)
+  dnorm(1.22,mean=mean_hetero,sd=sig_heterox)
+)
+
+expect_equal(
+  powLawDensity(5,1.22,th_w_hetero,hetSpec='sd_resp'),
+  dnorm(1.22,mean=mean_hetero,sd=sig_heteror)
 )
 
 # test powLawNegLogLikVect
-x <- c(1.3,2.1)
-w <- c(.7,3.8)
 mean_homo <- powLaw(x,th_w_homo)
 sig_homo  <- powLawSigma(x,th_w_homo)
 mean_hetero <- powLaw(x,th_w_hetero)
-sig_hetero  <- powLawSigma(x,th_w_hetero,hetSpec='sd_x')
+sig_heterox  <- powLawSigma(x,th_w_hetero,hetSpec='sd_x')
+sig_heteror  <- powLawSigma(x,th_w_hetero,hetSpec='sd_resp')
 
 eta_vect_homo <- powLawNegLogLikVect(th_w_homo,x,w)
 expect_equal(
@@ -75,10 +87,16 @@ expect_equal(
   -log(dnorm(w,mean_homo,sig_homo))
 )
 
-eta_vect_hetero <- powLawNegLogLikVect(th_w_hetero,x,w,hetSpec='sd_x')
+eta_vect_heterox <- powLawNegLogLikVect(th_w_hetero,x,w,hetSpec='sd_x')
 expect_equal(
-  eta_vect_hetero,
-  -log(dnorm(w,mean_hetero,sig_hetero))
+  eta_vect_heterox,
+  -log(dnorm(w,mean_hetero,sig_heterox))
+)
+
+eta_vect_heteror <- powLawNegLogLikVect(th_w_hetero,x,w,hetSpec='sd_resp')
+expect_equal(
+  eta_vect_heteror,
+  -log(dnorm(w,mean_hetero,sig_heteror))
 )
 
 # test powLawNegLogLik
@@ -89,7 +107,12 @@ expect_equal(
 
 expect_equal(
   powLawNegLogLik(th_w_hetero,x,w,hetSpec='sd_x'),
-  sum(eta_vect_hetero)
+  sum(eta_vect_heterox)
+)
+
+expect_equal(
+  powLawNegLogLik(th_w_hetero,x,w,hetSpec='sd_resp'),
+  sum(eta_vect_heteror)
 )
 
 # test simPowLaw
@@ -122,24 +145,45 @@ expect_equal(
   N
 )
 
-# Check simulation for heteroskedastic case
+# Check simulation for heteroskedastic case (sd_x)
 expect_error(
-  sim_hetero <- simPowLaw(N,th_x,th_w_hetero,hetSpec='sd_x'),
+  sim_heterox <- simPowLaw(N,th_x,th_w_hetero,hetSpec='sd_x'),
   NA
 )
 
 expect_equal(
-  names(sim_hetero),
+  names(sim_heterox),
   c('x','w')
 )
 
 expect_equal(
-  length(sim_hetero$x),
+  length(sim_heterox$x),
   N
 )
 
 expect_equal(
-  length(sim_hetero$w),
+  length(sim_heterox$w),
+  N
+)
+
+# Check simulation for heteroskedastic case (sd_resp)
+expect_error(
+  sim_heteror <- simPowLaw(N,th_x,th_w_hetero,hetSpec='sd_resp'),
+  NA
+)
+
+expect_equal(
+  names(sim_heteror),
+  c('x','w')
+)
+
+expect_equal(
+  length(sim_heteror$x),
+  N
+)
+
+expect_equal(
+  length(sim_heteror$w),
   N
 )
 
@@ -152,6 +196,12 @@ expect_error(
 
 # Check fit for heteroskedastic case
 expect_error(
-  fit_hetero <- fitPowLaw(sim_hetero$x,sim_hetero$w,hetSpec='sd_x'),
+  fit_heterox <- fitPowLaw(sim_heterox$x,sim_heterox$w,hetSpec='sd_x'),
+  NA
+)
+
+# Check fit for heteroskedastic case
+expect_error(
+  fit_heteror <- fitPowLaw(sim_heteror$x,sim_heteror$w,hetSpec='sd_resp'),
   NA
 )

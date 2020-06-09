@@ -20,7 +20,9 @@
 #'
 #' and
 #'
-#' \deqn{sig = s*(1 + kappa*x)}
+#' \deqn{sig = s}                    [hetSepc = 'none']
+#' \deqn{sig = s*(1 + kappa*x)}      [hetSpec = 'sd_x']
+#' \deqn{sig = s*(1 + kappa*h)}      [hetSpec = 'sd_resp']
 #' 
 #' @param x Vector of independent variable observations
 #' @param w Vector of dependent variable observations
@@ -30,7 +32,7 @@
 #' @param s Baseline noise
 #' @param kappa Slope of noise [Optional]
 #' @param th_w Vector of parameters with ordering [a,r,b,s,kappa]
-#' @param hetero Whether the model is heteroskedastic [Default FALSE]
+#' @param hetSpec Specification for the heteroskedasticity [Default 'none']
 #' @param transformVar Whether a transformation of the parameterization is needed [Default FALSE]
 #'
 #' @author Michael Holton Price <MichaelHoltonPrice@gmail.com>
@@ -51,7 +53,7 @@ powLaw <- function(x,th_w,transformVar=F) {
 #' @export
 powLawSigma <- function(x,th_w,hetSpec='none',transformVar=F) {
   # th_w has ordering [a,r,b,s,kappa]
-  # returns a scalar for hetero=F even if x is not length 1
+  # returns a scalar for hetSpec == 'none' even if x is not length 1
   sig <- th_w[4]
   if(transformVar) {
     sig <- exp(sig)

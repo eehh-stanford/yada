@@ -25,7 +25,7 @@ powLaw(x, th_w, transformVar = F)
 
 \item{kappa}{Slope of noise [Optional]}
 
-\item{hetero}{Whether the model is heteroskedastic [Default FALSE]}
+\item{hetSpec}{Specification for the heteroskedasticity [Default 'none']}
 }
 \description{
 \code{powLaw} calculates the mean (h). \code{powLawSigma} calculates the noise (sigma, or sig for short). \code{powLawDensity} calculates the density. \code{powLawNegLogLikVect} calculates a vector of negative log-likelihood. \code{powLawNegLogLik} calculates the negative log-likelihood (sum of \code{powLawNegLogLikVect}). \code{fitPowLaw} returns the maximum likelihood fit. \code{simPowLaw} creates simulated data.
@@ -49,7 +49,9 @@ For the mean and noise, we adopt the parametric forms
 
 and
 
-\deqn{sig = s*(1 + kappa*x)}
+\deqn{sig = s}                    [hetSepc = 'none']
+\deqn{sig = s*(1 + kappa*x)}      [hetSpec = 'sd_x']
+\deqn{sig = s*(1 + kappa*h)}      [hetSpec = 'sd_resp']
 }
 \author{
 Michael Holton Price <MichaelHoltonPrice@gmail.com>

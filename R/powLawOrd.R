@@ -57,23 +57,38 @@ powLawOrd <- function(x,th_v,transformVar=F) {
 
 #' @export
 powLawOrdSigma <- function(x,th_v,hetSpec='none',transformVar=F) {
-  # th_v has ordering [rho,tau_1,...tau_2,s,kappa]
+  # th_v has ordering [rho,tau_1,...tau_2,s,kappa,lambda]
   # returns a scalar for hetero=F even if x is not length 1
   hetero <- hetSpec != 'none'
   numParam <- length(th_v)
 
   if(hetero) {
-    if(transformVar) { 
-      s   <- exp(th_v[numParam-1])
-      kappa <- exp(th_v[numParam])
+    if(hetSpec == 'sd_pow') {
+      if(transformVar) { 
+        s   <- exp(th_v[numParam-2])
+        kappa <- exp(th_v[numParam-1])
+        lambda <- exp(th_v[numParam])
+      } else {
+        s   <- th_v[numParam-2]
+        kappa <- th_v[numParam-1]
+        lambda <- th_v[numParam]
+      }
     } else {
-      s   <- th_v[numParam-1]
-      kappa <- th_v[numParam]
+      if(transformVar) { 
+        s   <- exp(th_v[numParam-1])
+        kappa <- exp(th_v[numParam])
+      } else {
+        s   <- th_v[numParam-1]
+        kappa <- th_v[numParam]
+      }
     }
-    if(hetSpec == 'linearSd') {
+
+    if(hetSpec == 'sd_x') {
       sig <- s*(1+kappa*x)
-    } else if(hetSpec == 'linearSd_y') {
+    } else if(hetSpec == 'sd_resp') {
       sig <- s*(1+kappa*x^rho)
+    } else if(hetSpec == 'sd_pow') {
+      sig <- s*(1+kappa*x^lambda)
     } else {
       stop(paste('Unrecognized hetSpec,',hetSpec))
     }
@@ -96,11 +111,8 @@ powLawOrdNegLogLikVect <- function(th_v,x,v,hetSpec='none',transformVar=F) {
   # For optimization, make th_v the first input
 
   hetero <- hetSpec != 'none'
-  if(hetero) {
-    M <- length(th_v) - 3
-  } else {
-    M <- length(th_v) - 2
-  }
+
+  M <- calc_M(th_v,hetSpec)
 
   if(transformVar) {
     # Build modSpec
@@ -115,12 +127,15 @@ powLawOrdNegLogLikVect <- function(th_v,x,v,hetSpec='none',transformVar=F) {
     th_v <- theta_y_unconstr2constr(th_v,modSpec)
   }
 
-  rho <- th_v[1]         # rho
-  tau <- th_v[2:(M+1)]   # tau_1 ... tau_M
-  s   <- th_v[M+2]       # s
+  rho <- th_v[1]           # rho
+  tau <- th_v[2:(M+1)]     # tau_1 ... tau_M
+  s   <- th_v[M+2]         # s
 
   if(hetero) {
     kappa <- th_v[M+3]     # kappa
+    if(hetSpec == 'sd_pow') {
+      lambda <- th_v[M+4]  # lambda
+    }
   }
 
   # Initialize vector of negative log-likelihoods (eta_v)
@@ -135,10 +150,12 @@ powLawOrdNegLogLikVect <- function(th_v,x,v,hetSpec='none',transformVar=F) {
     if(sum(ind) > 0 ) {
       xm <- x[ind]
       if(hetero) {
-        if(hetSpec == 'linearSd') {
+        if(hetSpec == 'sd_x') {
           sig <- s*(1+kappa*xm)
-        } else if(hetSpec == 'linearSd_y') {
+        } else if(hetSpec == 'sd_resp') {
           sig <- s*(1+kappa*xm^rho)
+        } else if(hetSpec == 'sd_pow') {
+          sig <- s*(1+kappa*xm^lambda)
         } else {
           stop(paste('Unrecognized hetSpec,',hetSpec))
         }
@@ -178,181 +195,15 @@ calc_M <- function(th_v,hetSpec) {
   # A helper function to calculate M from the length of th_v
   hetero <- hetSpec != 'none'
   if(hetero) {
-    M <- length(th_v) - 3
+    if(hetSpec == 'sd_pow') {
+      M <- length(th_v) - 4
+    } else { 
+      M <- length(th_v) - 3
+    }
   } else {
     M <- length(th_v) - 2
-    }
+  }
   return(M)
-}
-
-#' @export
-powLawOrdGradNegLogLik <- function(th_v,x,v,hetSpec='none',transformVar=F) {
-  # th_v has ordering [rho,tau_1,...tau_2,s,kappa]
-  # eta_v is the negative log-likelihood
-  # For optimization, th_v is the first input
-  hetero <- hetSpec != 'none'
-  M <- calc_M(th_v,hetSpec)
-  if(transformVar) {
-    # Build modSpec
-    modSpec <- list(meanSpec='powLaw')
-    modSpec$J <- 1
-    modSpec$M <- M
-    modSpec$hetSpec <- hetSpec
-    if(hetero) {
-      modSpec$hetGroups <- 1
-    }
-
-    th_v <- theta_y_unconstr2constr(th_v,modSpec)
-    eta_v <- powLawOrdGradNegLogLik(th_v,x,v,hetSpec,transformVar=F)
-    # rho   = exp(rho_bar)
-    # tau1  = tau1_bar
-    # tau2  = tau1_bar + exp(tau2_bar)
-    # tau3  = tau1_bar + exp(tau2_bar) + exp(tau3_bar)
-    # tau4  = ...
-    # s     = exp(s_bar)
-    # kappa =  exp(kappa_bar)
-
-    # rho
-    eta_v[1] <- eta_v[1]*th_v[1]
-
-    # extract tau and the gradient for tau
-    tau       <- th_v [2:(1+M)]
-    eta_v_tau <- eta_v[2:(1+M)]
-
-    # Make the Jacobian
-    J <- matrix(0,M,M)
-    for(cc in 1:M) {
-      for(rr in cc:M) {
-        if(cc == 1) {
-          J[rr,cc] <- 1
-        } else {
-          J[rr,cc] <- tau[rr] - tau[rr-1]
-        }
-      }
-    }
-
-    eta_v[2:(1+M)] <- t(J) %*% eta_v_tau
-
-    eta_v[2:(1+M)] <- t(J) %*% eta_v_tau
-
-    # s
-    eta_v[M+2] <- eta_v[M+2] * th_v[M+2]
-
-    # kappa (if necessary)
-    if(hetero) {
-      eta_v[M+3] <- eta_v[M+3] * th_v[M+3]
-#      if(hetSpec == 'linearSd') {
-#        eta_v[M+3] <- eta_v[M+3] * th_v[M+3]
-#      } else if(hetSpec == 'linearSd_y') {
-#        eta_v[M+3] <- eta_v[M+3] * th_v[M+3]
-#      } else {
-#        stop(paste('Unrecognized hetSpec,',hetSpec))
-#      }
-    }
-    
-    return(eta_v)
-  }
-
-  if(transformVar) {
-    stop('Should not reach this point if transformVar is TRUE')
-  }
-
-  rho <- th_v[1]         # rho
-  tau <- th_v[2:(M+1)]   # tau_1 ... tau_M
-  s   <- th_v[M+2]       # s
-
-  if(hetero) {
-    kappa <- th_v[M+3]     # kappa
-    gradVect <- rep(0,3+M)
-  } else {
-    gradVect <- rep(0,2+M)
-  }
-
-  for(m in 0:M) { 
-    ind <- v == m
-    if(sum(ind) > 0) {
-      xm <- x[ind]
-      x_to_rho <- xm^rho
-
-      # Handle the special case x = 0 by setting log_x to zero for these cases
-      log_x <- log(xm)
-      log_x[xm==0] <- 0
-
-
-
-      if(hetero) {
-        if(hetSpec == 'linearSd') {
-          sig <- s*(1+kappa*xm)
-        } else if(hetSpec == 'linearSd_y') {
-          sig <- s*(1+kappa*xm^rho)
-        } else {
-          stop(paste('Unrecognized hetSpec,',hetSpec))
-        }
-      } else {
-        sig <- s
-      }
-
-      sig_sq <- sig^2
-   
-      if(m == 0) {
-        tau_lo <- 0 # only used when phi_lo=0 is used
-        phi_lo  <- 0
-        Phi_lo  <- 0
-      } else {
-        tau_lo <- tau[m]
-        evalVect <- (tau_lo-x_to_rho)/sig
-        phi_lo <- dnorm(evalVect)
-        Phi_lo <- pnorm(evalVect)
-      }
-
-      if(m == M) {
-        tau_hi <- 0 # only used when phi_hi=0 is used
-        phi_hi <- 0
-        Phi_hi <- 1
-      } else {
-        tau_hi <- tau[m+1]
-        evalVect <- (tau_hi - x_to_rho)/sig
-        phi_hi <- dnorm(evalVect)
-        Phi_hi <- pnorm(evalVect)
-      }
-
-      delta_Phi <- Phi_hi - Phi_lo
-      delta_phi <- phi_hi - phi_lo
-
-      # rho
-      gradVect[1] <- gradVect[1] + sum(delta_phi/delta_Phi*x_to_rho*log_x/sig)
-
-      # tau_m     [lo]
-      if(m > 0) {
-        gradVect[m+1] <- gradVect[m+1] + sum(phi_lo/delta_Phi/sig)
-      }
-
-      # tau_{m+1} [hi]
-      if(m < M) {
-        gradVect[m+2] <- gradVect[m+2] - sum(phi_hi/delta_Phi/sig)
-      }
-
-      # s
-      leadingTerm <- (phi_hi*(tau_hi-x_to_rho)-phi_lo*(tau_lo-x_to_rho))/delta_Phi/sig_sq
-      if(hetero) {
-        gradVect[M+2] <- gradVect[M+2] + sum(leadingTerm * (1+kappa*xm))
-      } else {
-        gradVect[M+2] <- gradVect[M+2] + sum(leadingTerm)
-      }
-
-      if(hetero) {
-        # kappa
-        if(hetSpec == 'linearSd') {
-          gradVect[M+3] <- gradVect[M+3] + sum(leadingTerm * s * xm)
-        } else if(hetSpec == 'linearSd_y') {
-          gradVect[M+3] <- gradVect[M+3] + sum(leadingTerm * s * x_to_rho)
-        } else {
-          stop(paste('Unrecognized hetSpec,',hetSpec))
-        }
-      }
-    } # end  if(sum(ind) > 0)
-  } # end for(m in 0:M)
-  return(gradVect)
 }
 
 #' @export
@@ -404,6 +255,10 @@ fitPowLawOrd <- function(x,v,hetSpec='none') {
   if(hetero) {
     kappa0   <- 0.001
     th_v0 <- c(th_v0,kappa0)
+    if(hetSpec == 'sd_pow') {
+      lambda0   <- 1
+      th_v0 <- c(th_v0,lambda0)
+    }
   }
 
   th_v_bar0 <- theta_y_constr2unconstr(th_v0,modSpec)
@@ -424,11 +279,7 @@ simPowLawOrd <- function(N,th_x,th_v,hetSpec='none') {
 
   hetero <- hetSpec != 'none'
 
-  if(hetero) {
-    M <- length(th_v) - 3
-  } else {
-    M <- length(th_v) - 2
-  }
+  M <- calc_M(th_v,hetSpec)
   tau <- th_v[2:(M+1)]
 
   x <- runif(N,th_x[1],th_x[2])

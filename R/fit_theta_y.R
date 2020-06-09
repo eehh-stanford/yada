@@ -257,6 +257,9 @@ fit_theta_y <- function(x,Y,modSpec,verbose=F) {
     }
     th_y_list_full$s <- s
     th_y_list_full$kappa <- th_y_list_hetero$kappa
+    if(modSpec$hetSpec == 'sd_pow') {
+      th_y_list_full$lambda <- th_y_list_hetero$lambda
+    }
     return(theta_y_list2vect(th_y_list_full))
   }
 
@@ -326,6 +329,11 @@ fit_theta_y <- function(x,Y,modSpec,verbose=F) {
   }
   s  <- rep(NA,J+K)
   kappa <- rep(NA,Gkappa)
+  if(modSpec$hetSpec == 'sd_pow') {
+    lambda <- rep(NA,Gkappa)
+  } else {
+    lambda <- c()
+  }
 
   for(g in 1:Gkappa) {
     if(verbose) {
@@ -362,6 +370,9 @@ fit_theta_y <- function(x,Y,modSpec,verbose=F) {
     }
     s[indg] <- th_y[get_var_index('s',modSpec_g)]
     kappa[g] <- th_y[get_var_index('kappa',modSpec_g)]
+    if(modSpec$hetSpec == 'sd_pow') {
+      lambda[g] <- th_y[get_var_index('lambda',modSpec_g)]
+    }
   }
-  return(c(rho,unlist(tau),a,r,b,s,kappa))
+  return(c(rho,unlist(tau),a,r,b,s,kappa,lambda))
 }

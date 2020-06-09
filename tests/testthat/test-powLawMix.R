@@ -14,7 +14,7 @@ modSpec_homo$hetSpec = 'none'
 modSpec_homo$cdepSpec = 'indep'
 
 modSpec_hetero <- modSpec_homo
-modSpec_hetero$hetSpec = 'linearSd'
+modSpec_hetero$hetSpec = 'sd_x'
 modSpec_hetero$hetGroups <- rep(1,4)
 
 th_y_sim_homo <- list(modSpec=modSpec_homo)
@@ -45,42 +45,3 @@ th_y_sim_vect_hetero <- theta_y_list2vect(th_y_sim_hetero)
 
 th_y_sim_vect_homo_bar <- theta_y_constr2unconstr(th_y_sim_vect_homo,modSpec_homo)
 th_y_sim_vect_hetero_bar <- theta_y_constr2unconstr(th_y_sim_vect_hetero,modSpec_hetero)
-
-# Numerically check the gradient calculation
-numGrad <- function(th_y,x,Y,modSpec,transformVar) {
-  eps <- 1e-8 # The step size for the finite difference
-  f0 <- powLawMixNegLogLik(th_y,x,Y,modSpec,transformVar)
-  N <- length(th_y) # number of variables
-  gradVect <- rep(NA,N) # The gradient vector
-  # iterate over variables to calculate the numerical gradient
-  for(n in 1:N) {
-    th_y_eps <- th_y
-    th_y_eps[n] <- th_y_eps[n] + eps
-    gradVect[n] <- (powLawMixNegLogLik(th_y_eps,x,Y,modSpec,transformVar) - f0)/eps
-  }
-  return(gradVect)
-}
-
-expect_equal(
-  powLawMixGradNegLogLik(th_y_sim_vect_homo,sim_homo$x,sim_homo$Y,modSpec_homo,F),
-  numGrad(th_y_sim_vect_homo,sim_homo$x,sim_homo$Y,modSpec_homo,F),
-  tol=1e-4
-)
-
-expect_equal(
-  powLawMixGradNegLogLik(th_y_sim_vect_hetero,sim_hetero$x,sim_hetero$Y,modSpec_hetero,F),
-  numGrad(th_y_sim_vect_hetero,sim_hetero$x,sim_hetero$Y,modSpec_hetero,F),
-  tol=1e-4
-)
-
-expect_equal(
-  powLawMixGradNegLogLik(th_y_sim_vect_homo_bar,sim_homo$x,sim_homo$Y,modSpec_homo,T),
-  numGrad(th_y_sim_vect_homo_bar,sim_homo$x,sim_homo$Y,modSpec_homo,T),
-  tol=1e-4
-)
-
-expect_equal(
-  powLawMixGradNegLogLik(th_y_sim_vect_hetero_bar,sim_hetero$x,sim_hetero$Y,modSpec_hetero,T),
-  numGrad(th_y_sim_vect_hetero_bar,sim_hetero$x,sim_hetero$Y,modSpec_hetero,T),
-  tol=1e-4
-)

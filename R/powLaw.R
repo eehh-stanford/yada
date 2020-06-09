@@ -73,10 +73,16 @@ powLawSigma <- function(x,th_w,hetSpec='none',transformVar=F) {
     kappa <- exp(kappa)
   }
 
-  if(hetSpec == 'linearSd') {
+  if(hetSpec == 'sd_x') {
     sig <- sig * (1+kappa*x)
-  } else if(hetSpec == 'linearSd_y') {
+  } else if(hetSpec == 'sd_resp') {
     sig <- sig * (1+a*kappa*x^r)
+  } else if(hetSpec == 'sd_pow') {
+    l <- th_w[6]
+    if(transformVar) {
+      l <- exp(l)
+    }
+    sig <- sig * (1+a*kappa*x^l)
   } else {
     stop(paste('Unrecognized hetSpec,',hetSpec))
   }
@@ -110,7 +116,6 @@ powLawNegLogLikVect <- function(th_w,x,w,hetSpec='none',transformVar=F) {
     th_w <- theta_y_unconstr2constr(th_w,modSpec)
   }
 
-
   N <- length(x) # No error checking is done on input lengths
   h   <- powLaw(x,th_w)
   sig <- powLawSigma(x,th_w,hetSpec)
@@ -124,84 +129,6 @@ powLawNegLogLik <- function(th_w,x,w,hetSpec='none',transformVar=F) {
   # eta_w is the negative log-likelihood
   # For optimization, th_w is the first input
   return(sum(powLawNegLogLikVect(th_w,x,w,hetSpec,transformVar)))
-}
-
-#' @export
-powLawGradNegLogLik <- function(th_w,x,w,hetSpec='none',transformVar=F) {
-  # th_w has ordering [a,r,b,s,kappa]
-  # eta_w is the negative log-likelihood
-  # eta_w_a is the partial derivative with respect to a (etc.)
-  # For optimization, th_w is the first input
-  hetero <- is_th_w_hetero(th_w)
-
-  if(transformVar) {
-    # Build modSpec
-    modSpec <- list(meanSpec='powLaw')
-    modSpec$K <- 1
-    modSpec$hetSpec <- hetSpec
-    if(hetero) {
-      modSpec$hetGroups <- 1
-    }
-    th_w <- theta_y_unconstr2constr(th_w,modSpec)
-    eta_w <- powLawGradNegLogLik(th_w,x,w,hetSpec=hetSpec,transformVar=F)
-    indToChange <- c(1,2,4)
-    if(hetero) {
-      indToChange <- c(indToChange,5)
-    }
-    eta_w[indToChange] <- eta_w[indToChange]*th_w[indToChange]
-    return(eta_w)
-  }
-
-  # Extract variables for code readability
-  N <- length(x) # No error checking is done on input lengths
-  a <- th_w[1]
-  r <- th_w[2]
-  b <- th_w[3]
-  s <- th_w[4]
-  if(hetero) {
-    kappa <- th_w[5]
-  }
-
-  # Do some pre-computations
-  h   <- powLaw(x,th_w)
-  wbar <- (w-h)
-  wbar_sq <- wbar^2
-  sig <- powLawSigma(x,th_w,hetSpec)
-  sig_sq <- sig^2
-  sig_cb <- sig^3
-  x_to_r <- x^r
-  log_x <- log(x)
-  log_x[x==0] = 0 # eta_w_r equals zero for the special case x = 0
-  sig_inv <- 1/sig
-
-  eta_w_a <- sum(-wbar/sig_sq*x_to_r)
-  eta_w_r <- sum(-wbar/sig_sq*x_to_r*log_x)*a
-  eta_w_b <- sum(-wbar/sig_sq)
-
-  if(hetero) {
-    if(hetSpec == 'linearSd') {
-      eta_w_s <- sum((sig_inv-wbar_sq/sig_cb)*(1+kappa*x))
-    } else if(hetSpec == 'linearSd_y') {
-      eta_w_s <- sum((sig_inv-wbar_sq/sig_cb)*(1+a*kappa*x_to_rho))
-    } else {
-      stop(paste('Unrecognized hetSpec,',hetSpec))
-    }
-  } else {
-    eta_w_s <- sum((sig_inv-wbar_sq/sig_cb))
-  }
-
-  grad_eta_w <- c(eta_w_a,eta_w_r,eta_w_b,eta_w_s)
-  if(hetero) {
-    if(hetSpec == 'linearSd') {
-      eta_w_kappa <- sum((sig_inv-wbar_sq/sig_cb)*s*x)
-    } else if(hetSpec == 'linearSd_y') {
-      eta_w_kappa <- sum((sig_inv-wbar_sq/sig_cb)*s*a*x_to_rho)
-    } else {
-      stop(paste('Unrecognized hetSpec,',hetSpec))
-    }
-    grad_eta_w <- c(grad_eta_w,eta_w_kappa)
-  }
-  return(grad_eta_w)
 }
 
 #' @export
@@ -219,6 +146,10 @@ fitPowLaw <- function(x,w,hetSpec='none') {
   if(hetero) {
     kappa0 <- 0.0001
     th_w0 <- c(th_w0,kappa0)
+    if(hetSpec == 'sd_pow') {
+      l0 <- 1
+      th_w0 <- c(th_w0,l0)
+    }
   }
 
  # Build modSpec
@@ -268,7 +199,9 @@ is_th_w_hetero <- function(th_w) {
     return(F)
   } else if(length(th_w) == 5) {
     return(T)
+  } else if(length(th_w) == 6) {
+    return(T)
   } else {
-    stop(paste('Length of th_w should be 4 or 5, not',length(th_w)))
+    stop(paste('Length of th_w should be 4, 5, or 6, not',length(th_w)))
   }
 }

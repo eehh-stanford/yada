@@ -149,7 +149,7 @@ expect_equal(
 modSpec <- list(meanSpec='powLaw')
 modSpec$J <- 1
 modSpec$M <- 2
-modSpec$hetSpec <- 'linearSd' # heteroskedastic
+modSpec$hetSpec <- 'sd_x' # heteroskedastic
 modSpec$hetGroups <- 1
 
 expect_error(
@@ -400,7 +400,7 @@ expect_equal(
 # A one variable, continuous model that is heteroskedastic
 modSpec <- list(meanSpec='powLaw')
 modSpec$K <- 1
-modSpec$hetSpec <- 'linearSd' # heteroskedastic
+modSpec$hetSpec <- 'sd_x' # heteroskedastic
 modSpec$hetGroups <- 1
 
 expect_error(
@@ -663,7 +663,7 @@ modSpec <- list(meanSpec='powLaw')
 modSpec$J <- 1
 modSpec$K <- 1
 modSpec$M <- 2
-modSpec$hetSpec <- 'linearSd' # heteroskedastic
+modSpec$hetSpec <- 'sd_x' # heteroskedastic
 modSpec$hetGroups <- c(1,2)
 modSpec$cdepSpec <- 'indep' # conditionally independent
 
@@ -927,7 +927,7 @@ modSpec <- list(meanSpec='powLaw')
 modSpec$J <- 1
 modSpec$K <- 1
 modSpec$M <- 2
-modSpec$hetSpec <- 'linearSd' # heteroskedastic
+modSpec$hetSpec <- 'sd_x' # heteroskedastic
 modSpec$hetGroups <- c(1,2)
 modSpec$cdepSpec <- 'dep' # conditionally dependent
 modSpec$cdepGroups <- c(1,2)
@@ -1063,7 +1063,7 @@ modSpec <- list(meanSpec='powLaw')
 modSpec$J <- 2
 modSpec$K <- 2
 modSpec$M <- c(2,3)
-modSpec$hetSpec <- 'linearSd' # heteroskedastic
+modSpec$hetSpec <- 'sd_x' # heteroskedastic
 modSpec$hetGroups <- c(1,2,NA,1)
 modSpec$cdepSpec <- 'dep' # conditionally dependent
 modSpec$cdepGroups <- c(1,NA,2,2)
@@ -1198,7 +1198,7 @@ modSpec <- list(meanSpec='powLaw')
 modSpec$J <- 3
 modSpec$K <- 3
 modSpec$M <- c(2,3,2)
-modSpec$hetSpec <- 'linearSd' # heteroskedastic
+modSpec$hetSpec <- 'sd_x' # heteroskedastic
 modSpec$hetGroups <- c(NA,1,2,2,NA,3)
 modSpec$cdepSpec <- 'dep' # conditionally dependent
 modSpec$cdepGroups <- c(1,2,1,3,NA,2)
@@ -1328,6 +1328,151 @@ expect_equal(
   30
 )
 
+# A six variable, mixed model with hetSpec = 'sd_pow'
+modSpec <- list(meanSpec='powLaw')
+modSpec$J <- 3
+modSpec$K <- 3
+modSpec$M <- c(2,3,2)
+modSpec$hetSpec <- 'sd_pow' # heteroskedastic
+modSpec$hetGroups <- c(NA,1,2,2,NA,3)
+modSpec$cdepSpec <- 'dep' # conditionally dependent
+modSpec$cdepGroups <- c(1,2,1,3,NA,2)
+
+expect_error(
+  check_model(modSpec),
+  NA
+)
+
+expect_equal(
+  get_J(modSpec),
+  3
+)
+
+expect_equal(
+  get_K(modSpec),
+  3
+)
+
+expect_equal(
+  get_Gkappa(modSpec),
+  3
+)
+
+expect_equal(
+  get_Gz(modSpec),
+  3
+)
+
+expect_equal(
+  is_hetero(modSpec),
+  T
+)
+
+expect_equal(
+  is_cdep(modSpec),
+  T
+)
+
+expect_equal(
+  get_z_length(modSpec),
+  5
+)
+
+expect_equal(
+  get_non_singleton_groups(modSpec$cdepGroups),
+  c(1,2)
+)
+
+expect_equal(
+  get_num_var('rho',modSpec),
+  3
+)
+
+expect_equal(
+  get_num_var('tau',modSpec),
+  7
+)
+
+expect_equal(
+  get_num_var('a',modSpec),
+  3
+)
+
+expect_equal(
+  get_num_var('r',modSpec),
+  3
+)
+
+expect_equal(
+  get_num_var('b',modSpec),
+  3
+)
+
+expect_equal(
+  get_num_var('s',modSpec),
+  6
+)
+
+expect_equal(
+  get_num_var('z',modSpec),
+  5
+)
+
+expect_equal(
+  get_num_var('kappa',modSpec),
+  3
+)
+
+expect_equal(
+  get_num_var('lambda',modSpec),
+  3
+)
+
+expect_equal(
+  get_num_var('rho',modSpec,preceding=T),
+  0
+)
+
+expect_equal(
+  get_num_var('tau',modSpec,preceding=T),
+  3
+)
+
+expect_equal(
+  get_num_var('a',modSpec,preceding=T),
+  10
+)
+
+expect_equal(
+  get_num_var('r',modSpec,preceding=T),
+  13
+)
+
+expect_equal(
+  get_num_var('b',modSpec,preceding=T),
+  16
+)
+
+expect_equal(
+  get_num_var('s',modSpec,preceding=T),
+  19
+)
+
+expect_equal(
+  get_num_var('z',modSpec,preceding=T),
+  25
+)
+
+expect_equal(
+  get_num_var('kappa',modSpec,preceding=T),
+  30
+)
+
+expect_equal(
+  get_num_var('lambda',modSpec,preceding=T),
+  33
+)
+
 # Test get_var_index
 # Conditionally independent / homoskedastic
 modSpec_io <- list(meanSpec='powLaw')
@@ -1343,7 +1488,7 @@ modSpec_ie$J <- 1
 modSpec_ie$K <- 1
 modSpec_ie$M <- 2
 modSpec_ie$cdepSpec <- 'indep'
-modSpec_ie$hetSpec  <- 'linearSd'
+modSpec_ie$hetSpec  <- 'sd_x'
 modSpec_ie$hetGroups  <- c(1,2)
 
 # Conditionally dependent / homoskedastic
@@ -1362,7 +1507,7 @@ modSpec_de$K <- 1
 modSpec_de$M <- 2
 modSpec_de$cdepSpec <- 'dep'
 modSpec_de$cdepGroups <- c(1,2)
-modSpec_de$hetSpec  <- 'linearSd'
+modSpec_de$hetSpec  <- 'sd_x'
 modSpec_de$hetGroups  <- c(1,2)
 
 modSpecList <- list()
@@ -1590,7 +1735,7 @@ modSpec$M <- c(2,2)
 modSpec$K <- 2
 modSpec$cdepSpec <- 'dep' # conditionally dependent
 modSpec$cdepGroups <- c(1,2,1,2)
-modSpec$hetSpec <- 'linearSd' # homoskedastic
+modSpec$hetSpec <- 'sd_x' # homoskedastic
 modSpec$hetGroups <- c(1,2,3,4)
 
 rho      <- c(0.5,0.75)
@@ -1750,7 +1895,7 @@ modSpec$M <- c(2,2)
 modSpec$K <- 2
 modSpec$cdepSpec <- 'dep' # conditionally dependent
 modSpec$cdepGroups <- c(1,2,1,2)
-modSpec$hetSpec <- 'linearSd' # homoskedastic
+modSpec$hetSpec <- 'sd_x' # homoskedastic
 modSpec$hetGroups <- c(NA,1,NA,NA)
 
 rho      <- c(0.5,0.75)

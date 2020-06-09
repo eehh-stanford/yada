@@ -7,7 +7,7 @@
 powLawMixNegLogLik(th_y, x, Y, modSpec, transformVar = F)
 }
 \arguments{
-\item{th_y}{Parameter vector with ordering th_y = [rho,tau,a,r,b,s,kappa]}
+\item{th_y}{Parameter vector with ordering th_y = [rho,tau,a,r,b,s,kappa,lambda]}
 
 \item{x}{Vector of independent variable observations}
 

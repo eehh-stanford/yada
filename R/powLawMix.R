@@ -31,7 +31,7 @@
 #' @param s Baseline noise
 #' @param kappa Slope of noise [Optional]
 #' @param modSpec Model specification that, among other things, specifies how to unpack th_y
-#' @param th_y Parameter vector with ordering th_y = [rho,tau,a,r,b,s,kappa]
+#' @param th_y Parameter vector with ordering th_y = [rho,tau,a,r,b,s,kappa,lambda]
 #' @param hetero Whether the model is heteroskedastic [Default FALSE]
 #'
 #' @author Michael Holton Price <MichaelHoltonPrice@gmail.com>
@@ -78,80 +78,6 @@ powLawMixNegLogLik <- function(th_y,x,Y,modSpec,transformVar=F) {
 }
 
 #' @export
-powLawMixGradNegLogLik <- function(th_y,x,Y,modSpec,transformVar=F) {
-  # th_y has ordering th_y = [rho,tau,a,r,b,s,kappa]
-  # eta_y is the negative log-likelihood
-  # For optimization, th_y is the first input
-  hetero <- is_hetero(modSpec)
-  J <- get_J(modSpec) # number of ordinal variables
-  K <- get_K(modSpec) # number of continuous variables
-
-  gradNegLogLik <- rep(0,length(th_y))
-
-  # Add contribution of ordinal variables
-  for(j in 1:J) {
-    # Extracting xList prior and making it an input to powLawMixNegLogLik
-    # would speed up computation. However, extracting it here likely makes the
-    # code easier to understand.
-    vj <- Y[j,]
-    indj <- !is.na(x) & !is.na(vj)
-    xj <-  x[indj]
-    vj <- vj[indj]
-    th_v <- extract_th_v(th_y,modSpec,j)
-    eta_v <- powLawOrdGradNegLogLik(th_v,xj,vj,modSpec$hetSpec,transformVar)
-    
-    l <- get_var_index('rho',modSpec,j=j)
-    gradNegLogLik[l] <- gradNegLogLik[l] + eta_v[1]
-    l <- get_var_index('tau',modSpec,j=j)
-    Mj <- modSpec$M[j]
-    gradNegLogLik[l] <- gradNegLogLik[l] + eta_v[2:(1+Mj)]
-    l <- get_var_index('s',modSpec,j=j)
-    gradNegLogLik[l] <- gradNegLogLik[l] + eta_v[2+Mj]
-    if(hetero) {
-      l <- get_var_index('kappa',modSpec,j=j)
-      gradNegLogLik[l] <- gradNegLogLik[l] + eta_v[3+Mj]
-    }
-  }
- 
-  # Add contribution of continuous variables
-  for(k in 1:K) {
-    wk <- Y[J+k,]
-    indk <- !is.na(x) & !is.na(wk)
-    xk <-  x[indk]
-    wk <- wk[indk]
-    th_w <- extract_th_w(th_y,modSpec,k)
-    eta_w <- powLawGradNegLogLik(th_w,xk,wk,modSpec$hetSpec,transformVar)
-    
-  # th_y has ordering th_y = [rho,tau,a,r,b,s,kappa]
-    l <- get_var_index('a',modSpec,k=k)
-    if(l == 1) {
-      print(k)
-    }
-    gradNegLogLik[l] <- gradNegLogLik[l] + eta_w[1]
-    l <- get_var_index('r',modSpec,k=k)
-    if(l == 1) {
-      print(k)
-    }
-    gradNegLogLik[l] <- gradNegLogLik[l] + eta_w[2]
-    l <- get_var_index('b',modSpec,k=k)
-    if(l == 1) {
-      print(k)
-    }
-    gradNegLogLik[l] <- gradNegLogLik[l] + eta_w[3]
-    l <- get_var_index('s',modSpec,k=k)
-    if(l == 1) {
-      print(k)
-    }
-    gradNegLogLik[l] <- gradNegLogLik[l] + eta_w[4]
-    if(hetero) {
-      l <- get_var_index('kappa',modSpec,k=k)
-      gradNegLogLik[l] <- gradNegLogLik[l] + eta_w[5]
-    }
-  }
-  return(gradNegLogLik)
-}
-
-#' @export
 extract_th_v <- function(th_y,modSpec,j) {
   # th_y has ordering th_y = [rho,tau,a,r,b,s,z,kappa]
   # It is assumed that the model is conditionally independent (no z)
@@ -162,10 +88,16 @@ extract_th_v <- function(th_y,modSpec,j) {
 
   if(hetero) {
     kappa <- th_y[get_var_index('kappa',modSpec,j=j)]
+    if(modSpec$hetSpec == 'sd_pow') {
+      lambda <- th_y[get_var_index('lambda',modSpec,j=j)]
+    } else {
+      lambda <- c()
+    }
   } else {
     kappa <- c()
+    lambda <- c()
   }
-  return(c(rho,tau,s,kappa))
+  return(c(rho,tau,s,kappa,lambda))
 }
 
 #' @export
@@ -180,10 +112,16 @@ extract_th_w <- function(th_y,modSpec,k) {
 
   if(hetero) {
     kappa <- th_y[get_var_index('kappa',modSpec,k=k)]
+    if(modSpec$hetSpec == 'sd_pow') {
+      lambda <- th_y[get_var_index('lambda',modSpec,k=k)]
+    } else {
+      lambda <- c()
+    }
   } else {
     kappa <- c()
+    lambda <- c()
   }
-  return(c(a,r,b,s,kappa))
+  return(c(a,r,b,s,kappa,lambda))
 }
 
 #' @export

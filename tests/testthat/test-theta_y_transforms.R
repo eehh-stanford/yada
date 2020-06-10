@@ -2,7 +2,26 @@
 
 # Test functions in theta_y_transforms.R
 
-# Test functions that depend only on modSpec and not on the parameter vector:
+
+# Test get_non_singleton_groups
+expect_equal(
+  get_non_singleton_groups(c(1,2,NA,4,1,3,3)),
+  c(1,3)
+)
+
+expect_equal(
+  get_non_singleton_groups(c(2,1,NA,4,1,3,3)),
+  c(1,3)
+)
+
+expect_equal(
+  get_non_singleton_groups(c(NA,4,4,4,3,3,NA,NA,2,1,NA)),
+  c(3,4)
+)
+
+# Test the following  functions that depend on modSpec on a variety of model
+# specifications (get_var_index is tested separately below):
+#
 # check_model
 # get_J
 # get_K
@@ -24,7 +43,6 @@ expect_error(
   NA
 )
 
-#if(F) {
 expect_equal(
   get_J(modSpec),
   1
@@ -59,11 +77,6 @@ expect_equal(
   get_z_length(modSpec),
   0
 )
-
-#expect_error(
-#  get_kappa_full(modSpec),
-#  'get_kappa_full called, but model is not heteroskedastic'
-#)
 
 expect_equal(
   get_num_var('rho',modSpec),
@@ -145,11 +158,138 @@ expect_equal(
   4
 )
 
-# A one variable, ordinal model that is heteroskedastic
+# A one variable, ordinal model that is heteroskedastic (sd_x)
 modSpec <- list(meanSpec='powLaw')
 modSpec$J <- 1
 modSpec$M <- 2
 modSpec$hetSpec <- 'sd_x' # heteroskedastic
+modSpec$hetGroups <- 1
+
+expect_error(
+  check_model(modSpec),
+  NA
+)
+
+expect_equal(
+  get_J(modSpec),
+  1
+)
+
+expect_equal(
+  get_K(modSpec),
+  0
+)
+
+expect_equal(
+  get_Gkappa(modSpec),
+  1
+)
+
+expect_equal(
+  get_Gz(modSpec),
+  0
+)
+
+expect_equal(
+  is_hetero(modSpec),
+  T
+)
+
+expect_equal(
+  is_cdep(modSpec),
+  F
+)
+
+expect_equal(
+  get_z_length(modSpec),
+  0
+)
+
+expect_equal(
+  get_num_var('rho',modSpec),
+  1
+)
+
+expect_equal(
+  get_num_var('tau',modSpec),
+  2
+)
+
+expect_equal(
+  get_num_var('a',modSpec),
+  0
+)
+
+expect_equal(
+  get_num_var('r',modSpec),
+  0
+)
+
+expect_equal(
+  get_num_var('b',modSpec),
+  0
+)
+
+expect_equal(
+  get_num_var('s',modSpec),
+  1
+)
+
+expect_equal(
+  get_num_var('z',modSpec),
+  0
+)
+
+expect_equal(
+  get_num_var('kappa',modSpec),
+  1
+)
+
+expect_equal(
+  get_num_var('rho',modSpec,preceding=T),
+  0
+)
+
+expect_equal(
+  get_num_var('tau',modSpec,preceding=T),
+  1
+)
+
+expect_equal(
+  get_num_var('a',modSpec,preceding=T),
+  3
+)
+
+expect_equal(
+  get_num_var('r',modSpec,preceding=T),
+  3
+)
+
+expect_equal(
+  get_num_var('b',modSpec,preceding=T),
+  3
+)
+
+expect_equal(
+  get_num_var('s',modSpec,preceding=T),
+  3
+)
+
+expect_equal(
+  get_num_var('z',modSpec,preceding=T),
+  4
+)
+
+expect_equal(
+  get_num_var('kappa',modSpec,preceding=T),
+  4
+)
+
+# A one variable, ordinal model that is heteroskedastic (sd_resp)
+modSpec <- list(meanSpec='powLaw')
+modSpec$J <- 1
+modSpec$M <- 2
+modSpec$hetSpec <- 'sd_resp' # heteroskedastic
 modSpec$hetGroups <- 1
 
 expect_error(
@@ -397,10 +537,136 @@ expect_equal(
   4
 )
 
-# A one variable, continuous model that is heteroskedastic
+# A one variable, continuous model that is heteroskedastic (sd_x)
 modSpec <- list(meanSpec='powLaw')
 modSpec$K <- 1
 modSpec$hetSpec <- 'sd_x' # heteroskedastic
+modSpec$hetGroups <- 1
+
+expect_error(
+  check_model(modSpec),
+  NA
+)
+
+expect_equal(
+  get_J(modSpec),
+  0
+)
+
+expect_equal(
+  get_K(modSpec),
+  1
+)
+
+expect_equal(
+  get_Gkappa(modSpec),
+  1
+)
+
+expect_equal(
+  get_Gz(modSpec),
+  0
+)
+
+expect_equal(
+  is_hetero(modSpec),
+  T
+)
+
+expect_equal(
+  is_cdep(modSpec),
+  F
+)
+
+expect_equal(
+  get_z_length(modSpec),
+  0
+)
+
+expect_equal(
+  get_num_var('rho',modSpec),
+  0
+)
+
+expect_equal(
+  get_num_var('tau',modSpec),
+  0
+)
+
+expect_equal(
+  get_num_var('a',modSpec),
+  1
+)
+
+expect_equal(
+  get_num_var('r',modSpec),
+  1
+)
+
+expect_equal(
+  get_num_var('b',modSpec),
+  1
+)
+
+expect_equal(
+  get_num_var('s',modSpec),
+  1
+)
+
+expect_equal(
+  get_num_var('z',modSpec),
+  0
+)
+
+expect_equal(
+  get_num_var('kappa',modSpec),
+  1
+)
+
+expect_equal(
+  get_num_var('rho',modSpec,preceding=T),
+  0
+)
+
+expect_equal(
+  get_num_var('tau',modSpec,preceding=T),
+  0
+)
+
+expect_equal(
+  get_num_var('a',modSpec,preceding=T),
+  0
+)
+
+expect_equal(
+  get_num_var('r',modSpec,preceding=T),
+  1
+)
+
+expect_equal(
+  get_num_var('b',modSpec,preceding=T),
+  2
+)
+
+expect_equal(
+  get_num_var('s',modSpec,preceding=T),
+  3
+)
+
+expect_equal(
+  get_num_var('z',modSpec,preceding=T),
+  4
+)
+
+expect_equal(
+  get_num_var('kappa',modSpec,preceding=T),
+  4
+)
+
+# A one variable, continuous model that is heteroskedastic (sd_resp)
+modSpec <- list(meanSpec='powLaw')
+modSpec$K <- 1
+modSpec$hetSpec <- 'sd_resp' # heteroskedastic
 modSpec$hetGroups <- 1
 
 expect_error(
@@ -657,13 +923,143 @@ expect_equal(
   8
 )
 
-# A two variable, mixed model that is heteroskedastic and conditionally
+# A two variable, mixed model that is heteroskedastic (sd_x) and conditionally
 # independent
 modSpec <- list(meanSpec='powLaw')
 modSpec$J <- 1
 modSpec$K <- 1
 modSpec$M <- 2
 modSpec$hetSpec <- 'sd_x' # heteroskedastic
+modSpec$hetGroups <- c(1,2)
+modSpec$cdepSpec <- 'indep' # conditionally independent
+
+expect_error(
+  check_model(modSpec),
+  NA
+)
+
+expect_equal(
+  get_J(modSpec),
+  1
+)
+
+expect_equal(
+  get_K(modSpec),
+  1
+)
+
+expect_equal(
+  get_Gkappa(modSpec),
+  2
+)
+
+expect_equal(
+  get_Gz(modSpec),
+  0
+)
+
+expect_equal(
+  is_hetero(modSpec),
+  T
+)
+
+expect_equal(
+  is_cdep(modSpec),
+  F
+)
+
+expect_equal(
+  get_z_length(modSpec),
+  0
+)
+
+expect_equal(
+  get_num_var('rho',modSpec),
+  1
+)
+
+expect_equal(
+  get_num_var('tau',modSpec),
+  2
+)
+
+expect_equal(
+  get_num_var('a',modSpec),
+  1
+)
+
+expect_equal(
+  get_num_var('r',modSpec),
+  1
+)
+
+expect_equal(
+  get_num_var('b',modSpec),
+  1
+)
+
+expect_equal(
+  get_num_var('s',modSpec),
+  2
+)
+
+expect_equal(
+  get_num_var('z',modSpec),
+  0
+)
+
+expect_equal(
+  get_num_var('kappa',modSpec),
+  2
+)
+
+expect_equal(
+  get_num_var('rho',modSpec,preceding=T),
+  0
+)
+
+expect_equal(
+  get_num_var('tau',modSpec,preceding=T),
+  1
+)
+
+expect_equal(
+  get_num_var('a',modSpec,preceding=T),
+  3
+)
+
+expect_equal(
+  get_num_var('r',modSpec,preceding=T),
+  4
+)
+
+expect_equal(
+  get_num_var('b',modSpec,preceding=T),
+  5
+)
+
+expect_equal(
+  get_num_var('s',modSpec,preceding=T),
+  6
+)
+
+expect_equal(
+  get_num_var('z',modSpec,preceding=T),
+  8
+)
+
+expect_equal(
+  get_num_var('kappa',modSpec,preceding=T),
+  8
+)
+
+# A two variable, mixed model that is heteroskedastic (sd_resp) and conditionally
+# independent
+modSpec <- list(meanSpec='powLaw')
+modSpec$J <- 1
+modSpec$K <- 1
+modSpec$M <- 2
+modSpec$hetSpec <- 'sd_resp' # heteroskedastic
 modSpec$hetGroups <- c(1,2)
 modSpec$cdepSpec <- 'indep' # conditionally independent
 
@@ -921,7 +1317,7 @@ expect_equal(
   9
 )
 
-# A two variable, mixed model that is heteroskedastic and conditionally
+# A two variable, mixed model that is heteroskedastic (sd_x) and conditionally
 # dependent
 modSpec <- list(meanSpec='powLaw')
 modSpec$J <- 1
@@ -1057,7 +1453,143 @@ expect_equal(
   9
 )
 
-# A four variable, mixed model that is heteroskedastic and conditionally
+# A two variable, mixed model that is heteroskedastic (sd_resp) and conditionally
+# dependent
+modSpec <- list(meanSpec='powLaw')
+modSpec$J <- 1
+modSpec$K <- 1
+modSpec$M <- 2
+modSpec$hetSpec <- 'sd_resp' # heteroskedastic
+modSpec$hetGroups <- c(1,2)
+modSpec$cdepSpec <- 'dep' # conditionally dependent
+modSpec$cdepGroups <- c(1,2)
+
+expect_error(
+  check_model(modSpec),
+  NA
+)
+
+expect_equal(
+  get_J(modSpec),
+  1
+)
+
+expect_equal(
+  get_K(modSpec),
+  1
+)
+
+expect_equal(
+  get_Gkappa(modSpec),
+  2
+)
+
+expect_equal(
+  get_Gz(modSpec),
+  2
+)
+
+expect_equal(
+  is_hetero(modSpec),
+  T
+)
+
+expect_equal(
+  is_cdep(modSpec),
+  T
+)
+
+expect_equal(
+  get_z_length(modSpec),
+  1
+)
+
+expect_equal(
+  get_non_singleton_groups(modSpec$cdepGroups),
+  numeric()
+)
+
+expect_equal(
+  get_num_var('rho',modSpec),
+  1
+)
+
+expect_equal(
+  get_num_var('tau',modSpec),
+  2
+)
+
+expect_equal(
+  get_num_var('a',modSpec),
+  1
+)
+
+expect_equal(
+  get_num_var('r',modSpec),
+  1
+)
+
+expect_equal(
+  get_num_var('b',modSpec),
+  1
+)
+
+expect_equal(
+  get_num_var('s',modSpec),
+  2
+)
+
+expect_equal(
+  get_num_var('z',modSpec),
+  1
+)
+
+expect_equal(
+  get_num_var('kappa',modSpec),
+  2
+)
+
+expect_equal(
+  get_num_var('rho',modSpec,preceding=T),
+  0
+)
+
+expect_equal(
+  get_num_var('tau',modSpec,preceding=T),
+  1
+)
+
+expect_equal(
+  get_num_var('a',modSpec,preceding=T),
+  3
+)
+
+expect_equal(
+  get_num_var('r',modSpec,preceding=T),
+  4
+)
+
+expect_equal(
+  get_num_var('b',modSpec,preceding=T),
+  5
+)
+
+expect_equal(
+  get_num_var('s',modSpec,preceding=T),
+  6
+)
+
+expect_equal(
+  get_num_var('z',modSpec,preceding=T),
+  8
+)
+
+expect_equal(
+  get_num_var('kappa',modSpec,preceding=T),
+  9
+)
+
+# A four variable, mixed model that is heteroskedastic (sd_x) and conditionally
 # dependent, with one variable being NA for each.
 modSpec <- list(meanSpec='powLaw')
 modSpec$J <- 2
@@ -1193,12 +1725,283 @@ expect_equal(
   19
 )
 
-# A six variable, mixed model
+# A four variable, mixed model that is heteroskedastic (sd_resp) and conditionally
+# dependent, with one variable being NA for each.
+modSpec <- list(meanSpec='powLaw')
+modSpec$J <- 2
+modSpec$K <- 2
+modSpec$M <- c(2,3)
+modSpec$hetSpec <- 'sd_resp' # heteroskedastic
+modSpec$hetGroups <- c(1,2,NA,1)
+modSpec$cdepSpec <- 'dep' # conditionally dependent
+modSpec$cdepGroups <- c(1,NA,2,2)
+
+expect_error(
+  check_model(modSpec),
+  NA
+)
+
+expect_equal(
+  get_J(modSpec),
+  2
+)
+
+expect_equal(
+  get_K(modSpec),
+  2
+)
+
+expect_equal(
+  get_Gkappa(modSpec),
+  2
+)
+
+expect_equal(
+  get_Gz(modSpec),
+  2
+)
+
+expect_equal(
+  is_hetero(modSpec),
+  T
+)
+
+expect_equal(
+  is_cdep(modSpec),
+  T
+)
+
+expect_equal(
+  get_z_length(modSpec),
+  2
+)
+
+expect_equal(
+  get_non_singleton_groups(modSpec$cdepGroups),
+  2
+)
+
+expect_equal(
+  get_num_var('rho',modSpec),
+  2
+)
+
+expect_equal(
+  get_num_var('tau',modSpec),
+  5
+)
+
+expect_equal(
+  get_num_var('a',modSpec),
+  2
+)
+
+expect_equal(
+  get_num_var('r',modSpec),
+  2
+)
+
+expect_equal(
+  get_num_var('b',modSpec),
+  2
+)
+
+expect_equal(
+  get_num_var('s',modSpec),
+  4
+)
+
+expect_equal(
+  get_num_var('z',modSpec),
+  2
+)
+
+expect_equal(
+  get_num_var('kappa',modSpec),
+  2
+)
+
+expect_equal(
+  get_num_var('rho',modSpec,preceding=T),
+  0
+)
+
+expect_equal(
+  get_num_var('tau',modSpec,preceding=T),
+  2
+)
+
+expect_equal(
+  get_num_var('a',modSpec,preceding=T),
+  7
+)
+
+expect_equal(
+  get_num_var('r',modSpec,preceding=T),
+  9
+)
+
+expect_equal(
+  get_num_var('b',modSpec,preceding=T),
+  11
+)
+
+expect_equal(
+  get_num_var('s',modSpec,preceding=T),
+  13
+)
+
+expect_equal(
+  get_num_var('z',modSpec,preceding=T),
+  17
+)
+
+expect_equal(
+  get_num_var('kappa',modSpec,preceding=T),
+  19
+)
+
+# A six variable, mixed model (sd_x)
 modSpec <- list(meanSpec='powLaw')
 modSpec$J <- 3
 modSpec$K <- 3
 modSpec$M <- c(2,3,2)
 modSpec$hetSpec <- 'sd_x' # heteroskedastic
+modSpec$hetGroups <- c(NA,1,2,2,NA,3)
+modSpec$cdepSpec <- 'dep' # conditionally dependent
+modSpec$cdepGroups <- c(1,2,1,3,NA,2)
+
+expect_error(
+  check_model(modSpec),
+  NA
+)
+
+expect_equal(
+  get_J(modSpec),
+  3
+)
+
+expect_equal(
+  get_K(modSpec),
+  3
+)
+
+expect_equal(
+  get_Gkappa(modSpec),
+  3
+)
+
+expect_equal(
+  get_Gz(modSpec),
+  3
+)
+
+expect_equal(
+  is_hetero(modSpec),
+  T
+)
+
+expect_equal(
+  is_cdep(modSpec),
+  T
+)
+
+expect_equal(
+  get_z_length(modSpec),
+  5
+)
+
+expect_equal(
+  get_non_singleton_groups(modSpec$cdepGroups),
+  c(1,2)
+)
+
+expect_equal(
+  get_num_var('rho',modSpec),
+  3
+)
+
+expect_equal(
+  get_num_var('tau',modSpec),
+  7
+)
+
+expect_equal(
+  get_num_var('a',modSpec),
+  3
+)
+
+expect_equal(
+  get_num_var('r',modSpec),
+  3
+)
+
+expect_equal(
+  get_num_var('b',modSpec),
+  3
+)
+
+expect_equal(
+  get_num_var('s',modSpec),
+  6
+)
+
+expect_equal(
+  get_num_var('z',modSpec),
+  5
+)
+
+expect_equal(
+  get_num_var('kappa',modSpec),
+  3
+)
+
+expect_equal(
+  get_num_var('rho',modSpec,preceding=T),
+  0
+)
+
+expect_equal(
+  get_num_var('tau',modSpec,preceding=T),
+  3
+)
+
+expect_equal(
+  get_num_var('a',modSpec,preceding=T),
+  10
+)
+
+expect_equal(
+  get_num_var('r',modSpec,preceding=T),
+  13
+)
+
+expect_equal(
+  get_num_var('b',modSpec,preceding=T),
+  16
+)
+
+expect_equal(
+  get_num_var('s',modSpec,preceding=T),
+  19
+)
+
+expect_equal(
+  get_num_var('z',modSpec,preceding=T),
+  25
+)
+
+expect_equal(
+  get_num_var('kappa',modSpec,preceding=T),
+  30
+)
+
+# A six variable, mixed model (sd_resp)
+modSpec <- list(meanSpec='powLaw')
+modSpec$J <- 3
+modSpec$K <- 3
+modSpec$M <- c(2,3,2)
+modSpec$hetSpec <- 'sd_resp' # heteroskedastic
 modSpec$hetGroups <- c(NA,1,2,2,NA,3)
 modSpec$cdepSpec <- 'dep' # conditionally dependent
 modSpec$cdepGroups <- c(1,2,1,3,NA,2)
@@ -1337,14 +2140,23 @@ modSpec_io$M <- 2
 modSpec_io$cdepSpec <- 'indep'
 modSpec_io$hetSpec  <- 'none'
 
-# Conditionally independent / heteroskedastic
-modSpec_ie <- list(meanSpec='powLaw')
-modSpec_ie$J <- 1
-modSpec_ie$K <- 1
-modSpec_ie$M <- 2
-modSpec_ie$cdepSpec <- 'indep'
-modSpec_ie$hetSpec  <- 'sd_x'
-modSpec_ie$hetGroups  <- c(1,2)
+# Conditionally independent / heteroskedastic (sd_x)
+modSpec_iex <- list(meanSpec='powLaw')
+modSpec_iex$J <- 1
+modSpec_iex$K <- 1
+modSpec_iex$M <- 2
+modSpec_iex$cdepSpec <- 'indep'
+modSpec_iex$hetSpec  <- 'sd_x'
+modSpec_iex$hetGroups  <- c(1,2)
+
+# Conditionally independent / heteroskedastic (sd_resp)
+modSpec_ier <- list(meanSpec='powLaw')
+modSpec_ier$J <- 1
+modSpec_ier$K <- 1
+modSpec_ier$M <- 2
+modSpec_ier$cdepSpec <- 'indep'
+modSpec_ier$hetSpec  <- 'sd_resp'
+modSpec_ier$hetGroups  <- c(1,2)
 
 # Conditionally dependent / homoskedastic
 modSpec_do <- list(meanSpec='powLaw')
@@ -1355,21 +2167,33 @@ modSpec_do$cdepSpec <- 'dep'
 modSpec_do$cdepGroups <- c(1,2)
 modSpec_do$hetSpec  <- 'none'
 
-# Conditionally dependent / heteroskedastic
-modSpec_de <- list(meanSpec='powLaw')
-modSpec_de$J <- 1
-modSpec_de$K <- 1
-modSpec_de$M <- 2
-modSpec_de$cdepSpec <- 'dep'
-modSpec_de$cdepGroups <- c(1,2)
-modSpec_de$hetSpec  <- 'sd_x'
-modSpec_de$hetGroups  <- c(1,2)
+# Conditionally dependent / heteroskedastic (sd_x)
+modSpec_dex <- list(meanSpec='powLaw')
+modSpec_dex$J <- 1
+modSpec_dex$K <- 1
+modSpec_dex$M <- 2
+modSpec_dex$cdepSpec <- 'dep'
+modSpec_dex$cdepGroups <- c(1,2)
+modSpec_dex$hetSpec  <- 'sd_x'
+modSpec_dex$hetGroups  <- c(1,2)
+
+# Conditionally dependent / heteroskedastic (sd_resp)
+modSpec_der <- list(meanSpec='powLaw')
+modSpec_der$J <- 1
+modSpec_der$K <- 1
+modSpec_der$M <- 2
+modSpec_der$cdepSpec <- 'dep'
+modSpec_der$cdepGroups <- c(1,2)
+modSpec_der$hetSpec  <- 'sd_resp'
+modSpec_der$hetGroups  <- c(1,2)
 
 modSpecList <- list()
 modSpecList[[1]] <- modSpec_io
-modSpecList[[2]] <- modSpec_ie
-modSpecList[[3]] <- modSpec_do
-modSpecList[[4]] <- modSpec_de
+modSpecList[[2]] <- modSpec_iex
+modSpecList[[3]] <- modSpec_ier
+modSpecList[[4]] <- modSpec_do
+modSpecList[[5]] <- modSpec_dex
+modSpecList[[6]] <- modSpec_der
 
 # rho
 for(modSpec in modSpecList) {
@@ -1497,6 +2321,52 @@ for(modSpec in modSpecList) {
   )
 }
 
+# test z
+expect_error(
+  get_var_index('z',modSpec_io,i1=1,i2=2),
+  'z requested but model is not conditionally dependent'
+)
+
+expect_error(
+  get_var_index('z',modSpec_iex,i1=1,i2=2),
+  'z requested but model is not conditionally dependent'
+)
+
+expect_error(
+  get_var_index('z',modSpec_ier,i1=1,i2=2),
+  'z requested but model is not conditionally dependent'
+)
+
+expect_equal(
+  get_var_index('z',modSpec_do,i1=1,i2=2),
+  9
+)
+
+expect_equal(
+  get_var_index('z',modSpec_dex,i1=1,i2=2),
+  9
+)
+
+expect_equal(
+  get_var_index('z',modSpec_der,i1=1,i2=2),
+  9
+)
+
+expect_equal(
+  get_var_index('z',modSpec_do),
+  9
+)
+
+expect_equal(
+  get_var_index('z',modSpec_dex),
+  9
+)
+
+expect_equal(
+  get_var_index('z',modSpec_der),
+  9
+)
+
 # test kappa
 expect_error(
   get_var_index('kappa',modSpec_io,j=1),
@@ -1509,12 +2379,22 @@ expect_error(
 )
 
 expect_equal(
-  get_var_index('kappa',modSpec_ie,j=1),
+  get_var_index('kappa',modSpec_iex,j=1),
   9
 )
 
 expect_equal(
-  get_var_index('kappa',modSpec_ie,k=1),
+  get_var_index('kappa',modSpec_ier,j=1),
+  9
+)
+
+expect_equal(
+  get_var_index('kappa',modSpec_iex,k=1),
+  10
+)
+
+expect_equal(
+  get_var_index('kappa',modSpec_ier,k=1),
   10
 )
 
@@ -1529,44 +2409,23 @@ expect_error(
 )
 
 expect_equal(
-  get_var_index('kappa',modSpec_de,j=1),
+  get_var_index('kappa',modSpec_dex,j=1),
   10
 )
 
 expect_equal(
-  get_var_index('kappa',modSpec_de,k=1),
+  get_var_index('kappa',modSpec_der,j=1),
+  10
+)
+
+expect_equal(
+  get_var_index('kappa',modSpec_dex,k=1),
   11
 )
 
-# test z
-expect_error(
-  get_var_index('z',modSpec_io,i1=1,i2=2),
-  'z requested but model is not conditionally dependent'
-)
-
-expect_error(
-  get_var_index('z',modSpec_ie,i1=1,i2=2),
-  'z requested but model is not conditionally dependent'
-)
-
 expect_equal(
-  get_var_index('z',modSpec_do,i1=1,i2=2),
-  9
-)
-
-expect_equal(
-  get_var_index('z',modSpec_de,i1=1,i2=2),
-  9
-)
-
-expect_equal(
-  get_var_index('z',modSpec_do),
-  9
-)
-
-expect_equal(
-  get_var_index('z',modSpec_de),
-  9
+  get_var_index('kappa',modSpec_der,k=1),
+  11
 )
 
 # Test the functions that depend on both modSpec and the parameter vector. These
@@ -1574,24 +2433,28 @@ expect_equal(
 #
 # theta_y_list2vect
 # theta_y_vect2list
-# theta_y_vect2list
 # theta_y_constr2unconstr
 # theta_y_unconstr2constr
 # get_kappa_full
+# get_z_full
 # get_Sigma0
+# get_Sigma
 
 # Create a model and parameter vector with two ordinal variables and two
 # continuous variables, for which there are two groups of conditionally
 # dependent variables and all variables have separate heteroskedastic
-# parameters.
-modSpec <- list(meanSpec='powLaw')
-modSpec$J <- 2
-modSpec$M <- c(2,2)
-modSpec$K <- 2
-modSpec$cdepSpec <- 'dep' # conditionally dependent
-modSpec$cdepGroups <- c(1,2,1,2)
-modSpec$hetSpec <- 'sd_x' # homoskedastic
-modSpec$hetGroups <- c(1,2,3,4)
+# parameters. Do this for both sd_x and sd_resp.
+modSpecx <- list(meanSpec='powLaw')
+modSpecx$J <- 2
+modSpecx$M <- c(2,2)
+modSpecx$K <- 2
+modSpecx$cdepSpec <- 'dep' # conditionally dependent
+modSpecx$cdepGroups <- c(1,2,1,2)
+modSpecx$hetSpec <- 'sd_x' # homoskedastic
+modSpecx$hetGroups <- c(1,2,3,4)
+
+modSpecr <- modSpecx
+modSpecr$hetSpec <- 'sd_resp'
 
 rho      <- c(0.5,0.75)
 tau      <- list()
@@ -1607,49 +2470,90 @@ z        <- c(zns,zcr)
 kappa    <- c(.02,.01,.03,.01)
 
 th_y_vect <- c(rho,unlist(tau),a,r,b,s,z,kappa)
-th_y_list <- theta_y_vect2list(th_y_vect,modSpec)
+th_y_listx <- theta_y_vect2list(th_y_vect,modSpecx)
+th_y_listr <- theta_y_vect2list(th_y_vect,modSpecr)
 
 expect_equal(
-  th_y_list$rho,
+  th_y_listx$rho,
   rho
 )
 
 expect_equal(
-  th_y_list$tau,
+  th_y_listr$rho,
+  rho
+)
+
+expect_equal(
+  th_y_listx$tau,
   tau
 )
 
 expect_equal(
-  th_y_list$a,
+  th_y_listr$tau,
+  tau
+)
+
+expect_equal(
+  th_y_listx$a,
   a
 )
 
 expect_equal(
-  th_y_list$r,
+  th_y_listr$a,
+  a
+)
+
+expect_equal(
+  th_y_listx$r,
   r
 )
 
 expect_equal(
-  th_y_list$b,
+  th_y_listr$r,
+  r
+)
+
+expect_equal(
+  th_y_listx$b,
   b
 )
 
+expect_equal(
+  th_y_listr$b,
+  b
+)
 
 expect_equal(
-  th_y_list$z,
+  th_y_listx$z,
   z
 )
 
 expect_equal(
-  th_y_list$kappa,
+  th_y_listr$z,
+  z
+)
+
+expect_equal(
+  th_y_listx$kappa,
+  kappa
+)
+
+expect_equal(
+  th_y_listr$kappa,
   kappa
 )
 
 # Test that theta_y_list2vect yields the original vector
-th_y_vect2 <- theta_y_list2vect(th_y_list)
+th_y_vect2x <- theta_y_list2vect(th_y_listx)
 expect_equal(
   th_y_vect,
   th_y_vect2
+)
+
+th_y_vect2r <- theta_y_list2vect(th_y_listr)
+expect_equal(
+  th_y_vect,
+  th_y_vect2r
 )
 
 # Test get_kappa_full by building it "from scratch". For this example,
@@ -1658,17 +2562,32 @@ kappa_full <- kappa
 kappa_full_matrix <- matrix(kappa_full) %*% t(matrix(kappa_full))
 
 expect_equal(
-  get_kappa_full(th_y_list),
+  get_kappa_full(th_y_listx),
   kappa_full
 )
 
 expect_equal(
-  get_kappa_full(th_y_list,asMatrix=T),
+  get_kappa_full(th_y_listr),
+  kappa_full
+)
+
+expect_equal(
+  get_kappa_full(th_y_listx,asMatrix=T),
   kappa_full_matrix
 )
 
 expect_equal(
-  get_kappa_full(th_y_vect,modSpec,asMatrix=T),
+  get_kappa_full(th_y_listr,asMatrix=T),
+  kappa_full_matrix
+)
+
+expect_equal(
+  get_kappa_full(th_y_vect,modSpecx,asMatrix=T),
+  kappa_full_matrix
+)
+
+expect_equal(
+  get_kappa_full(th_y_vect,modSpecr,asMatrix=T),
   kappa_full_matrix
 )
 
@@ -1688,15 +2607,30 @@ Sigma0[4,2] <- Sigma0[2,4]
 Sigma0[4,3] <- Sigma0[3,4]
 
 expect_equal(
-  get_Sigma0(th_y_list),
-  Sigma0
-)
-expect_equal(
-  get_Sigma0(th_y_vect,modSpec),
+  get_Sigma0(th_y_listx),
   Sigma0
 )
 
+expect_equal(
+  get_Sigma0(th_y_listr),
+  Sigma0
+)
+
+expect_equal(
+  get_Sigma0(th_y_vect,modSpecx),
+  Sigma0
+)
+
+expect_equal(
+  get_Sigma0(th_y_vect,modSpecr),
+  Sigma0
+)
+
+# Test get_Sigma by building Sigma "from scratch"
+# Do this for both sd_x and sd_resp
 x <- c(1.5,2.5)
+
+# sd_x
 heteroTerm1 <- matrix(1 + kappa_full*x[1]) # a column vector
 heteroTerm2 <- matrix(1 + kappa_full*x[2]) # a column vector
 Sigma1 <- Sigma0 * (heteroTerm1 %*% t(heteroTerm1))
@@ -1706,17 +2640,42 @@ Sigma[1,,] <- Sigma1
 Sigma[2,,] <- Sigma2
 
 expect_equal(
-  get_Sigma(th_y_vect,x[1],modSpec),
+  get_Sigma(th_y_vect,x[1],modSpecx),
   Sigma1
 )
 
 expect_equal(
-  get_Sigma(th_y_vect,x[2],modSpec),
+  get_Sigma(th_y_vect,x[2],modSpecx),
   Sigma2
 )
 
 expect_equal(
-  get_Sigma(th_y_vect,x,modSpec),
+  get_Sigma(th_y_vect,x,modSpecx),
+  Sigma
+)
+
+# sd_resp
+
+heteroTerm1 <- matrix(1 + kappa_full*c(x[1]^rho,a*x[1]^r)) # a column vector
+heteroTerm2 <- matrix(1 + kappa_full*c(x[2]^rho,a*x[2]^r)) # a column vector
+Sigma1 <- Sigma0 * (heteroTerm1 %*% t(heteroTerm1))
+Sigma2 <- Sigma0 * (heteroTerm2 %*% t(heteroTerm2))
+Sigma <- array(NA,c(2,nrow(Sigma0),ncol(Sigma0)))
+Sigma[1,,] <- Sigma1
+Sigma[2,,] <- Sigma2
+
+expect_equal(
+  get_Sigma(th_y_vect,x[1],modSpecr),
+  Sigma1
+)
+
+expect_equal(
+  get_Sigma(th_y_vect,x[2],modSpecr),
+  Sigma2
+)
+
+expect_equal(
+  get_Sigma(th_y_vect,x,modSpecr),
   Sigma
 )
 
@@ -1724,34 +2683,47 @@ expect_equal(
 # Do the calculation directly, then check the function
 th_y_vect_unconstr_direct <- c(log(rho),tau[[1]][1],log(diff(tau[[1]])),tau[[2]][1],log(diff(tau[[2]])),log(a),log(r),b,log(s),gtools::logit((1+z)/2),log(kappa))
 
-th_y_vect_unconstr <- theta_y_constr2unconstr(th_y_vect,modSpec)
-
+th_y_vect_unconstrx <- theta_y_constr2unconstr(th_y_vect,modSpecx)
 expect_equal(
   th_y_vect_unconstr_direct,
-  th_y_vect_unconstr
+  th_y_vect_unconstrx
+)
+
+th_y_vect_unconstrr <- theta_y_constr2unconstr(th_y_vect,modSpecr)
+expect_equal(
+  th_y_vect_unconstr_direct,
+  th_y_vect_unconstrr
 )
 
 # Test theta_y_constr2unconstr by ensuring that the reverse transform yields the
 # original vector
-th_y_vect2 <- theta_y_unconstr2constr(th_y_vect_unconstr,modSpec)
-
+th_y_vect2x <- theta_y_unconstr2constr(th_y_vect_unconstrx,modSpecx)
 expect_equal(
-  th_y_vect2,
+  th_y_vect2x,
+  th_y_vect
+)
+
+th_y_vect2r <- theta_y_unconstr2constr(th_y_vect_unconstrr,modSpecr)
+expect_equal(
+  th_y_vect2r,
   th_y_vect
 )
 
 # Create a model and parameter vector with two ordinal variables and two
 # continuous variables, for which there are two groups of conditionally
-# dependent variables and only one variable is heteroskedastic
-# parameters.
-modSpec <- list(meanSpec='powLaw')
-modSpec$J <- 2
-modSpec$M <- c(2,2)
-modSpec$K <- 2
-modSpec$cdepSpec <- 'dep' # conditionally dependent
-modSpec$cdepGroups <- c(1,2,1,2)
-modSpec$hetSpec <- 'sd_x' # homoskedastic
-modSpec$hetGroups <- c(NA,1,NA,NA)
+# dependent variables and only one variable is heteroskedastic. Do this for
+# sd_x and sd_resp
+modSpecx <- list(meanSpec='powLaw')
+modSpecx$J <- 2
+modSpecx$M <- c(2,2)
+modSpecx$K <- 2
+modSpecx$cdepSpec <- 'dep' # conditionally dependent
+modSpecx$cdepGroups <- c(1,2,1,2)
+modSpecx$hetSpec <- 'sd_x' # homoskedastic
+modSpecx$hetGroups <- c(NA,1,NA,NA)
+
+modSpecr <- modSpecx
+modSpecr$hetSpec <- 'sd_resp'
 
 rho      <- c(0.5,0.75)
 tau      <- list()
@@ -1767,49 +2739,90 @@ z        <- c(zns,zcr)
 kappa    <- c(.02)
 
 th_y_vect <- c(rho,unlist(tau),a,r,b,s,z,kappa)
-th_y_list <- theta_y_vect2list(th_y_vect,modSpec)
+th_y_listx <- theta_y_vect2list(th_y_vect,modSpecx)
+th_y_listr <- theta_y_vect2list(th_y_vect,modSpecr)
 
 expect_equal(
-  th_y_list$rho,
+  th_y_listx$rho,
   rho
 )
 
 expect_equal(
-  th_y_list$tau,
+  th_y_listr$rho,
+  rho
+)
+
+expect_equal(
+  th_y_listx$tau,
   tau
 )
 
 expect_equal(
-  th_y_list$a,
+  th_y_listr$tau,
+  tau
+)
+
+expect_equal(
+  th_y_listx$a,
   a
 )
 
 expect_equal(
-  th_y_list$r,
+  th_y_listr$a,
+  a
+)
+
+expect_equal(
+  th_y_listx$r,
   r
 )
 
 expect_equal(
-  th_y_list$b,
+  th_y_listr$r,
+  r
+)
+
+expect_equal(
+  th_y_listx$b,
   b
 )
 
+expect_equal(
+  th_y_listr$b,
+  b
+)
 
 expect_equal(
-  th_y_list$z,
+  th_y_listx$z,
   z
 )
 
 expect_equal(
-  th_y_list$kappa,
+  th_y_listr$z,
+  z
+)
+
+expect_equal(
+  th_y_listx$kappa,
   kappa
 )
 
+expect_equal(
+  th_y_listr$kappa,
+  kappa
+)
 # Test that theta_y_list2vect yields the original vector
-th_y_vect2 <- theta_y_list2vect(th_y_list)
+th_y_vect2x <- theta_y_list2vect(th_y_listx)
+th_y_vect2r <- theta_y_list2vect(th_y_listr)
+
 expect_equal(
   th_y_vect,
-  th_y_vect2
+  th_y_vect2x
+)
+
+expect_equal(
+  th_y_vect,
+  th_y_vect2r
 )
 
 # Test get_kappa_full by building it "from scratch".
@@ -1817,20 +2830,34 @@ kappa_full <- c(0,kappa,0,0)
 kappa_full_matrix <- matrix(kappa_full) %*% t(matrix(kappa_full))
 
 expect_equal(
-  get_kappa_full(th_y_list),
+  get_kappa_full(th_y_listx),
   kappa_full
 )
 
 expect_equal(
-  get_kappa_full(th_y_list,asMatrix=T),
+  get_kappa_full(th_y_listr),
+  kappa_full
+)
+
+expect_equal(
+  get_kappa_full(th_y_listx,asMatrix=T),
   kappa_full_matrix
 )
 
 expect_equal(
-  get_kappa_full(th_y_vect,modSpec,asMatrix=T),
+  get_kappa_full(th_y_listr,asMatrix=T),
   kappa_full_matrix
 )
 
+expect_equal(
+  get_kappa_full(th_y_vect,modSpecx,asMatrix=T),
+  kappa_full_matrix
+)
+
+expect_equal(
+  get_kappa_full(th_y_vect,modSpecr,asMatrix=T),
+  kappa_full_matrix
+)
 # Test get_Sigma0 by building Sigma0 "from scratch"
 Sigma0 <- diag(s^2)
 Sigma0[1,2] <- s[1]*s[2]*z[3] # cross group (index 3)
@@ -1847,16 +2874,30 @@ Sigma0[4,2] <- Sigma0[2,4]
 Sigma0[4,3] <- Sigma0[3,4]
 
 expect_equal(
-  get_Sigma0(th_y_list),
+  get_Sigma0(th_y_listx),
   Sigma0
 )
 
 expect_equal(
-  get_Sigma0(th_y_vect,modSpec),
+  get_Sigma0(th_y_listr),
   Sigma0
 )
 
+expect_equal(
+  get_Sigma0(th_y_vect,modSpecx),
+  Sigma0
+)
+
+expect_equal(
+  get_Sigma0(th_y_vect,modSpecr),
+  Sigma0
+)
+
+# Test get_Sigma by building Sigma "from scratch"
+# Do this for both sd_x and sd_resp
 x <- c(1.5,2.5)
+
+# sd_x
 heteroTerm1 <- matrix(1 + kappa_full*x[1]) # a column vector
 heteroTerm2 <- matrix(1 + kappa_full*x[2]) # a column vector
 Sigma1 <- Sigma0 * (heteroTerm1 %*% t(heteroTerm1))
@@ -1866,17 +2907,41 @@ Sigma[1,,] <- Sigma1
 Sigma[2,,] <- Sigma2
 
 expect_equal(
-  get_Sigma(th_y_vect,x[1],modSpec),
+  get_Sigma(th_y_vect,x[1],modSpecx),
   Sigma1
 )
 
 expect_equal(
-  get_Sigma(th_y_vect,x[2],modSpec),
+  get_Sigma(th_y_vect,x[2],modSpecx),
   Sigma2
 )
 
 expect_equal(
-  get_Sigma(th_y_vect,x,modSpec),
+  get_Sigma(th_y_vect,x,modSpecx),
+  Sigma
+)
+
+# sd_resp
+heteroTerm1 <- matrix(1 + kappa_full*x[1]^c(rho,r)) # a column vector
+heteroTerm2 <- matrix(1 + kappa_full*x[2]^c(rho,r)) # a column vector
+Sigma1 <- Sigma0 * (heteroTerm1 %*% t(heteroTerm1))
+Sigma2 <- Sigma0 * (heteroTerm2 %*% t(heteroTerm2))
+Sigma <- array(NA,c(2,nrow(Sigma0),ncol(Sigma0)))
+Sigma[1,,] <- Sigma1
+Sigma[2,,] <- Sigma2
+
+expect_equal(
+  get_Sigma(th_y_vect,x[1],modSpecr),
+  Sigma1
+)
+
+expect_equal(
+  get_Sigma(th_y_vect,x[2],modSpecr),
+  Sigma2
+)
+
+expect_equal(
+  get_Sigma(th_y_vect,x,modSpecr),
   Sigma
 )
 
@@ -1884,8 +2949,13 @@ expect_equal(
 # Do the calculation directly, then check the function
 th_y_vect_unconstr_direct <- c(log(rho),tau[[1]][1],log(diff(tau[[1]])),tau[[2]][1],log(diff(tau[[2]])),log(a),log(r),b,log(s),gtools::logit((1+z)/2),log(kappa))
 
-th_y_vect_unconstr <- theta_y_constr2unconstr(th_y_vect,modSpec)
+th_y_vect_unconstx <- theta_y_constr2unconstr(th_y_vect,modSpecx)
+expect_equal(
+  th_y_vect_unconstr_direct,
+  th_y_vect_unconstx
+)
 
+th_y_vect_unconstr <- theta_y_constr2unconstr(th_y_vect,modSpecr)
 expect_equal(
   th_y_vect_unconstr_direct,
   th_y_vect_unconstr
@@ -1893,9 +2963,14 @@ expect_equal(
 
 # Test theta_y_constr2unconstr by ensuring that the reverse transform yields the
 # original vector
-th_y_vect2 <- theta_y_unconstr2constr(th_y_vect_unconstr,modSpec)
-
+th_y_vect2x <- theta_y_unconstr2constr(th_y_vect_unconstr,modSpecx)
 expect_equal(
-  th_y_vect2,
+  th_y_vect2x,
+  th_y_vect
+)
+
+th_y_vect2r <- theta_y_unconstr2constr(th_y_vect_unconstr,modSpecr)
+expect_equal(
+  th_y_vect2r,
   th_y_vect
 )

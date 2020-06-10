@@ -1,25 +1,91 @@
 #' @title Transformation functions for theta_y
 #'
-#' @description \code{powLawOrd}
+#' @description A number of transformation functions for theta_y -- for example, converting from a list to vector representation, and vice versa.
 #'
-#' @details Stuff
-#' @param th_v Vector of parameters with ordering [rho,tau_1,...,tau_M,s,kappa]
+#' @details For for variable definitions see powLawMix.R. For every ordinal variable, rho, tau, and s are uniquely specified. For every continuous variable, a, r, b, and s are uniquely specified. For all variables, kappa (the heteroskedastic parameter) and z (the correlation parameter) can be grouped or set to zero using the vectors heteroSpec and cdepSpec in the model specification, modSpec.
+#'
+#' For example, consider a model with two ordinal and two continuous variables with the following model specification (this can be obtained by calling the function yada::get_example_modSpec):
+#'
+#' modSpec <- list(meanSpec = 'powLaw')
+#' modSpec$J <- 2
+#' modSpec$K <- 2
+#' modSpec$M <- c(1,2)
+#' modSpec$hetSpec <- 'sd_x'
+#' modSpec$hetGroups <- c(1,NA,2,1)
+#' modSpec$cdepSpec <- 'dep'
+#' modSpec$cdepGroups <- c(1,1,2,2)
+#'
+#' To obtain and check this model use:
+#'
+#' modSpec <- get_example_modSpec()
+#' check_model(modSpec)
+#'
+#' For this model specification, the full heteroskedastic parameter vector is:
+#'
+#' kappa_full = [kappa1; 0; kappa2; kappa1]
+#'
+#' The full covariance matrix is:
+#'
+#' Sigma_full = [   s1*s1, z1*s1*s2, z3*s1*s3, z3*s1*s4;
+#'               z1*s2*s1,    s2*s2, z3*s2*s3, z3*s2*s4;
+#'               z3*s3*s1, z3*s3*s2,    s3*s3, z2*s3*s4;
+#'               z3*s4*s1, z3*s4*s2, z2*s4*s3,    s4*s4]
+#'
+#' The specification of kappa is relatively straightforward. For variable i, kappa_full[i] = 0 if hetSpec[i] is NA. Otherwise, kappa_full[i] is kappa[hetSpec[i]].
+#'
+#' The specification of the covariance matrix correlation terms is more involved. If cdpeGroups[i] is NA then all correlation terms associated with that variable are 0. Beyond this, there are two components to the reduced correlation vector z: intra-group correlations and inter-group correlations.
+#'
+#' The intra-group correlations are for non-singleton groups -- that is, groups with more than one entry in cdepGroups. Let Gns be the number of such non-singleton groups. The first entries of the reduced z are these correlations. In the example above, they are zns = [z1; z2].
+#'
+#' The inter-group correlations link all groups, whether singleton or not. Let Gz be the number of unique groups of all types. In the example above, Gz = 2. The number of unique inter-group correlations is choose(Gz,2). In the example above, there is one cross-term, zcross = [z3], and z = [zns; zcros] = [z1; z2; z3].
+#'
+#' The full specification for z (a vector with choose(J+K,2) terms) is
+#'
+#' zfull = [z1; z3; z3; z3; z3; z2]
+#'
+#' These correspond to the correlation terms in the upper-right part of Sigma_full, "unwrapped" by rows. Identically, the components of zfull can be thought of as the lexically ordered unique variable pairs {11,12,13,14,23,24,34}; in each pair, the first element gives the row index in Sigma_full and the second element the column index.
 #'
 #' @author Michael Holton Price <MichaelHoltonPrice@gmail.com>
 
 #' @export
+get_example_modSpec <- function() {
+  modSpec <- list(meanSpec = 'powLaw')
+  modSpec$J <- 2
+  modSpec$K <- 2
+  modSpec$M <- c(1,2)
+  modSpec$hetSpec <- 'sd_x'
+  modSpec$hetGroups <- c(1,NA,2,1)
+  modSpec$cdepSpec <- 'dep'
+  modSpec$cdepGroups <- c(1,1,2,2)
+  return(modSpec)
+}
+
+#' @export
 check_model <- function(modSpec) {
+
   if(tolower(modSpec$meanSpec) != 'powlaw') {
     stop(paste('Unrecognized specification for the mean,',modSpec$meanSpec))
   }
 
-  # Reject single variable models specified as conditionally independent
   J <- get_J(modSpec)
   K <- get_K(modSpec)
+
   if(J + K == 1) {
+    # Single variable models should either have no specification of the
+    # conditional dependence or have it be independent
     if('cdepSpec' %in% names(modSpec)) {
       if(tolower(modSpec$cdepSpec) == 'dep') {
-        stop('Model is single-variable, but conditional independence is specified')
+        stop('Model is single-variable, but conditional dependence is specified')
+      }
+    }
+  } else {
+    # Multiple variable models must have a specification of the conditional
+    # dependence, and it must be 'indep' or 'dep'
+    if( !('cdepSpec' %in% names(modSpec))) {
+      stop('Model is multi-variable, yet cdepSpec is not in modSpec')
+    } else {
+      if( !(modSpec$cdepSpec %in% c('indep','dep')) ) {
+        stop(paste0('cdepSpec should be indep or dep, not ',modSpec$cdepSpec))
       }
     }
   }
@@ -47,26 +113,35 @@ check_model <- function(modSpec) {
     }
   }
 
-  # Reject models specified as heteroskedatic for which hetGroups is
+  # hetSpec must always be specified
+  if( !('hetSpec' %in% names(modSpec)) ) {
+    stop('hetSpec must be specified')
+  }
+
+  # Reject models with an unrecognized hetSpec
+  if( !(modSpec$hetSpec %in% c('none','sd_x','sd_resp')) ) {
+    stop(paste0('hetSpec = ',modSpec$hetSpec,' is an unrecognized specification'))
+  }
+
+  # Reject models specified as heteroskedastic for which hetGroups is
   # mis-specified.
-  if('hetSpec' %in% names(modSpec)) {
-    if(tolower(modSpec$hetSpec) == 'sd_x') { # At least for now, this is the only heteroskedastic parameterization
-      if( !('hetGroups' %in% names(modSpec)) ) {
-        stop('Model is heteroskedastic, but hetGroups not given')
-      }
-      N <- length(modSpec$hetGroups)
-      if(N != J + K) {
-        stop(paste('Length of hetGroups =',N,'but should be J+K=',J+K))
-      }
-      if(all(is.na(modSpec$hetGroups))) {
-        stop(paste('hetGroups is all NA'))
-      }
-   
-      Gkappa <- max(modSpec$hetGroups,na.rm=T)
-      uniqueVal <- sort(unique(modSpec$hetGroups[!is.na(modSpec$hetGroups)]))
-      if(!all(uniqueVal == 1:Gkappa)) {
-        stop('Unique values of hetGroups is not 1:Gkappa')
-      }
+  if(modSpec$hetSpec != 'none') {
+    # hetGroups must be specified
+    if( !('hetGroups' %in% names(modSpec)) ) {
+      stop('Model is heteroskedastic, but hetGroups not given')
+    }
+
+    # hetGroups must must be the same length as the number of variables
+    N <- length(modSpec$hetGroups)
+    if(N != J + K) {
+      stop(paste('Length of hetGroups =',N,'but should be J+K=',J+K))
+    }
+
+    # hetGroups should be unique, sequential integers starting from 1
+    Gkappa <- max(modSpec$hetGroups,na.rm=T)
+    uniqueVal <- sort(unique(modSpec$hetGroups[!is.na(modSpec$hetGroups)]))
+    if(!all(uniqueVal == 1:Gkappa)) {
+      stop('hetGroups should be unique, sequential integers starting from 1')
     }
   }
 }
@@ -133,8 +208,8 @@ is_hetero <- function(modSpec) {
 #' @export
 is_cdep <- function(modSpec) {
   # For the special case of a one-variable model, False is returned. Aside from
-  # this, the model is conditionally depenendent if (a) modSpec$cdepSpec is
-  # 'dep' or (b) modSpec$cdepSpec is 'indep', but cdepGroups is all NA.
+  # this, the model is conditionally indepenendent if (a) modSpec$cdepSpec is
+  # 'indep' or (b) modSpec$cdepSpec is 'dep', but cdepGroups is all NA.
 
   J <- get_J(modSpec)
   K <- get_K(modSpec)
@@ -165,8 +240,16 @@ get_z_length <- function(modSpec) {
 }
 
 #' @export
-get_non_singleton_groups <- function(groups) {
-  counts <- table(groups)
+get_non_singleton_groups <- function(groupVect) {
+  # groupVect is a vector assigning each of its elements to a unique group.
+  # Return the non-singleton groups in groupVect -- that is, the groups with
+  # more than one member
+  #
+  # For example:
+  # groupVect <- c(1,2,NA,4,1,3,3)
+  # print(get_non_singleton_groups(groupVect))
+  # [1] 1 3
+  counts <- table(groupVect)
   return(sort(as.numeric(names(counts))[counts > 1]))
 }
 
@@ -180,6 +263,9 @@ get_num_var <- function(varName,modSpec,preceding=F) {
   # If the variable is not part of the model, 0 is returned (rather than
   # throwing an error). This happens, for example, with rho if J=0 or with
   # kappa if the model is homoskedastic.
+  #
+  # If preceding is TRUE, the number of variables of that precede this variable
+  # in the vector is returned.
   check_model(modSpec)
 
   variables <- c('rho','tau','a','r','b','s','z','kappa')
@@ -217,7 +303,7 @@ get_num_var <- function(varName,modSpec,preceding=F) {
   } else if(varName == 'kappa') {
     return(get_Gkappa(modSpec))
   }
-  stop('This point should never get reached')
+  stop('This point should never be reached')
 }
 
 #' @export
@@ -227,7 +313,7 @@ get_var_index <- function(varName,modSpec,j=NA,k=NA,i1=NA,i2=NA) {
   # to improve code readability and make test easier. For tau, a vector is
   # returned.
   #
-  # th_y has ordering th_y = [rho,tau,a,r,b,s,z,kappa,l]
+  # th_y has ordering th_y = [rho,tau,a,r,b,s,z,kappa]
 
 
   check_model(modSpec)
@@ -797,7 +883,14 @@ get_Sigma <- function(th_y,x,modSpec=NA,transformVar=F) {
   if(modSpec$hetSpec == 'sd_x') {
     heteroTerm <- 1 + kappa_full*x
   } else if(modSpec$hetSpec == 'sd_resp') {
-    heteroTerm <- 1 + kappa_full*get_response(x,th_y_vect,modSpec)
+    respVect <- c()
+    if(J > 0) {
+      respVect <- c(respVect,x^th_y_list$rho)
+    }
+    if(K > 0) {
+      respVect <- c(respVect,th_y_list$a*x^th_y_list$r)
+    }
+    heteroTerm <- 1 + kappa_full*respVect
   } else {
     stop(paste('Unsupported hetSpec,',th_y_list$modSpec$hetSpec))
   }

@@ -112,38 +112,38 @@ extract_th_w <- function(th_y,modSpec,k) {
   return(c(a,r,b,s,kappa))
 }
 
-#' @export
-get_response <- function(x,th_y,modSpec,transformVar=F) {
-  check_model(modSpec)
-  J <- get_J(modSpec)
-  K <- get_K(modSpec)
-
-  if(modSpec$meanSpec != 'powLaw') {
-    stop('Only a power law is currenty supported for the mean specification')
-  }
-
-  if(J > 0) {
-    for(j in 1:J) {
-      v <- rep(NA,J)
-      th_v <- extract_th_v(th_y,modSpec,j)
-      v[j] <- powLawOrd(x,th_v,transformVar)
-    }
-  } else {
-      v <- c()
-  }
-
-  if(K > 0) {
-    for(k in 1:K) {
-      w <- rep(NA,K)
-      th_w <- extract_th_w(th_y,modSpec,k)
-      w[k] <- powLaw(x,th_w,transformVar)
-    }
-  } else {
-     w <- c()
-  }
-
-  return(c(v,w))
-}
+##' @export
+#get_response <- function(x,th_y,modSpec,transformVar=F) {
+#  check_model(modSpec)
+#  J <- get_J(modSpec)
+#  K <- get_K(modSpec)
+#
+#  if(modSpec$meanSpec != 'powLaw') {
+#    stop('Only a power law is currenty supported for the mean specification')
+#  }
+#
+#  if(J > 0) {
+#    for(j in 1:J) {
+#      v <- rep(NA,J)
+#      th_v <- extract_th_v(th_y,modSpec,j)
+#      v[j] <- powLawOrd(x,th_v,transformVar)
+#    }
+#  } else {
+#      v <- c()
+#  }
+#
+#  if(K > 0) {
+#    for(k in 1:K) {
+#      w <- rep(NA,K)
+#      th_w <- extract_th_w(th_y,modSpec,k)
+#      w[k] <- powLaw(x,th_w,transformVar)
+#    }
+#  } else {
+#     w <- c()
+#  }
+#
+#  return(c(v,w))
+#}
 
 #' @export
 simPowLawMix <- function(th_y_list,th_x_list,N,modSpec) {

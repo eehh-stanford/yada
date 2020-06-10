@@ -293,13 +293,13 @@ fit_theta_y <- function(x,Y,modSpec,verbose=F) {
     useHjk <- F
     if(useHjk) {
       optimControl <- list(info=verbose)
-      fit <- dfoptim::hjk(th_y_bar0,powLawMixNegLogLik,control=optimControl,x=x[keep],Y=Y[,keep],modSpec=modSpec,transformVar=T)
+      fit <- dfoptim::hjk(th_y_bar0,powLawMixIndepNegLogLik,control=optimControl,x=x[keep],Y=Y[,keep],modSpec=modSpec,transformVar=T)
     } else {
       optimControl <- list(reltol=1e-12,maxit=10000000,ndeps=rep(1e-8,length(th_y_bar0)))
       if(verbose) {
         optimControl$trace <- 100
       }
-      fit <- optim(th_y_bar0,powLawMixNegLogLik,control=optimControl,x=x[keep],Y=Y[,keep],modSpec=modSpec,transformVar=T,method='BFGS')
+      fit <- optim(th_y_bar0,powLawMixIndepNegLogLik,control=optimControl,x=x[keep],Y=Y[,keep],modSpec=modSpec,transformVar=T,method='BFGS')
     }
   
 

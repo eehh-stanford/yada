@@ -115,16 +115,186 @@ expect_error(
   NA
 )
 
+# Multi-variable, homoskedastic
+modSpec_homo <- list(meanSpec='powLaw')
+modSpec_homo$J <- 2
+modSpec_homo$K <- 2
+modSpec_homo$M <- c(2,2)
+modSpec_homo$hetSpec <- 'none'
+modSpec_homo$cdepSpec <- 'indep'
 
-## Four variables, homoskedastic
-#modSpec <- list(meanSpec='powLaw')
-#modSpec$J <- 2
-#modSpec$K <- 2
-#modSpec$hetSpec <- 'none'
-#modSpec$cdepSpec <- 'indep'
-#
-#expect_error(
-#  fit <- fit_theta_y(sim3_sdr$x,sim3_sdr$w,modSpec3_sdr),
-#  NA
-#)
+th_y_sim_homo <- list(modSpec=modSpec_homo)
+th_y_sim_homo$rho <- c(.75,.5)
+th_y_sim_homo$tau <- list()
+th_y_sim_homo$tau[[1]] <- c(2,5)
+th_y_sim_homo$tau[[2]] <- c(1,3)
+th_y_sim_homo$a <- c(2,3)
+th_y_sim_homo$r <- c(.45,.10)
+th_y_sim_homo$b <- c(1.2,-.5)
+th_y_sim_homo$s <- c(.01,.02,.05,.04)
+
+sim_homo <- simPowLawMixIndep(th_y_sim_homo,th_x_sim,100,modSpec_homo)
+expect_error(
+  fit_homo <- fit_theta_y(sim_homo$x,sim_homo$Y,modSpec_homo),
+  NA
+)
+
+# Multi-variable, heteroskedastic (sd_x), NA in hetGroups
+modSpec_heterox <- list(meanSpec='powLaw')
+modSpec_heterox$J <- 2
+modSpec_heterox$K <- 2
+modSpec_heterox$M <- c(2,2)
+modSpec_heterox$hetSpec <- 'sd_x'
+modSpec_heterox$hetGroups <- c(NA,2,1,1)
+modSpec_heterox$cdepSpec <- 'indep'
+
+th_y_sim_heterox <- list(modSpec=modSpec_heterox)
+th_y_sim_heterox$rho <- c(.75,.5)
+th_y_sim_heterox$tau <- list()
+th_y_sim_heterox$tau[[1]] <- c(2,5)
+th_y_sim_heterox$tau[[2]] <- c(1,3)
+th_y_sim_heterox$a <- c(2,3)
+th_y_sim_heterox$r <- c(.45,.10)
+th_y_sim_heterox$b <- c(1.2,-.5)
+th_y_sim_heterox$s <- c(.01,.02,.05,.04)
+th_y_sim_heterox$kappa <- kappa_full[1:2]
+
+
+sim_heterox <- simPowLawMixIndep(th_y_sim_heterox,th_x_sim,100,modSpec_heterox)
+expect_error(
+  fit_heterox <- fit_theta_y(sim_heterox$x,sim_heterox$Y,modSpec_heterox),
+  NA
+)
+
+# Multi-variable, heteroskedastic (sd_resp), NA in hetGroups
+modSpec_heteror <- list(meanSpec='powLaw')
+modSpec_heteror$J <- 2
+modSpec_heteror$K <- 2
+modSpec_heteror$M <- c(2,2)
+modSpec_heteror$hetSpec <- 'sd_resp'
+modSpec_heteror$hetGroups <- c(NA,2,1,1)
+modSpec_heteror$cdepSpec <- 'indep'
+
+th_y_sim_heteror <- list(modSpec=modSpec_heteror)
+th_y_sim_heteror$rho <- c(.75,.5)
+th_y_sim_heteror$tau <- list()
+th_y_sim_heteror$tau[[1]] <- c(2,5)
+th_y_sim_heteror$tau[[2]] <- c(1,3)
+th_y_sim_heteror$a <- c(2,3)
+th_y_sim_heteror$r <- c(.45,.10)
+th_y_sim_heteror$b <- c(1.2,-.5)
+th_y_sim_heteror$s <- c(.01,.02,.05,.04)
+th_y_sim_heteror$kappa <- kappa_full[1:2]
+
+sim_heteror <- simPowLawMixIndep(th_y_sim_heteror,th_x_sim,N,modSpec_heteror)
+expect_error(
+  fit_heteror <- fit_theta_y(sim_heteror$x,sim_heteror$Y,modSpec_heteror),
+  NA
+)
+
+# Multi-variable, heteroskedastic (sd_x), single heteroskedastic parameter
+modSpec_heterox <- list(meanSpec='powLaw')
+modSpec_heterox$J <- 2
+modSpec_heterox$K <- 2
+modSpec_heterox$M <- c(2,2)
+modSpec_heterox$hetSpec <- 'sd_x'
+modSpec_heterox$hetGroups <- c(1,1,1,1)
+modSpec_heterox$cdepSpec <- 'indep'
+
+th_y_sim_heterox <- list(modSpec=modSpec_heterox)
+th_y_sim_heterox$rho <- c(.75,.5)
+th_y_sim_heterox$tau <- list()
+th_y_sim_heterox$tau[[1]] <- c(2,5)
+th_y_sim_heterox$tau[[2]] <- c(1,3)
+th_y_sim_heterox$a <- c(2,3)
+th_y_sim_heterox$r <- c(.45,.10)
+th_y_sim_heterox$b <- c(1.2,-.5)
+th_y_sim_heterox$s <- c(.01,.02,.05,.04)
+th_y_sim_heterox$kappa <- kappa_full[1]
+
+
+sim_heterox <- simPowLawMixIndep(th_y_sim_heterox,th_x_sim,100,modSpec_heterox)
+expect_error(
+  fit_heterox <- fit_theta_y(sim_heterox$x,sim_heterox$Y,modSpec_heterox),
+  NA
+)
+
+# Multi-variable, heteroskedastic (sd_resp), single heteroskedastic parameter
+modSpec_heteror <- list(meanSpec='powLaw')
+modSpec_heteror$J <- 2
+modSpec_heteror$K <- 2
+modSpec_heteror$M <- c(2,2)
+modSpec_heteror$hetSpec <- 'sd_resp'
+modSpec_heteror$hetGroups <- c(1,1,1,1)
+modSpec_heteror$cdepSpec <- 'indep'
+
+th_y_sim_heteror <- list(modSpec=modSpec_heteror)
+th_y_sim_heteror$rho <- c(.75,.5)
+th_y_sim_heteror$tau <- list()
+th_y_sim_heteror$tau[[1]] <- c(2,5)
+th_y_sim_heteror$tau[[2]] <- c(1,3)
+th_y_sim_heteror$a <- c(2,3)
+th_y_sim_heteror$r <- c(.45,.10)
+th_y_sim_heteror$b <- c(1.2,-.5)
+th_y_sim_heteror$s <- c(.01,.02,.05,.04)
+th_y_sim_heteror$kappa <- kappa_full[1]
+
+sim_heteror <- simPowLawMixIndep(th_y_sim_heteror,th_x_sim,N,modSpec_heteror)
+expect_error(
+  fit_heteror <- fit_theta_y(sim_heteror$x,sim_heteror$Y,modSpec_heteror),
+  NA
+)
+
+# Multi-variable, heteroskedastic (sd_x), multiple heteroskedastic parameters
+modSpec_heterox <- list(meanSpec='powLaw')
+modSpec_heterox$J <- 2
+modSpec_heterox$K <- 2
+modSpec_heterox$M <- c(2,2)
+modSpec_heterox$hetSpec <- 'sd_x'
+modSpec_heterox$hetGroups <- c(1,2,1,1)
+modSpec_heterox$cdepSpec <- 'indep'
+
+th_y_sim_heterox <- list(modSpec=modSpec_heterox)
+th_y_sim_heterox$rho <- c(.75,.5)
+th_y_sim_heterox$tau <- list()
+th_y_sim_heterox$tau[[1]] <- c(2,5)
+th_y_sim_heterox$tau[[2]] <- c(1,3)
+th_y_sim_heterox$a <- c(2,3)
+th_y_sim_heterox$r <- c(.45,.10)
+th_y_sim_heterox$b <- c(1.2,-.5)
+th_y_sim_heterox$s <- c(.01,.02,.05,.04)
+th_y_sim_heterox$kappa <- kappa_full[1:3]
+
+
+sim_heterox <- simPowLawMixIndep(th_y_sim_heterox,th_x_sim,100,modSpec_heterox)
+expect_error(
+  fit_heterox <- fit_theta_y(sim_heterox$x,sim_heterox$Y,modSpec_heterox),
+  NA
+)
+
+# Multi-variable, heteroskedastic (sd_resp), multiple heteroskedastic parameters
+modSpec_heteror <- list(meanSpec='powLaw')
+modSpec_heteror$J <- 2
+modSpec_heteror$K <- 2
+modSpec_heteror$M <- c(2,2)
+modSpec_heteror$hetSpec <- 'sd_resp'
+modSpec_heteror$hetGroups <- c(1,2,1,1)
+modSpec_heteror$cdepSpec <- 'indep'
+
+th_y_sim_heteror <- list(modSpec=modSpec_heteror)
+th_y_sim_heteror$rho <- c(.75,.5)
+th_y_sim_heteror$tau <- list()
+th_y_sim_heteror$tau[[1]] <- c(2,5)
+th_y_sim_heteror$tau[[2]] <- c(1,3)
+th_y_sim_heteror$a <- c(2,3)
+th_y_sim_heteror$r <- c(.45,.10)
+th_y_sim_heteror$b <- c(1.2,-.5)
+th_y_sim_heteror$s <- c(.01,.02,.05,.04)
+th_y_sim_heteror$kappa <- kappa_full[1:3]
+
+sim_heteror <- simPowLawMixIndep(th_y_sim_heteror,th_x_sim,N,modSpec_heteror)
+expect_error(
+  fit_heteror <- fit_theta_y(sim_heteror$x,sim_heteror$Y,modSpec_heteror),
+  NA
+)
 

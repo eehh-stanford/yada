@@ -4,7 +4,7 @@
 \alias{fit_theta_y}
 \title{Do a maximum likelihood fit for theta_y}
 \usage{
-fit_theta_y(x, Y, modSpec, verbose = F)
+fit_theta_y(x, Y, modSpec, verbose = F, reqConv = T)
 }
 \arguments{
 \item{x}{Vector of indepenent variable observations}

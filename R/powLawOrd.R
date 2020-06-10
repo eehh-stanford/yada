@@ -192,7 +192,7 @@ calc_M <- function(th_v,hetSpec) {
 }
 
 #' @export
-fitPowLawOrd <- function(x,v,hetSpec='none') {
+fitPowLawOrd <- function(x,v,hetSpec='none',reqConv=T) {
   # th_v has ordering [rho,tau_1,...tau_2,s,kap]
   hetero <- hetSpec != 'none'
   M <- length(unique(v)) - 1
@@ -246,6 +246,9 @@ fitPowLawOrd <- function(x,v,hetSpec='none') {
 
   optimControl <- list(reltol=1e-12,maxit=100000,ndeps=rep(1e-8,length(th_v_bar0)))
   fit <- optim(th_v_bar0,powLawOrdNegLogLik,control=optimControl,x=x,v=v,hetSpec=hetSpec,hessian=T,transformVar=T,method='BFGS')
+  if(reqConv && (fit$convergence != 0)) {
+    stop(paste0('fit did not converge. convergence code = ',fit$convergence))
+  }
 
   th_v <- theta_y_unconstr2constr(fit$par,modSpec)
   

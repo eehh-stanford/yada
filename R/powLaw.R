@@ -128,7 +128,7 @@ powLawNegLogLik <- function(th_w,x,w,hetSpec='none',transformVar=F) {
 }
 
 #' @export
-fitPowLaw <- function(x,w,hetSpec='none') {
+fitPowLaw <- function(x,w,hetSpec='none',reqConv=T) {
   # th_w has ordering [a,r,b,s,kappa]
   hetero <- hetSpec != 'none'
 
@@ -155,6 +155,9 @@ fitPowLaw <- function(x,w,hetSpec='none') {
   th_w_bar0 <- theta_y_constr2unconstr(th_w0,modSpec)
   optimControl <- list(reltol=1e-12,maxit=100000,ndeps=rep(1e-8,length(th_w_bar0)))
   fit <- optim(th_w_bar0,powLawNegLogLik,method='BFGS',control=optimControl,x=x,w=w,hessian=T,hetSpec=hetSpec,transformVar=T)
+  if(reqConv && (fit$convergence != 0)) {
+    stop(paste0('fit did not converge. convergence code = ',fit$convergence))
+  }
 
   th_w <- theta_y_unconstr2constr(fit$par,modSpec)
 

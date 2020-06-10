@@ -49,7 +49,7 @@
 #' @author Michael Holton Price <MichaelHoltonPrice@gmail.com>
 
 #' @export
-fit_theta_y <- function(x,Y,modSpec,verbose=F) {
+fit_theta_y <- function(x,Y,modSpec,verbose=F,reqConv=T) {
   # dep	multi	-	-	-	-	Call bbb
   # indep	single	-	ord	-	Call fitPowLawOrd
   # indep	single	-	cont	-	Call fitPowLaw
@@ -85,9 +85,9 @@ fit_theta_y <- function(x,Y,modSpec,verbose=F) {
     # Remove possible missing values
     keep <- !is.na(Y) & !is.na(x)
     if(J == 1) {
-      return(fitPowLawOrd(x[keep],Y[keep],hetSpec=modSpec$hetSpec))
+      return(fitPowLawOrd(x[keep],Y[keep],hetSpec=modSpec$hetSpec,reqConv=reqConv))
     } else {
-      return(fitPowLaw(x[keep],Y[keep],hetSpec=modSpec$hetSpec))
+      return(fitPowLaw(x[keep],Y[keep],hetSpec=modSpec$hetSpec,reqConv=reqConv))
     }
   }
 
@@ -133,7 +133,7 @@ fit_theta_y <- function(x,Y,modSpec,verbose=F) {
         modSpec_j$hetSpec <- 'none'
         modSpec_j$cdepSpec <- 'indep'
 
-        th_v <- fit_theta_y(xj,vj,modSpec_j,verbose=verbose)
+        th_v <- fit_theta_y(xj,vj,modSpec_j,verbose=verbose,reqConv=reqConv)
         th_v_list <- theta_y_vect2list(th_v,modSpec_j)
         rho[j] <- th_v_list$rho
         tau[[j]] <- th_v_list$tau[[1]]
@@ -154,7 +154,7 @@ fit_theta_y <- function(x,Y,modSpec,verbose=F) {
         modSpec_k$K <- 1
         modSpec_k$hetSpec <- 'none'
         modSpec_k$cdepSpec <- 'indep'
-        th_w <- fit_theta_y(xk,vk,modSpec_k,verbose=verbose)
+        th_w <- fit_theta_y(xk,vk,modSpec_k,verbose=verbose,reqConv=reqConv)
         th_w_list <- theta_y_vect2list(th_w,modSpec_k)
         a[k] <- th_w_list$a
         r[k] <- th_w_list$r
@@ -192,7 +192,7 @@ fit_theta_y <- function(x,Y,modSpec,verbose=F) {
       modSpec_homo$M <- modSpec$M[ind_homo]
     }
     modSpec_homo$hetSpec <- 'none'
-    th_y_homo <- fit_theta_y(x,Y[ind_homo,],modSpec_homo,verbose)
+    th_y_homo <- fit_theta_y(x,Y[ind_homo,],modSpec_homo,verbose,reqConv=reqConv)
     th_y_list_homo <- theta_y_vect2list(th_y_homo,modSpec_homo)
 
     modSpec_hetero <- list(meanSpec='powLaw')
@@ -206,7 +206,7 @@ fit_theta_y <- function(x,Y,modSpec,verbose=F) {
     }
     modSpec_hetero$hetSpec <- modSpec$hetSpec
     modSpec_hetero$hetGroups <- modSpec$hetGroups[ind_hetero]
-    th_y_hetero <- fit_theta_y(x,Y[ind_hetero,],modSpec_hetero,verbose)
+    th_y_hetero <- fit_theta_y(x,Y[ind_hetero,],modSpec_hetero,verbose,reqConv=reqConv)
     th_y_list_hetero <- theta_y_vect2list(th_y_hetero,modSpec_hetero)
     
     # Combine the results
@@ -283,26 +283,21 @@ fit_theta_y <- function(x,Y,modSpec,verbose=F) {
     modSpec0$hetSpec  <- 'none'
     modSpec0$J        <- modSpec$J
     modSpec0$K        <- modSpec$K
-    th_y0 <- fit_theta_y(x,Y,modSpec0,verbose=F)
+    th_y0 <- fit_theta_y(x,Y,modSpec0,verbose=F,reqConv=reqConv)
     th_y0 <- c(th_y0,0.0001) # Add a small amount of heteroskedasticity
     th_y_bar0 <- theta_y_constr2unconstr(th_y0,modSpec)
 
     # Handle possible missing values
     keep <- colSums(is.na(Y)) < ncol(Y)
 
-    useHjk <- F
-    if(useHjk) {
-      optimControl <- list(info=verbose)
-      fit <- dfoptim::hjk(th_y_bar0,powLawMixIndepNegLogLik,control=optimControl,x=x[keep],Y=Y[,keep],modSpec=modSpec,transformVar=T)
-    } else {
-      optimControl <- list(reltol=1e-12,maxit=10000000,ndeps=rep(1e-8,length(th_y_bar0)))
-      if(verbose) {
-        optimControl$trace <- 100
-      }
-      fit <- optim(th_y_bar0,powLawMixIndepNegLogLik,control=optimControl,x=x[keep],Y=Y[,keep],modSpec=modSpec,transformVar=T,method='BFGS')
+    optimControl <- list(reltol=1e-12,maxit=10000000,ndeps=rep(1e-8,length(th_y_bar0)))
+    if(verbose) {
+      optimControl$trace <- 100
     }
-  
-
+    fit <- optim(th_y_bar0,powLawMixIndepNegLogLik,control=optimControl,x=x[keep],Y=Y[,keep],modSpec=modSpec,transformVar=T,method='BFGS')
+    if(reqConv && (fit$convergence != 0)) {
+      stop(paste0('fit did not converge. convergence code = ',fit$convergence))
+    }
     th_y <- theta_y_unconstr2constr(fit$par,modSpec)
     return(th_y)
   }

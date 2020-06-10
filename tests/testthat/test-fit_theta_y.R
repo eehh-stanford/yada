@@ -162,7 +162,7 @@ th_y_sim_heterox$s <- c(.01,.02,.05,.04)
 th_y_sim_heterox$kappa <- c(kappa1,kappa2)
 
 
-sim_heterox <- simPowLawMixIndep(th_y_sim_heterox,th_x_sim,100,modSpec_heterox)
+sim_heterox <- simPowLawMixIndep(th_y_sim_heterox,th_x_sim,N,modSpec_heterox)
 expect_error(
   fit_heterox <- fit_theta_y(sim_heterox$x,sim_heterox$Y,modSpec_heterox),
   NA
@@ -215,7 +215,7 @@ th_y_sim_heterox$s <- c(.01,.02,.05,.04)
 th_y_sim_heterox$kappa <- kappa1
 
 
-sim_heterox <- simPowLawMixIndep(th_y_sim_heterox,th_x_sim,100,modSpec_heterox)
+sim_heterox <- simPowLawMixIndep(th_y_sim_heterox,th_x_sim,N,modSpec_heterox)
 expect_error(
   fit_heterox <- fit_theta_y(sim_heterox$x,sim_heterox$Y,modSpec_heterox),
   NA
@@ -268,7 +268,7 @@ th_y_sim_heterox$s <- c(.01,.02,.05,.04)
 th_y_sim_heterox$kappa <- c(kappa1,kappa2,kappa3)
 
 
-sim_heterox <- simPowLawMixIndep(th_y_sim_heterox,th_x_sim,100,modSpec_heterox)
+sim_heterox <- simPowLawMixIndep(th_y_sim_heterox,th_x_sim,N,modSpec_heterox)
 expect_error(
   fit_heterox <- fit_theta_y(sim_heterox$x,sim_heterox$Y,modSpec_heterox),
   NA

@@ -37,10 +37,15 @@
 #' @author Michael Holton Price <MichaelHoltonPrice@gmail.com>
 
 #' @export
-powLawMixNegLogLik <- function(th_y,x,Y,modSpec,transformVar=F) {
+powLawMixIndepNegLogLik <- function(th_y,x,Y,modSpec,transformVar=F) {
   # th_y has ordering th_y = [rho,tau,a,r,b,s,kappa]
   # eta_y is the negative log-likelihood
   # For optimization, th_y is the first input
+
+  if(is_cdep(modSpec)) {
+    stop('Must be a conditionally independent model')
+  }
+
   hetero <- is_hetero(modSpec)
 
   J <- get_J(modSpec) # number of ordinal variables
@@ -87,7 +92,12 @@ extract_th_v <- function(th_y,modSpec,j) {
   s   <- th_y[get_var_index('s'  ,modSpec,j=j)]
 
   if(hetero) {
-    kappa <- th_y[get_var_index('kappa',modSpec,j=j)]
+    ind <- get_var_index('kappa',modSpec,j=j)
+    if(is.na(ind)) {
+      kappa <- 0
+    } else {
+      kappa <- th_y[ind]
+    }
   } else {
     kappa <- c()
   }
@@ -105,48 +115,20 @@ extract_th_w <- function(th_y,modSpec,k) {
   s <- th_y[get_var_index('s',modSpec,k=k)]
 
   if(hetero) {
-    kappa <- th_y[get_var_index('kappa',modSpec,k=k)]
+    ind <- get_var_index('kappa',modSpec,k=k)
+    if(is.na(ind)) {
+      kappa <- 0
+    } else {
+      kappa <- th_y[ind]
+    }
   } else {
     kappa <- c()
   }
   return(c(a,r,b,s,kappa))
 }
 
-##' @export
-#get_response <- function(x,th_y,modSpec,transformVar=F) {
-#  check_model(modSpec)
-#  J <- get_J(modSpec)
-#  K <- get_K(modSpec)
-#
-#  if(modSpec$meanSpec != 'powLaw') {
-#    stop('Only a power law is currenty supported for the mean specification')
-#  }
-#
-#  if(J > 0) {
-#    for(j in 1:J) {
-#      v <- rep(NA,J)
-#      th_v <- extract_th_v(th_y,modSpec,j)
-#      v[j] <- powLawOrd(x,th_v,transformVar)
-#    }
-#  } else {
-#      v <- c()
-#  }
-#
-#  if(K > 0) {
-#    for(k in 1:K) {
-#      w <- rep(NA,K)
-#      th_w <- extract_th_w(th_y,modSpec,k)
-#      w[k] <- powLaw(x,th_w,transformVar)
-#    }
-#  } else {
-#     w <- c()
-#  }
-#
-#  return(c(v,w))
-#}
-
 #' @export
-simPowLawMix <- function(th_y_list,th_x_list,N,modSpec) {
+simPowLawMixIndep <- function(th_y_list,th_x_list,N,modSpec) {
   if(th_x_list$fitType == 'uniform') {
     x <- runif(N,th_x_list$xmin,th_x_list$xmax)
   } else {

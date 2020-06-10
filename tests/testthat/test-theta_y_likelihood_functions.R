@@ -274,3 +274,44 @@ expect_equal(
   calcLogLik_theta_y(theta_y_list,c(x1,x2),Y),
   lik1 + lik2
 )
+
+# For powLawMixIndepNegLogLik, test a conditionally independent model with two ordinal and two continuous variable
+modSpec <- list(meanSpec='powLaw')
+modSpec$J <- 2
+modSpec$K <- 2
+modSpec$M <- c(2,2)
+modSpec$hetSpec  <- 'none'
+modSpec$cdepSpec <- 'indep'
+
+theta_y_list <- list(modSpec=modSpec)
+theta_y_list$rho <- c(rho1,rho2)
+theta_y_list$tau <- list()
+theta_y_list$tau[[1]] <- tau1
+theta_y_list$tau[[2]] <- tau2
+theta_y_list$a <- c(a1,a2)
+theta_y_list$r <- c(r1,r2)
+theta_y_list$b <- c(b1,b2)
+theta_y_list$s <- c(s1,s2,s3,s4)
+
+Y <- matrix(c(0,1,100,50,1,2,160,92),nrow=4)
+# Directly Calculate likelihood for both observations
+# Ordinal means:
+g1 <- x1^c(rho1,rho2)
+g2 <- x2^c(rho1,rho2)
+h1 <- c(a1,a2)*x1^c(r1,r2) + c(b1,b2)
+h2 <- c(a1,a2)*x2^c(r1,r2) + c(b1,b2)
+
+lik1_ord <- c(pnorm((tau1[1]-g1[1])/s1),pnorm((tau2[2]-g1[2])/s2) - pnorm((tau2[1]-g1[2])/s2))
+lik1_cont <- dnorm(Y[3:4,1],h1,c(s3,s4))
+
+lik2_ord <- c(pnorm((tau1[2]-g2[1])/s1) - pnorm((tau1[1]-g2[1])/s1),1 - pnorm((tau2[2]-g2[2])/s2))
+lik2_cont <- dnorm(Y[3:4,2],h2,c(s3,s4))
+
+eta <- -sum(log(c(lik1_ord,lik1_cont,lik2_ord,lik2_cont)))
+
+theta_y_vect <- theta_y_list2vect(theta_y_list)
+expect_equal(
+  powLawMixIndepNegLogLik(theta_y_vect,c(x1,x2),Y,modSpec),
+  eta
+)
+

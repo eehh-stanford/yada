@@ -3,8 +3,6 @@
 # From random.org between 1 and 1,000,000:
 set.seed(874287)
 
-N <- 100
-
 # Parameters for first ordinal variable
 rho1 <- .5
 tau1 <- c(1.5,3.5)
@@ -115,6 +113,10 @@ expect_error(
   NA
 )
 
+xmin <- 0
+xmax <- 20
+th_x_sim <- list(fitType='uniform',xmin=xmin,xmax=xmax)
+
 # Multi-variable, homoskedastic
 modSpec_homo <- list(meanSpec='powLaw')
 modSpec_homo$J <- 2
@@ -157,7 +159,7 @@ th_y_sim_heterox$a <- c(2,3)
 th_y_sim_heterox$r <- c(.45,.10)
 th_y_sim_heterox$b <- c(1.2,-.5)
 th_y_sim_heterox$s <- c(.01,.02,.05,.04)
-th_y_sim_heterox$kappa <- kappa_full[1:2]
+th_y_sim_heterox$kappa <- c(kappa1,kappa2)
 
 
 sim_heterox <- simPowLawMixIndep(th_y_sim_heterox,th_x_sim,100,modSpec_heterox)
@@ -184,7 +186,7 @@ th_y_sim_heteror$a <- c(2,3)
 th_y_sim_heteror$r <- c(.45,.10)
 th_y_sim_heteror$b <- c(1.2,-.5)
 th_y_sim_heteror$s <- c(.01,.02,.05,.04)
-th_y_sim_heteror$kappa <- kappa_full[1:2]
+th_y_sim_heteror$kappa <- c(kappa1,kappa2)
 
 sim_heteror <- simPowLawMixIndep(th_y_sim_heteror,th_x_sim,N,modSpec_heteror)
 expect_error(
@@ -210,7 +212,7 @@ th_y_sim_heterox$a <- c(2,3)
 th_y_sim_heterox$r <- c(.45,.10)
 th_y_sim_heterox$b <- c(1.2,-.5)
 th_y_sim_heterox$s <- c(.01,.02,.05,.04)
-th_y_sim_heterox$kappa <- kappa_full[1]
+th_y_sim_heterox$kappa <- kappa1
 
 
 sim_heterox <- simPowLawMixIndep(th_y_sim_heterox,th_x_sim,100,modSpec_heterox)
@@ -237,7 +239,7 @@ th_y_sim_heteror$a <- c(2,3)
 th_y_sim_heteror$r <- c(.45,.10)
 th_y_sim_heteror$b <- c(1.2,-.5)
 th_y_sim_heteror$s <- c(.01,.02,.05,.04)
-th_y_sim_heteror$kappa <- kappa_full[1]
+th_y_sim_heteror$kappa <- kappa1
 
 sim_heteror <- simPowLawMixIndep(th_y_sim_heteror,th_x_sim,N,modSpec_heteror)
 expect_error(
@@ -263,7 +265,7 @@ th_y_sim_heterox$a <- c(2,3)
 th_y_sim_heterox$r <- c(.45,.10)
 th_y_sim_heterox$b <- c(1.2,-.5)
 th_y_sim_heterox$s <- c(.01,.02,.05,.04)
-th_y_sim_heterox$kappa <- kappa_full[1:3]
+th_y_sim_heterox$kappa <- c(kappa1,kappa2,kappa3)
 
 
 sim_heterox <- simPowLawMixIndep(th_y_sim_heterox,th_x_sim,100,modSpec_heterox)
@@ -290,7 +292,7 @@ th_y_sim_heteror$a <- c(2,3)
 th_y_sim_heteror$r <- c(.45,.10)
 th_y_sim_heteror$b <- c(1.2,-.5)
 th_y_sim_heteror$s <- c(.01,.02,.05,.04)
-th_y_sim_heteror$kappa <- kappa_full[1:3]
+th_y_sim_heteror$kappa <- c(kappa1,kappa2,kappa3)
 
 sim_heteror <- simPowLawMixIndep(th_y_sim_heteror,th_x_sim,N,modSpec_heteror)
 expect_error(

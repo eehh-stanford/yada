@@ -2547,7 +2547,7 @@ expect_equal(
 th_y_vect2x <- theta_y_list2vect(th_y_listx)
 expect_equal(
   th_y_vect,
-  th_y_vect2
+  th_y_vect2x
 )
 
 th_y_vect2r <- theta_y_list2vect(th_y_listr)

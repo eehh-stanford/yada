@@ -62,6 +62,16 @@ expect_error(
   NA
 )
 
+expect_equal(
+  any(is.na(fit)),
+  F
+)
+
+expect_equal(
+  length(fit),
+  2 + M1
+)
+
 # Single variable, ordinal, hetSpec = 'sd_x'
 modSpec1_sdx <- list(meanSpec='powLaw')
 modSpec1_sdx$J <- 1
@@ -71,6 +81,16 @@ modSpec1_sdx$hetGroups <- 1
 expect_error(
   fit <- fit_theta_y(sim1_sdx$x,sim1_sdx$v,modSpec1_sdx),
   NA
+)
+
+expect_equal(
+  any(is.na(fit)),
+  F
+)
+
+expect_equal(
+  length(fit),
+  3 + M1
 )
 
 # Single variable, ordinal, hetSpec = 'sd_resp'
@@ -84,6 +104,16 @@ expect_error(
   NA
 )
 
+expect_equal(
+  any(is.na(fit)),
+  F
+)
+
+expect_equal(
+  length(fit),
+  3 + M1
+)
+
 # Single variable, continuous, hetSpec = 'none'
 modSpec3_none <- list(meanSpec='powLaw')
 modSpec3_none$K <- 1
@@ -91,6 +121,16 @@ modSpec3_none$hetSpec <- 'none'
 expect_error(
   fit <- fit_theta_y(sim3_none$x,sim3_none$w,modSpec3_none),
   NA
+)
+
+expect_equal(
+  any(is.na(fit)),
+  F
+)
+
+expect_equal(
+  length(fit),
+  4
 )
 
 # Single variable, continuous, hetSpec = 'sd_x'
@@ -103,6 +143,16 @@ expect_error(
   NA
 )
 
+expect_equal(
+  any(is.na(fit)),
+  F
+)
+
+expect_equal(
+  length(fit),
+  5
+)
+
 # Single variable, continuous, hetSpec = 'sd_resp'
 modSpec3_sdr <- list(meanSpec='powLaw')
 modSpec3_sdr$K <- 1
@@ -111,6 +161,16 @@ modSpec3_sdr$hetGroups <- 1
 expect_error(
   fit <- fit_theta_y(sim3_sdr$x,sim3_sdr$w,modSpec3_sdr),
   NA
+)
+
+expect_equal(
+  any(is.na(fit)),
+  F
+)
+
+expect_equal(
+  length(fit),
+  5
 )
 
 xmin <- 0
@@ -135,10 +195,20 @@ th_y_sim_homo$r <- c(.45,.10)
 th_y_sim_homo$b <- c(1.2,-.5)
 th_y_sim_homo$s <- c(.01,.02,.05,.04)
 
-sim_homo <- simPowLawMixIndep(th_y_sim_homo,th_x_sim,100,modSpec_homo)
+sim_homo <- simPowLawMixIndep(th_y_sim_homo,th_x_sim,N,modSpec_homo)
 expect_error(
   fit_homo <- fit_theta_y(sim_homo$x,sim_homo$Y,modSpec_homo),
   NA
+)
+
+expect_equal(
+  any(is.na(fit_homo)),
+  F
+)
+
+expect_equal(
+  length(fit_homo),
+  2*modSpec_homo$J + sum(modSpec_homo$M) + 4*modSpec_homo$K
 )
 
 # Multi-variable, heteroskedastic (sd_x), NA in hetGroups
@@ -168,6 +238,16 @@ expect_error(
   NA
 )
 
+expect_equal(
+  any(is.na(fit_heterox)),
+  F
+)
+
+expect_equal(
+  length(fit_heterox),
+  2*modSpec_heterox$J + sum(modSpec_heterox$M) + 4*modSpec_heterox$K + get_Gkappa(modSpec_heterox)
+)
+
 # Multi-variable, heteroskedastic (sd_resp), NA in hetGroups
 modSpec_heteror <- list(meanSpec='powLaw')
 modSpec_heteror$J <- 2
@@ -194,6 +274,16 @@ expect_error(
   NA
 )
 
+expect_equal(
+  any(is.na(fit_heteror)),
+  F
+)
+
+expect_equal(
+  length(fit_heteror),
+  2*modSpec_heteror$J + sum(modSpec_heteror$M) + 4*modSpec_heteror$K + get_Gkappa(modSpec_heteror)
+)
+
 # Multi-variable, heteroskedastic (sd_x), single heteroskedastic parameter
 modSpec_heterox <- list(meanSpec='powLaw')
 modSpec_heterox$J <- 2
@@ -216,9 +306,24 @@ th_y_sim_heterox$kappa <- kappa1
 
 
 sim_heterox <- simPowLawMixIndep(th_y_sim_heterox,th_x_sim,N,modSpec_heterox)
+x <- sim_heterox$x
+Y <- sim_heterox$Y
+modSpec <- modSpec_heterox
+verbose <- T
+reqConv <- T
 expect_error(
   fit_heterox <- fit_theta_y(sim_heterox$x,sim_heterox$Y,modSpec_heterox),
   NA
+)
+
+expect_equal(
+  any(is.na(fit_heterox)),
+  F
+)
+
+expect_equal(
+  length(fit_heterox),
+  2*modSpec_heterox$J + sum(modSpec_heterox$M) + 4*modSpec_heterox$K + get_Gkappa(modSpec_heterox)
 )
 
 # Multi-variable, heteroskedastic (sd_resp), single heteroskedastic parameter
@@ -247,6 +352,16 @@ expect_error(
   NA
 )
 
+expect_equal(
+  any(is.na(fit_heteror)),
+  F
+)
+
+expect_equal(
+  length(fit_heteror),
+  2*modSpec_heteror$J + sum(modSpec_heteror$M) + 4*modSpec_heteror$K + get_Gkappa(modSpec_heteror)
+)
+
 # Multi-variable, heteroskedastic (sd_x), multiple heteroskedastic parameters
 modSpec_heterox <- list(meanSpec='powLaw')
 modSpec_heterox$J <- 2
@@ -267,11 +382,20 @@ th_y_sim_heterox$b <- c(1.2,-.5)
 th_y_sim_heterox$s <- c(.01,.02,.05,.04)
 th_y_sim_heterox$kappa <- c(kappa1,kappa2,kappa3)
 
-
 sim_heterox <- simPowLawMixIndep(th_y_sim_heterox,th_x_sim,N,modSpec_heterox)
 expect_error(
   fit_heterox <- fit_theta_y(sim_heterox$x,sim_heterox$Y,modSpec_heterox),
   NA
+)
+
+expect_equal(
+  any(is.na(fit_heterox)),
+  F
+)
+
+expect_equal(
+  length(fit_heterox),
+  2*modSpec_heterox$J + sum(modSpec_heterox$M) + 4*modSpec_heterox$K + get_Gkappa(modSpec_heterox)
 )
 
 # Multi-variable, heteroskedastic (sd_resp), multiple heteroskedastic parameters
@@ -298,5 +422,15 @@ sim_heteror <- simPowLawMixIndep(th_y_sim_heteror,th_x_sim,N,modSpec_heteror)
 expect_error(
   fit_heteror <- fit_theta_y(sim_heteror$x,sim_heteror$Y,modSpec_heteror),
   NA
+)
+
+expect_equal(
+  any(is.na(fit_heteror)),
+  F
+)
+
+expect_equal(
+  length(fit_heteror),
+  2*modSpec_heteror$J + sum(modSpec_heteror$M) + 4*modSpec_heteror$K + get_Gkappa(modSpec_heteror)
 )
 

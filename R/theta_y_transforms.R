@@ -70,6 +70,21 @@ check_model <- function(modSpec) {
   J <- get_J(modSpec)
   K <- get_K(modSpec)
 
+  # Check M
+  if(J > 0) {
+    if(!('M' %in% names(modSpec))) {
+      stop('M should be a field in modSpec if J > 0')
+    }
+
+    if(any(is.na(modSpec$M))) {
+      stop('No element of M should be NA')
+    }
+
+    if(J != length(modSpec$M)) {
+      stop(paste0('J [',J,'] should equal length of M [',length(modSpec$M),']'))
+    }
+  }
+
   if(J + K == 1) {
     # Single variable models should either have no specification of the
     # conditional dependence or have it be independent

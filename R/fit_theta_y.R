@@ -202,7 +202,7 @@ fit_theta_y <- function(x,Y,modSpec,verbose=F,reqConv=T) {
     modSpec_hetero$hetSpec <- modSpec$hetSpec
     modSpec_hetero$hetGroups <- modSpec$hetGroups[ind_hetero]
     if(J_hetero > 0) {
-      modSpec_hetero$M <- modSpec$M[ind_hetero]
+      modSpec_hetero$M <- modSpec$M[ind_hetero[1:J_hetero]]
     }
     modSpec_hetero$hetSpec <- modSpec$hetSpec
     modSpec_hetero$hetGroups <- modSpec$hetGroups[ind_hetero]
@@ -244,14 +244,14 @@ fit_theta_y <- function(x,Y,modSpec,verbose=F,reqConv=T) {
         if(is.na(modSpec$hetGroups[J+k])) {
           # Then k is a homoskedastic variable
           # Index in the homoskedastic fit:
-          k_homo <- sum(is.na(modSpec$hetGroups[1:(J+k)]))
+          k_homo <- sum(is.na(modSpec$hetGroups[(J+1):(J+k)]))
           a[k]   <- th_y_list_homo$a[k_homo]
           r[k]   <- th_y_list_homo$r[k_homo]
           b[k]   <- th_y_list_homo$b[k_homo]
           s[J+k] <- th_y_list_homo$s[k_homo]
         } else {
           # Then j is a heteroskedastic variable
-          k_hetero <- sum(!is.na(modSpec$hetGroups[1:(J+k)]))
+          k_hetero <- sum(!is.na(modSpec$hetGroups[(J+1):(J+k)]))
           a[k]   <- th_y_list_hetero$a[k_hetero]
           r[k]   <- th_y_list_hetero$r[k_hetero]
           b[k]   <- th_y_list_hetero$b[k_hetero]
@@ -265,7 +265,7 @@ fit_theta_y <- function(x,Y,modSpec,verbose=F,reqConv=T) {
     th_y_list_full$s <- s
     th_y_list_full$kappa <- th_y_list_hetero$kappa
     return(theta_y_list2vect(th_y_list_full))
-  }
+  } # end haveNA
 
   # If this point is reached, the model is conditionally independent,
   # multi-variable, heteroskedastic, and contains no special-case homoskedastic
@@ -281,8 +281,11 @@ fit_theta_y <- function(x,Y,modSpec,verbose=F,reqConv=T) {
     modSpec0 <- list(meanSpec='powLaw')
     modSpec0$cdepSpec <- 'indep'
     modSpec0$hetSpec  <- 'none'
-    modSpec0$J        <- modSpec$J
-    modSpec0$K        <- modSpec$K
+    modSpec0$J        <- get_J(modSpec)
+    modSpec0$K        <- get_K(modSpec)
+    if(modSpec0$J > 0) {
+      modSpec0$M <- modSpec$M
+    }
     th_y0 <- fit_theta_y(x,Y,modSpec0,verbose=F,reqConv=reqConv)
     th_y0 <- c(th_y0,0.0001) # Add a small amount of heteroskedasticity
     th_y_bar0 <- theta_y_constr2unconstr(th_y0,modSpec)
@@ -351,6 +354,7 @@ fit_theta_y <- function(x,Y,modSpec,verbose=F,reqConv=T) {
     modSpec_g$hetSpec <- modSpec$hetSpec
     modSpec_g$hetGroups <- rep(1,length(indg))
     th_y <- fit_theta_y(x,Y[indg,],modSpec_g,verbose=verbose)
+    kappa[g] <- th_y[get_var_index('kappa',modSpec_g)]
 
     if(J_g > 0) {
       rho[indg_ord] <- th_y[get_var_index('rho',modSpec_g)]

@@ -75,13 +75,16 @@ powLawSigma <- function(x,th_w,hetSpec='none',transformVar=F) {
     kappa <- exp(kappa)
   }
 
+  if(!(hetSpec %in% c('none','sd_x','sd_resp'))) {
+    stop(paste('Unrecognized hetSpec,',hetSpec))
+  }
+
   if(hetSpec == 'sd_x') {
     sig <- sig * (1+kappa*x)
   } else if(hetSpec == 'sd_resp') {
     sig <- sig * (1+a*kappa*x^r)
-  } else {
-    stop(paste('Unrecognized hetSpec,',hetSpec))
   }
+
   return(sig)
 }
 
